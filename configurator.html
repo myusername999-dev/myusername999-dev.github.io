@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Homepage Configurator - VinATech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Sora:wght@400;600;700;800&family=Manrope:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Outfit:wght@400;500;700;800&family=DM+Sans:wght@400;500;700;900&family=Archivo:wght@400;500;700;800&family=Karla:wght@400;500;700;800&family=Merriweather:wght@400;700;900&family=Playfair+Display:wght@400;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/configurator.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="control-rail">
+      <header class="rail-header">
+        <p class="eyebrow">Design Lab</p>
+        <h1>Homepage Configurator</h1>
+        <p class="subtitle">Experiment with style, layout, and content before publishing.</p>
+      </header>
+
+      <section class="panel">
+        <h2>Branding</h2>
+        <p class="hint">Publish writes uploaded images into images/ in your selected project folder.</p>
+        <label>Brand Name<input id="brandName" type="text"></label>
+        <label>Hero Title<textarea id="heroTitle" rows="2"></textarea></label>
+        <label>Hero Subtitle<textarea id="heroSubtitle" rows="3"></textarea></label>
+        <div class="upload-group">
+          <label>Logo File<input id="logoInput" type="file" accept="image/*"></label>
+          <button id="clearLogo" type="button" class="ghost">Clear Logo</button>
+        </div>
+        <div class="upload-group">
+          <label>Background File<input id="backgroundInput" type="file" accept="image/*"></label>
+          <button id="clearBackground" type="button" class="ghost">Clear Background</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Typography</h2>
+        <label>Font Family
+          <select id="fontFamily">
+            <option value="Sora">Sora</option>
+            <option value="Space Grotesk">Space Grotesk</option>
+            <option value="Manrope">Manrope</option>
+            <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+            <option value="Outfit">Outfit</option>
+            <option value="DM Sans">DM Sans</option>
+            <option value="Archivo">Archivo</option>
+            <option value="Karla">Karla</option>
+            <option value="Merriweather">Merriweather</option>
+            <option value="Playfair Display">Playfair Display</option>
+            <option value="Cormorant Garamond">Cormorant Garamond</option>
+            <option value="Bricolage Grotesque">Bricolage Grotesque</option>
+          </select>
+        </label>
+        <label>Heading Size (px)
+          <input id="headingSize" type="range" min="40" max="92" step="1">
+          <span id="headingSizeValue" class="value-pill"></span>
+        </label>
+        <label>Body Size (px)
+          <input id="bodySize" type="range" min="14" max="28" step="1">
+          <span id="bodySizeValue" class="value-pill"></span>
+        </label>
+        <label>Button Text Size (px)
+          <input id="buttonTextSize" type="range" min="12" max="32" step="1">
+          <span id="buttonTextSizeValue" class="value-pill"></span>
+        </label>
+      </section>
+
+      <section class="panel">
+        <div class="tabs-head">
+          <h2>Action Buttons</h2>
+          <button id="addButton" type="button">Add Button</button>
+        </div>
+        <div id="buttonsEditor" class="tabs-editor"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Colors</h2>
+        <div class="color-grid">
+          <label>Background<input id="bgColor" type="color"></label>
+          <label>Text<input id="textColor" type="color"></label>
+          <label>Accent<input id="accentColor" type="color"></label>
+          <label>Muted<input id="mutedColor" type="color"></label>
+          <label>Surface<input id="surfaceColor" type="color"></label>
+          <label>Button Text<input id="buttonTextColor" type="color"></label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Layout</h2>
+        <p class="hint">Drag in preview or fine-tune numerically.</p>
+        <p class="hint">Background focus controls apply only when a background image is uploaded.</p>
+        <div class="layout-grid">
+          <label>Logo X<input id="logoX" type="number" step="1"></label>
+          <label>Logo Y<input id="logoY" type="number" step="1"></label>
+          <label>Nav X<input id="navX" type="number" step="1"></label>
+          <label>Nav Y<input id="navY" type="number" step="1"></label>
+          <label>Hero Block Horizontal Offset (px)<input id="heroX" type="number" step="1"></label>
+          <label>Hero Block Vertical Offset (px)<input id="heroY" type="number" step="1"></label>
+          <label>CTA Button Horizontal Offset (px)<input id="ctaX" type="number" step="1"></label>
+          <label>CTA Button Vertical Offset (px)<input id="ctaY" type="number" step="1"></label>
+          <label>Background Focus X (%)<input id="bgX" type="number" min="0" max="100" step="1"></label>
+          <label>Background Focus Y (%)<input id="bgY" type="number" min="0" max="100" step="1"></label>
+          <label>Background Transparency (%)
+            <input id="bgTransparency" type="range" min="0" max="95" step="1">
+            <span id="bgTransparencyValue" class="value-pill"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="tabs-head">
+          <h2>Tabs</h2>
+          <button id="addTab" type="button">New Tab</button>
+        </div>
+        <p class="hint">Each tab can use custom font and colors for its card and nav pill.</p>
+        <div id="tabsEditor" class="tabs-editor"></div>
+      </section>
+
+      <section class="panel actions">
+        <label class="approval"><input id="approval" type="checkbox"> I approve this preview for publish</label>
+        <div class="action-row">
+          <button id="previewHome" type="button">Preview HOME</button>
+          <button id="publishHome" type="button" class="primary">Publish to index.html</button>
+        </div>
+        <div class="action-row">
+          <button id="exportDraft" type="button" class="ghost">Export Draft JSON</button>
+          <label class="import-btn ghost">Import Draft JSON<input id="importDraft" type="file" accept="application/json"></label>
+        </div>
+        <button id="resetDraft" type="button" class="danger">Reset Draft</button>
+        <p id="statusMessage" class="status" aria-live="polite"></p>
+      </section>
+    </aside>
+
+    <main class="preview-shell">
+      <header class="preview-top">
+        <div>
+          <p class="eyebrow">Live Stage</p>
+          <h2>Interactive Homepage Preview</h2>
+        </div>
+        <a href="index.html" class="inline-link" target="_blank" rel="noreferrer">Open current published home</a>
+      </header>
+      <div id="previewViewport" class="preview-viewport"></div>
+      <p class="hint foot-hint">Tip: drag logo, nav, hero block, and CTA directly on stage.</p>
+    </main>
+  </div>
+
+  <script src="js/configurator.app.js"></script>
+</body>
+</html>
