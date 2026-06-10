@@ -22,7 +22,8 @@
     brand: {
       name: "VinATech",
       logoSrc: "",
-      logoFileName: ""
+      logoFileName: "",
+      logos: createDefaultLogos()
     },
     hero: {
       title: "We Build Financial Software With Human Clarity",
@@ -144,6 +145,7 @@
 
   function init() {
     collectDom();
+    sanitizeState();
     bindCoreInputs();
     bindActions();
     syncInputsFromState();
@@ -157,9 +159,11 @@
     dom.brandName = document.getElementById("brandName");
     dom.heroTitle = document.getElementById("heroTitle");
     dom.heroSubtitle = document.getElementById("heroSubtitle");
-    dom.logoInput = document.getElementById("logoInput");
+    dom.logo1Input = document.getElementById("logo1Input");
+    dom.logo2Input = document.getElementById("logo2Input");
     dom.backgroundInput = document.getElementById("backgroundInput");
-    dom.clearLogo = document.getElementById("clearLogo");
+    dom.clearLogo1 = document.getElementById("clearLogo1");
+    dom.clearLogo2 = document.getElementById("clearLogo2");
     dom.clearBackground = document.getElementById("clearBackground");
 
     dom.fontFamily = document.getElementById("fontFamily");
@@ -177,8 +181,16 @@
     dom.surfaceColor = document.getElementById("surfaceColor");
     dom.buttonTextColor = document.getElementById("buttonTextColor");
 
-    dom.logoX = document.getElementById("logoX");
-    dom.logoY = document.getElementById("logoY");
+    dom.logo1X = document.getElementById("logo1X");
+    dom.logo1Y = document.getElementById("logo1Y");
+    dom.logo1Size = document.getElementById("logo1Size");
+    dom.logo1Rotation = document.getElementById("logo1Rotation");
+    dom.logo1Transparency = document.getElementById("logo1Transparency");
+    dom.logo2X = document.getElementById("logo2X");
+    dom.logo2Y = document.getElementById("logo2Y");
+    dom.logo2Size = document.getElementById("logo2Size");
+    dom.logo2Rotation = document.getElementById("logo2Rotation");
+    dom.logo2Transparency = document.getElementById("logo2Transparency");
     dom.navX = document.getElementById("navX");
     dom.navY = document.getElementById("navY");
     dom.heroX = document.getElementById("heroX");
@@ -249,11 +261,35 @@
       state.theme.buttonTextColor = value;
     }, "input");
 
-    bindNumber(dom.logoX, function (value) {
-      state.layout.logo.x = value;
+    bindNumber(dom.logo1X, function (value) {
+      state.brand.logos[0].x = value;
     });
-    bindNumber(dom.logoY, function (value) {
-      state.layout.logo.y = value;
+    bindNumber(dom.logo1Y, function (value) {
+      state.brand.logos[0].y = value;
+    });
+    bindNumber(dom.logo1Size, function (value) {
+      setLogoSize(0, value, true);
+    });
+    bindNumber(dom.logo1Rotation, function (value) {
+      state.brand.logos[0].rotation = normalizeRotation(value);
+    });
+    bindNumber(dom.logo1Transparency, function (value) {
+      state.brand.logos[0].transparency = clamp(value, 0, 95);
+    });
+    bindNumber(dom.logo2X, function (value) {
+      state.brand.logos[1].x = value;
+    });
+    bindNumber(dom.logo2Y, function (value) {
+      state.brand.logos[1].y = value;
+    });
+    bindNumber(dom.logo2Size, function (value) {
+      setLogoSize(1, value, true);
+    });
+    bindNumber(dom.logo2Rotation, function (value) {
+      state.brand.logos[1].rotation = normalizeRotation(value);
+    });
+    bindNumber(dom.logo2Transparency, function (value) {
+      state.brand.logos[1].transparency = clamp(value, 0, 95);
     });
     bindNumber(dom.navX, function (value) {
       state.layout.nav.x = value;
@@ -283,10 +319,19 @@
       state.background.transparency = clamp(value, 0, 95);
     });
 
-    dom.logoInput.addEventListener("change", function (event) {
+    dom.logo1Input.addEventListener("change", function (event) {
       handleImageUpload(event, function (asset) {
+        state.brand.logos[0].src = asset.src;
+        state.brand.logos[0].fileName = asset.fileName;
         state.brand.logoSrc = asset.src;
         state.brand.logoFileName = asset.fileName;
+      });
+    });
+
+    dom.logo2Input.addEventListener("change", function (event) {
+      handleImageUpload(event, function (asset) {
+        state.brand.logos[1].src = asset.src;
+        state.brand.logos[1].fileName = asset.fileName;
       });
     });
 
@@ -297,11 +342,20 @@
       });
     });
 
-    dom.clearLogo.addEventListener("click", function () {
+    dom.clearLogo1.addEventListener("click", function () {
+      state.brand.logos[0].src = "";
+      state.brand.logos[0].fileName = "";
       state.brand.logoSrc = "";
       state.brand.logoFileName = "";
-      dom.logoInput.value = "";
-      refresh("Logo removed from draft.");
+      dom.logo1Input.value = "";
+      refresh("Logo 1 removed from draft.");
+    });
+
+    dom.clearLogo2.addEventListener("click", function () {
+      state.brand.logos[1].src = "";
+      state.brand.logos[1].fileName = "";
+      dom.logo2Input.value = "";
+      refresh("Logo 2 removed from draft.");
     });
 
     dom.clearBackground.addEventListener("click", function () {
@@ -384,11 +438,21 @@
     element.addEventListener("input", function () {
       var numericValue = parseInt(element.value, 10);
       if (Number.isNaN(numericValue)) {
-        numericValue = 0;
+        return;
       }
       setter(numericValue);
-      refresh();
+      if (element.type === "range") {
+        refresh();
+        return;
+      }
+      saveAndPreview();
     });
+
+    if (element.type === "number") {
+      element.addEventListener("change", function () {
+        refresh();
+      });
+    }
   }
 
   function handleImageUpload(event, callback) {
@@ -471,8 +535,16 @@
     dom.surfaceColor.value = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
     dom.buttonTextColor.value = normalizeHex(state.theme.buttonTextColor, "#ffffff");
 
-    dom.logoX.value = String(state.layout.logo.x);
-    dom.logoY.value = String(state.layout.logo.y);
+    dom.logo1X.value = String(state.brand.logos[0].x);
+    dom.logo1Y.value = String(state.brand.logos[0].y);
+    dom.logo1Size.value = String(state.brand.logos[0].size);
+    dom.logo1Rotation.value = String(state.brand.logos[0].rotation);
+    dom.logo1Transparency.value = String(state.brand.logos[0].transparency);
+    dom.logo2X.value = String(state.brand.logos[1].x);
+    dom.logo2Y.value = String(state.brand.logos[1].y);
+    dom.logo2Size.value = String(state.brand.logos[1].size);
+    dom.logo2Rotation.value = String(state.brand.logos[1].rotation);
+    dom.logo2Transparency.value = String(state.brand.logos[1].transparency);
     dom.navX.value = String(state.layout.nav.x);
     dom.navY.value = String(state.layout.nav.y);
     dom.heroX.value = String(state.layout.hero.x);
@@ -723,16 +795,13 @@
       node.addEventListener("pointerdown", function (event) {
         event.preventDefault();
         var dragKey = String(node.getAttribute("data-drag-key") || "");
-        if (!state.layout[dragKey]) {
+        var startPosition = getDragPosition(dragKey);
+        if (!startPosition) {
           return;
         }
 
         var startX = event.clientX;
         var startY = event.clientY;
-        var startPosition = {
-          x: state.layout[dragKey].x,
-          y: state.layout[dragKey].y
-        };
         var moved = false;
 
         node.classList.add("dragging");
@@ -743,9 +812,15 @@
           if (!moved && (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4)) {
             moved = true;
           }
-          state.layout[dragKey].x = Math.round(startPosition.x + deltaX);
-          state.layout[dragKey].y = Math.round(startPosition.y + deltaY);
-          node.style.transform = "translate(" + state.layout[dragKey].x + "px, " + state.layout[dragKey].y + "px)";
+          var nextX = Math.round(startPosition.x + deltaX);
+          var nextY = Math.round(startPosition.y + deltaY);
+          setDragPosition(dragKey, nextX, nextY);
+          if (isLogoDragKey(dragKey)) {
+            var logoIndex = logoIndexFromDragKey(dragKey);
+            node.style.transform = logoTransform(state.brand.logos[logoIndex]);
+          } else {
+            node.style.transform = "translate(" + nextX + "px, " + nextY + "px)";
+          }
           syncPositionInputsOnly();
         }
 
@@ -756,7 +831,7 @@
           saveState();
           if (moved) {
             node.setAttribute("data-block-click-until", String(Date.now() + 350));
-            setStatus("Updated " + dragKey + " position.", false);
+            setStatus("Updated " + dragLabel(dragKey) + " position.", false);
           }
         }
 
@@ -767,8 +842,10 @@
   }
 
   function syncPositionInputsOnly() {
-    dom.logoX.value = String(state.layout.logo.x);
-    dom.logoY.value = String(state.layout.logo.y);
+    dom.logo1X.value = String(state.brand.logos[0].x);
+    dom.logo1Y.value = String(state.brand.logos[0].y);
+    dom.logo2X.value = String(state.brand.logos[1].x);
+    dom.logo2Y.value = String(state.brand.logos[1].y);
     dom.navX.value = String(state.layout.nav.x);
     dom.navY.value = String(state.layout.nav.y);
     dom.heroX.value = String(state.layout.hero.x);
@@ -995,11 +1072,15 @@
       })
       .join("");
 
-    var logoInner = config.brand.logoSrc
-      ? "<img src=\"" + escapeAttr(config.brand.logoSrc) + "\" alt=\"" + escapeAttr(config.brand.name) + " logo\"><span>" +
-        escapeHtml(config.brand.name) +
-        "</span>"
-      : "<span>" + escapeHtml(config.brand.name) + "</span>";
+    var logos = ensureTwoLogos(config.brand)
+      .map(function (logo, index) {
+        var label = index === 0 ? config.brand.name : "Logo 2";
+        var inner = logo.src
+          ? "<img src=\"" + escapeAttr(logo.src) + "\" alt=\"" + escapeAttr(label) + "\">"
+          : "<span class=\"logo-fallback\">" + escapeHtml(label) + "</span>";
+        return "<div class=\"logo-slot\" " + logoDragAttr(index, draggable) + logoStyleAttr(logo) + ">" + inner + "</div>";
+      })
+      .join("");
 
     return [
       "<div class=\"home-root\" style=\"--preview-bg:" + escapeAttr(config.theme.bgColor) +
@@ -1030,7 +1111,7 @@
         escapeAttr(config.theme.surfaceColor) +
         " 86%, #ffffff 14%) 0%, transparent 70%);\"></div>",
       "<header class=\"home-header\">",
-      "<div class=\"logo-slot\" " + dragAttr("logo", draggable) + transformAttr(config.layout.logo) + ">" + logoInner + "</div>",
+      "<div class=\"brand-logos\">" + logos + "</div>",
       "<nav class=\"home-nav nav-slot\" " + dragAttr("nav", draggable) + transformAttr(config.layout.nav) + ">" + navLinks + "</nav>",
       "</header>",
       "<main class=\"hero-wrap\">",
@@ -1112,9 +1193,15 @@
       };
     }
 
-    var logoAsset = stageAsset(publishConfig.brand.logoSrc, publishConfig.brand.logoFileName, "logo");
-    publishConfig.brand.logoSrc = logoAsset.src;
-    publishConfig.brand.logoFileName = logoAsset.fileName;
+    publishConfig.brand.logos = ensureTwoLogos(publishConfig.brand).map(function (logo, logoIndex) {
+      var logoAsset = stageAsset(logo.src, logo.fileName, "logo-" + (logoIndex + 1));
+      return Object.assign({}, logo, {
+        src: logoAsset.src,
+        fileName: logoAsset.fileName
+      });
+    });
+    publishConfig.brand.logoSrc = publishConfig.brand.logos[0].src;
+    publishConfig.brand.logoFileName = publishConfig.brand.logos[0].fileName;
 
     var backgroundAsset = stageAsset(publishConfig.background.src, publishConfig.background.fileName, "home-background");
     publishConfig.background.src = backgroundAsset.src;
@@ -1243,8 +1330,75 @@
     return "data-drag-key=\"" + key + "\"";
   }
 
+  function logoDragAttr(index, draggable) {
+    if (!draggable) {
+      return "";
+    }
+    return "data-drag-key=\"logo-" + index + "\"";
+  }
+
   function transformAttr(position) {
     return "style=\"transform:translate(" + position.x + "px," + position.y + "px);\"";
+  }
+
+  function logoStyleAttr(logo) {
+    return "style=\"width:" + logo.size + "px;height:" + logo.size + "px;opacity:" + transparencyToOpacity(logo.transparency) + ";transform:" + logoTransform(logo) + ";\"";
+  }
+
+  function logoTransform(logo) {
+    return "translate(" + logo.x + "px," + logo.y + "px) rotate(" + logo.rotation + "deg)";
+  }
+
+  function isLogoDragKey(dragKey) {
+    return /^logo-\d+$/.test(dragKey);
+  }
+
+  function logoIndexFromDragKey(dragKey) {
+    var index = parseInt(String(dragKey).replace("logo-", ""), 10);
+    if (Number.isNaN(index)) {
+      return 0;
+    }
+    return clamp(index, 0, 1);
+  }
+
+  function getDragPosition(dragKey) {
+    if (isLogoDragKey(dragKey)) {
+      var logoIndex = logoIndexFromDragKey(dragKey);
+      return {
+        x: state.brand.logos[logoIndex].x,
+        y: state.brand.logos[logoIndex].y
+      };
+    }
+    if (!state.layout[dragKey]) {
+      return null;
+    }
+    return {
+      x: state.layout[dragKey].x,
+      y: state.layout[dragKey].y
+    };
+  }
+
+  function setDragPosition(dragKey, x, y) {
+    if (isLogoDragKey(dragKey)) {
+      var logoIndex = logoIndexFromDragKey(dragKey);
+      state.brand.logos[logoIndex].x = x;
+      state.brand.logos[logoIndex].y = y;
+      return;
+    }
+    if (state.layout[dragKey]) {
+      state.layout[dragKey].x = x;
+      state.layout[dragKey].y = y;
+    }
+  }
+
+  function dragLabel(dragKey) {
+    if (dragKey === "logo-0") {
+      return "logo 1";
+    }
+    if (dragKey === "logo-1") {
+      return "logo 2";
+    }
+    return dragKey;
   }
 
   function buildPublishedStyles(config) {
@@ -1256,8 +1410,10 @@
       ".home-bg{position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;opacity:var(--preview-bg-opacity,.68);z-index:-2}",
       ".home-overlay{position:absolute;inset:0;z-index:-1}",
       ".home-header{max-width:1240px;margin:0 auto;padding:24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}",
-      ".logo-slot{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem}",
-      ".logo-slot img{max-height:44px;width:auto;object-fit:contain}",
+      ".brand-logos{position:relative;min-width:280px;min-height:96px;flex:1 1 280px}",
+      ".logo-slot{position:absolute;left:0;top:0;display:flex;align-items:center;justify-content:center;transform-origin:center;touch-action:none}",
+      ".logo-slot img{width:100%;height:100%;object-fit:contain;display:block}",
+      ".logo-fallback{font-size:.78rem;font-weight:700;padding:8px 10px;border-radius:10px;border:1px dashed color-mix(in srgb,var(--preview-text) 28%,#fff 72%);background:color-mix(in srgb,var(--preview-surface) 86%,#fff 14%);text-align:center}",
       ".home-nav{display:flex;flex-wrap:wrap;gap:8px}",
       ".home-nav a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}",
       ".hero-wrap{max-width:1240px;margin:34px auto 0;padding:0 24px 36px}",
@@ -1283,6 +1439,14 @@
     state.brand.name = String(state.brand.name || "VinATech").trim();
     state.brand.logoSrc = normalizeImageSrc(state.brand.logoSrc);
     state.brand.logoFileName = sanitizeFileName(state.brand.logoFileName);
+    state.brand.logos = normalizeBrandLogos(state.brand.logos, {
+      src: state.brand.logoSrc,
+      fileName: state.brand.logoFileName,
+      x: state.layout && state.layout.logo ? state.layout.logo.x : 0,
+      y: state.layout && state.layout.logo ? state.layout.logo.y : 0
+    });
+    state.brand.logoSrc = state.brand.logos[0].src;
+    state.brand.logoFileName = state.brand.logos[0].fileName;
     state.hero.title = String(state.hero.title || "");
     state.hero.subtitle = String(state.hero.subtitle || "");
 
@@ -1324,7 +1488,9 @@
     state.theme.surfaceColor = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
     state.theme.buttonTextColor = normalizeHex(state.theme.buttonTextColor, "#ffffff");
 
+    state.layout = state.layout || {};
     ["logo", "nav", "hero", "cta"].forEach(function (key) {
+      state.layout[key] = state.layout[key] || { x: 0, y: 0 };
       state.layout[key].x = parseInt(state.layout[key].x, 10) || 0;
       state.layout[key].y = parseInt(state.layout[key].y, 10) || 0;
     });
@@ -1418,6 +1584,12 @@
     }
 
     merged.brand = Object.assign({}, merged.brand, incoming.brand || {});
+    merged.brand.logos = normalizeBrandLogos(merged.brand.logos, {
+      src: merged.brand.logoSrc,
+      fileName: merged.brand.logoFileName,
+      x: incoming.layout && incoming.layout.logo ? incoming.layout.logo.x : 0,
+      y: incoming.layout && incoming.layout.logo ? incoming.layout.logo.y : 0
+    });
     merged.hero = Object.assign({}, merged.hero, incoming.hero || {});
     merged.theme = Object.assign({}, merged.theme, incoming.theme || {});
     merged.background = Object.assign({}, merged.background, incoming.background || {});
@@ -1511,6 +1683,85 @@
       return "";
     }
     return name.replace(/[\\/:*?"<>|]/g, "-");
+  }
+
+  function createDefaultLogo(index) {
+    return {
+      src: "",
+      fileName: "",
+      x: index === 0 ? 0 : 76,
+      y: 0,
+      size: 72,
+      rotation: 0,
+      transparency: 0
+    };
+  }
+
+  function createDefaultLogos() {
+    return [createDefaultLogo(0), createDefaultLogo(1)];
+  }
+
+  function normalizeRotation(value) {
+    var parsed = parseInt(value, 10);
+    if (Number.isNaN(parsed)) {
+      parsed = 0;
+    }
+    return clamp(parsed, -180, 180);
+  }
+
+  function normalizeBrandLogos(value, legacyPrimary) {
+    var defaults = createDefaultLogos();
+    var legacy = legacyPrimary || {};
+    var source = Array.isArray(value) ? value.slice(0, 2) : [];
+
+    if (!source.length && (legacy.src || legacy.fileName)) {
+      source.push({
+        src: legacy.src,
+        fileName: legacy.fileName,
+        x: legacy.x,
+        y: legacy.y
+      });
+    }
+
+    while (source.length < 2) {
+      source.push(defaults[source.length]);
+    }
+
+    return [0, 1].map(function (index) {
+      var item = source[index] || defaults[index];
+      return {
+        src: normalizeImageSrc(item.src),
+        fileName: sanitizeFileName(item.fileName),
+        x: parseInt(item.x, 10) || 0,
+        y: parseInt(item.y, 10) || 0,
+        size: clamp(parseInt(item.size, 10) || defaults[index].size, 1, 1200),
+        rotation: normalizeRotation(item.rotation),
+        transparency: clamp(parseInt(item.transparency, 10) || 0, 0, 95)
+      };
+    });
+  }
+
+  function ensureTwoLogos(brand) {
+    var legacy = {
+      src: brand.logoSrc,
+      fileName: brand.logoFileName,
+      x: 0,
+      y: 0
+    };
+    return normalizeBrandLogos(brand.logos, legacy);
+  }
+
+  function setLogoSize(index, value, keepCenter) {
+    var logoIndex = clamp(parseInt(index, 10) || 0, 0, 1);
+    var logo = state.brand.logos[logoIndex];
+    var nextSize = clamp(parseInt(value, 10) || 0, 1, 1200);
+    var previousSize = clamp(parseInt(logo.size, 10) || 72, 1, 1200);
+    if (keepCenter && nextSize !== previousSize) {
+      var delta = nextSize - previousSize;
+      logo.x -= Math.round(delta / 2);
+      logo.y -= Math.round(delta / 2);
+    }
+    logo.size = nextSize;
   }
 
   function createEmptyGallery() {
