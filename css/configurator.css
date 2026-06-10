@@ -129,6 +129,24 @@ input[type="color"] {
   padding: 10px;
 }
 
+.logo-editor-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.logo-editor-card {
+  border: 1px solid #d4ddd8;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+}
+
+.logo-editor-card h3 {
+  margin: 0;
+  font-size: .9rem;
+  color: #1f3e36;
+}
+
 .tabs-head {
   display: flex;
   justify-content: space-between;
@@ -309,7 +327,6 @@ button.danger {
   align-items: center;
 }
 
-.logo-slot,
 .nav-slot,
 .hero-slot,
 .cta-slot {
@@ -317,22 +334,43 @@ button.danger {
   touch-action: none;
 }
 
+.brand-logos {
+  position: relative;
+  min-width: 280px;
+  min-height: 96px;
+  flex: 1 1 280px;
+}
+
 .dragging {
   cursor: grabbing;
 }
 
 .logo-slot {
+  position: absolute;
+  left: 0;
+  top: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 1.05rem;
+  justify-content: center;
+  transform-origin: center;
+  touch-action: none;
 }
 
 .logo-slot img {
-  max-height: 44px;
-  width: auto;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  display: block;
+}
+
+.logo-fallback {
+  font-size: .78rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--ink) 28%, #fff 72%);
+  background: color-mix(in srgb, var(--sand) 72%, #fff 28%);
 }
 
 .home-nav {
@@ -463,5 +501,9 @@ button.danger {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+
+  .brand-logos {
+    min-width: 100%;
   }
 }

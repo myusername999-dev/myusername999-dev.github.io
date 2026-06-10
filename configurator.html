@@ -25,12 +25,43 @@
         <label>Hero Title<textarea id="heroTitle" rows="2"></textarea></label>
         <label>Hero Subtitle<textarea id="heroSubtitle" rows="3"></textarea></label>
         <div class="upload-group">
-          <label>Logo File<input id="logoInput" type="file" accept="image/*"></label>
-          <button id="clearLogo" type="button" class="ghost">Clear Logo</button>
-        </div>
-        <div class="upload-group">
           <label>Background File<input id="backgroundInput" type="file" accept="image/*"></label>
           <button id="clearBackground" type="button" class="ghost">Clear Background</button>
+        </div>
+      </section>
+
+      <section class="panel logos-panel">
+        <h2>Logos Studio</h2>
+        <p class="hint">Use drag on preview or fine tune with X/Y, size, rotation (1 deg), and transparency.</p>
+        <div class="logo-editor-grid">
+          <div class="logo-editor-card">
+            <h3>Logo 1</h3>
+            <div class="upload-group">
+              <label>Logo 1 File<input id="logo1Input" type="file" accept="image/*"></label>
+              <button id="clearLogo1" type="button" class="ghost">Clear Logo 1</button>
+            </div>
+            <div class="layout-grid">
+              <label>Logo 1 X<input id="logo1X" type="number" step="1"></label>
+              <label>Logo 1 Y<input id="logo1Y" type="number" step="1"></label>
+              <label>Logo 1 Size (px)<input id="logo1Size" type="number" min="1" max="1200" step="1"></label>
+              <label>Logo 1 Rotation (deg)<input id="logo1Rotation" type="number" min="-180" max="180" step="1"></label>
+              <label>Logo 1 Transparency (%)<input id="logo1Transparency" type="number" min="0" max="95" step="1"></label>
+            </div>
+          </div>
+          <div class="logo-editor-card">
+            <h3>Logo 2</h3>
+            <div class="upload-group">
+              <label>Logo 2 File<input id="logo2Input" type="file" accept="image/*"></label>
+              <button id="clearLogo2" type="button" class="ghost">Clear Logo 2</button>
+            </div>
+            <div class="layout-grid">
+              <label>Logo 2 X<input id="logo2X" type="number" step="1"></label>
+              <label>Logo 2 Y<input id="logo2Y" type="number" step="1"></label>
+              <label>Logo 2 Size (px)<input id="logo2Size" type="number" min="1" max="1200" step="1"></label>
+              <label>Logo 2 Rotation (deg)<input id="logo2Rotation" type="number" min="-180" max="180" step="1"></label>
+              <label>Logo 2 Transparency (%)<input id="logo2Transparency" type="number" min="0" max="95" step="1"></label>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -91,8 +122,6 @@
         <p class="hint">Drag in preview or fine-tune numerically.</p>
         <p class="hint">Background focus controls apply only when a background image is uploaded.</p>
         <div class="layout-grid">
-          <label>Logo X<input id="logoX" type="number" step="1"></label>
-          <label>Logo Y<input id="logoY" type="number" step="1"></label>
           <label>Nav X<input id="navX" type="number" step="1"></label>
           <label>Nav Y<input id="navY" type="number" step="1"></label>
           <label>Hero Block Horizontal Offset (px)<input id="heroX" type="number" step="1"></label>
@@ -141,7 +170,7 @@
         <a href="index.html" class="inline-link" target="_blank" rel="noreferrer">Open current published home</a>
       </header>
       <div id="previewViewport" class="preview-viewport"></div>
-      <p class="hint foot-hint">Tip: drag logo, nav, hero block, and CTA directly on stage.</p>
+      <p class="hint foot-hint">Tip: drag logo 1, logo 2, nav, hero block, and CTA directly on stage.</p>
     </main>
   </div>
 
