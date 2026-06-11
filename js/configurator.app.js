@@ -3,6 +3,11 @@
 
   var STORAGE_KEY = "home-config-draft-v1";
   var LAST_PUBLISHED_KEY = "home-config-last-published-v1";
+  var PUBLISH_PAGE_DEFINITIONS = [
+    { fileName: "about.html", title: "About - VinATech" },
+    { fileName: "products.html", title: "Products - VinATech" },
+    { fileName: "privacy.html", title: "Privacy Policy - VinATech" }
+  ];
   var FONT_FAMILIES = [
     "Sora",
     "Space Grotesk",
@@ -59,6 +64,11 @@
       nav: { x: 0, y: 0 },
       hero: { x: 0, y: 0 },
       cta: { x: 0, y: 0 }
+    },
+    display: {
+      tabMode: "top-and-home",
+      topTabsTransparent: false,
+      ctaTextOnly: false
     },
     tabs: [
       {
@@ -205,7 +215,10 @@
     dom.tabsEditor = document.getElementById("tabsEditor");
     dom.buttonsEditor = document.getElementById("buttonsEditor");
     dom.addButton = document.getElementById("addButton");
+    dom.ctaTextOnly = document.getElementById("ctaTextOnly");
     dom.addTab = document.getElementById("addTab");
+    dom.tabDisplayMode = document.getElementById("tabDisplayMode");
+    dom.topTabsTransparent = document.getElementById("topTabsTransparent");
 
     dom.previewHome = document.getElementById("previewHome");
     dom.publishHome = document.getElementById("publishHome");
@@ -246,16 +259,22 @@
       state.theme.bgColor = value;
     }, "input");
     bindText(dom.textColor, function (value) {
+      var previous = state.theme.textColor;
       state.theme.textColor = value;
+      syncThemeLinkedTabColors("textColor", previous, value);
     }, "input");
     bindText(dom.accentColor, function (value) {
       state.theme.accentColor = value;
     }, "input");
     bindText(dom.mutedColor, function (value) {
+      var previous = state.theme.mutedColor;
       state.theme.mutedColor = value;
+      syncThemeLinkedTabColors("mutedColor", previous, value);
     }, "input");
     bindText(dom.surfaceColor, function (value) {
+      var previous = state.theme.surfaceColor;
       state.theme.surfaceColor = value;
+      syncThemeLinkedTabColors("surfaceColor", previous, value);
     }, "input");
     bindText(dom.buttonTextColor, function (value) {
       state.theme.buttonTextColor = value;
@@ -317,6 +336,20 @@
     });
     bindNumber(dom.bgTransparency, function (value) {
       state.background.transparency = clamp(value, 0, 95);
+    });
+
+    bindText(dom.tabDisplayMode, function (value) {
+      state.display.tabMode = normalizeTabMode(value);
+    }, "change");
+
+    dom.topTabsTransparent.addEventListener("change", function () {
+      state.display.topTabsTransparent = !!dom.topTabsTransparent.checked;
+      refresh();
+    });
+
+    dom.ctaTextOnly.addEventListener("change", function () {
+      state.display.ctaTextOnly = !!dom.ctaTextOnly.checked;
+      refresh();
     });
 
     dom.logo1Input.addEventListener("change", function (event) {
@@ -430,7 +463,7 @@
     var inputEvent = eventName || "input";
     element.addEventListener(inputEvent, function () {
       setter(element.value);
-      refresh();
+      saveAndPreview();
     });
   }
 
@@ -441,17 +474,96 @@
         return;
       }
       setter(numericValue);
-      if (element.type === "range") {
-        refresh();
-        return;
-      }
+      syncRangeValuePill(element);
       saveAndPreview();
     });
 
     if (element.type === "number") {
       element.addEventListener("change", function () {
-        refresh();
+        saveAndPreview();
       });
+    }
+  }
+
+  function syncRangeValuePill(element) {
+    if (!element || element.type !== "range") {
+      return;
+    }
+    var value = String(element.value || "0");
+    if (element === dom.headingSize && dom.headingSizeValue) {
+      dom.headingSizeValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.bodySize && dom.bodySizeValue) {
+      dom.bodySizeValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.buttonTextSize && dom.buttonTextSizeValue) {
+      dom.buttonTextSizeValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.bgTransparency && dom.bgTransparencyValue) {
+      dom.bgTransparencyValue.textContent = value + "%";
+    }
+  }
+
+  function syncThemeLinkedTabColors(themeKey, previousValue, nextValue) {
+    if (previousValue === nextValue) {
+      return;
+    }
+
+    state.tabs.forEach(function (tab) {
+      if (themeKey === "textColor") {
+        if (tab.sectionTitleColor === previousValue) {
+          tab.sectionTitleColor = nextValue;
+        }
+        if (tab.navTextColor === previousValue) {
+          tab.navTextColor = nextValue;
+        }
+      }
+
+      if (themeKey === "mutedColor" && tab.sectionTextColor === previousValue) {
+        tab.sectionTextColor = nextValue;
+      }
+
+      if (themeKey === "surfaceColor") {
+        if (tab.sectionBackgroundColor === previousValue) {
+          tab.sectionBackgroundColor = nextValue;
+        }
+        if (tab.navBackgroundColor === previousValue) {
+          tab.navBackgroundColor = nextValue;
+        }
+      }
+    });
+
+    syncTabColorInputsFromState();
+  }
+
+  function syncTabColorInputsFromState() {
+    if (!dom.tabsEditor) {
+      return;
+    }
+
+    var rows = dom.tabsEditor.querySelectorAll(".tab-row[data-tab-index]");
+    rows.forEach(function (row) {
+      var index = parseInt(row.getAttribute("data-tab-index"), 10);
+      if (Number.isNaN(index) || !state.tabs[index]) {
+        return;
+      }
+
+      var tab = state.tabs[index];
+      setColorFieldValue(row, "sectionTitleColor", tab.sectionTitleColor);
+      setColorFieldValue(row, "sectionTextColor", tab.sectionTextColor);
+      setColorFieldValue(row, "sectionBackgroundColor", tab.sectionBackgroundColor);
+      setColorFieldValue(row, "navTextColor", tab.navTextColor);
+      setColorFieldValue(row, "navBackgroundColor", tab.navBackgroundColor);
+    });
+  }
+
+  function setColorFieldValue(row, fieldName, value) {
+    var input = row.querySelector("input[type='color'][data-field='" + fieldName + "']");
+    if (input) {
+      input.value = normalizeHex(value, "#000000");
     }
   }
 
@@ -555,6 +667,9 @@
     dom.bgY.value = String(state.background.y);
     dom.bgTransparency.value = String(state.background.transparency);
     dom.bgTransparencyValue.textContent = state.background.transparency + "%";
+    dom.tabDisplayMode.value = state.display.tabMode;
+    dom.topTabsTransparent.checked = !!state.display.topTabsTransparent;
+    dom.ctaTextOnly.checked = !!state.display.ctaTextOnly;
   }
 
   function renderButtonsEditor() {
@@ -881,6 +996,7 @@
 
     var publishPayload = preparePublishPayload(state);
     var html = buildPublishedHtml(publishPayload.config);
+    var publishedExtraPages = 0;
 
     try {
       if (typeof window.showDirectoryPicker === "function") {
@@ -898,29 +1014,33 @@
 
         var savedAssetsResult = await persistPublishAssets(publishPayload.assets, projectDirectory);
         await writeIndexHtml(projectDirectory, html);
+        publishedExtraPages = await writeAdditionalSitePages(projectDirectory);
         localStorage.setItem(LAST_PUBLISHED_KEY, html);
-        setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". index.html and uploaded images were saved." + assetStatusSuffix(savedAssetsResult), false);
+        setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". Saved index.html plus " + publishedExtraPages + " additional page(s)." + assetStatusSuffix(savedAssetsResult), false);
         return;
       }
 
       downloadFile("index.html", html, "text/html");
+      publishedExtraPages = downloadAdditionalSitePages();
       var noFsAssetsResult = await persistPublishAssets(publishPayload.assets);
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
-      setStatus("Browser folder-write API unavailable. Downloaded index.html and image files for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
+      setStatus("Browser folder-write API unavailable. Downloaded index.html plus " + publishedExtraPages + " additional page(s) and image files for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
       return;
     } catch (error) {
       if (error && error.name === "AbortError") {
         downloadFile("index.html", html, "text/html");
+        publishedExtraPages = downloadAdditionalSitePages();
         var cancelledAssetsResult = await persistPublishAssets(publishPayload.assets);
         localStorage.setItem(LAST_PUBLISHED_KEY, html);
-        setStatus("Folder selection was cancelled. Downloaded index.html and image files instead." + assetStatusSuffix(cancelledAssetsResult), false);
+        setStatus("Folder selection was cancelled. Downloaded index.html plus " + publishedExtraPages + " additional page(s) and image files instead." + assetStatusSuffix(cancelledAssetsResult), false);
         return;
       }
 
       downloadFile("index.html", html, "text/html");
+      publishedExtraPages = downloadAdditionalSitePages();
       var fallbackAssetsResult = await persistPublishAssets(publishPayload.assets);
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
-      setStatus("Publish fallback used because direct folder write is blocked in this context." + assetStatusSuffix(fallbackAssetsResult), false);
+      setStatus("Publish fallback used because direct folder write is blocked in this context. Downloaded index.html plus " + publishedExtraPages + " additional page(s)." + assetStatusSuffix(fallbackAssetsResult), false);
     }
   }
 
@@ -988,6 +1108,7 @@
 
   function buildPublishedHtml(config) {
     var fontHref = getAllFontsHref();
+
     return [
       "<!doctype html>",
       "<html lang=\"en\">",
@@ -1010,6 +1131,15 @@
   }
 
   function buildHomeMarkup(config, draggable) {
+    var footerMarkup = draggable
+      ? ""
+      : "<footer class=\"site-footer-fixed\">&copy;VINATECH 2026. All rights reserved.</footer>";
+
+    var tabMode = normalizeTabMode(config.display && config.display.tabMode);
+    var topTabsTransparent = !!(config.display && config.display.topTabsTransparent);
+    var ctaTextOnly = !!(config.display && config.display.ctaTextOnly);
+    var showHomeTabSelector = tabMode === "top-and-home";
+    var showTabCards = tabMode === "top-and-home";
     var bgImage = config.background.src
       ? "style=\"background-image:url('" + escapeAttr(config.background.src) + "');background-position:" +
         config.background.x +
@@ -1022,17 +1152,38 @@
         config.background.y +
         "%, color-mix(in srgb, var(--preview-accent) 22%, #ffffff 78%) 0%, transparent 58%);\"";
 
-    var navLinks = config.tabs
+    var topNavLinks = config.tabs
       .map(function (tab) {
         var id = slugify(tab.sectionId || tab.label || "section");
+        var href = showTabCards ? "#" + id : "#";
         var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
         var navStyle = "color:" + escapeAttr(tab.navTextColor || config.theme.textColor) + ";background:" +
           escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
           (tab.navFontFamily ? "font-family:'" + escapeAttr(tab.navFontFamily) + "','Segoe UI',sans-serif;" : "") +
           "font-size:var(--preview-button-size);";
-        return "<a href=\"#" + escapeAttr(id) + "\"" + previewAttrs + " style=\"" + navStyle + "\">" + escapeHtml(tab.label) + "</a>";
+        if (topTabsTransparent) {
+          navStyle += "background:transparent;border-color:transparent;box-shadow:none;";
+        }
+        return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + navStyle + "\">" + escapeHtml(tab.label) + "</a>";
       })
       .join("");
+
+    var homeSelectorLinks = config.tabs
+      .map(function (tab) {
+        var id = slugify(tab.sectionId || tab.label || "section");
+        var href = showTabCards ? "#" + id : "#";
+        var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
+        var navStyle = "color:" + escapeAttr(tab.navTextColor || config.theme.textColor) + ";background:" +
+          escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
+          (tab.navFontFamily ? "font-family:'" + escapeAttr(tab.navFontFamily) + "','Segoe UI',sans-serif;" : "") +
+          "font-size:var(--preview-button-size);";
+        return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + navStyle + "\">" + escapeHtml(tab.label) + "</a>";
+      })
+      .join("");
+
+    var homeTabSelectorMarkup = showHomeTabSelector
+      ? "<nav class=\"home-tab-selector\">" + homeSelectorLinks + "</nav>"
+      : "";
 
     var cards = config.tabs
       .map(function (tab) {
@@ -1064,9 +1215,12 @@
       .map(function (button) {
         var href = String(button.href || "#").trim() || "#";
         var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
-        return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"background:" +
-          escapeAttr(config.theme.accentColor) + ";color:" +
-          escapeAttr(config.theme.buttonTextColor) + ";font-size:var(--preview-button-size);\">" +
+        var buttonStyle = "background:" + escapeAttr(config.theme.accentColor) + ";color:" +
+          escapeAttr(config.theme.buttonTextColor) + ";font-size:var(--preview-button-size);";
+        if (ctaTextOnly) {
+          buttonStyle += "background:transparent;border-color:transparent;box-shadow:none;";
+        }
+        return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + buttonStyle + "\">" +
           escapeHtml(button.label) +
           "</a>";
       })
@@ -1112,7 +1266,7 @@
         " 86%, #ffffff 14%) 0%, transparent 70%);\"></div>",
       "<header class=\"home-header\">",
       "<div class=\"brand-logos\">" + logos + "</div>",
-      "<nav class=\"home-nav nav-slot\" " + dragAttr("nav", draggable) + transformAttr(config.layout.nav) + ">" + navLinks + "</nav>",
+      "<nav class=\"home-nav nav-slot\" " + dragAttr("nav", draggable) + transformAttr(config.layout.nav) + ">" + topNavLinks + "</nav>",
       "</header>",
       "<main class=\"hero-wrap\">",
       "<section class=\"hero-slot\" " + dragAttr("hero", draggable) + transformAttr(config.layout.hero) + ">",
@@ -1122,8 +1276,10 @@
       "<div class=\"cta-slot\" " + dragAttr("cta", draggable) + transformAttr(config.layout.cta) + ">",
       buttonLinks,
       "</div>",
+      homeTabSelectorMarkup,
       "</main>",
-      "<section class=\"generated-sections\">" + cards + "</section>",
+      showTabCards ? "<section class=\"generated-sections\">" + cards + "</section>" : "",
+      footerMarkup,
       "</div>"
     ].join("");
   }
@@ -1232,6 +1388,43 @@
     var writable = await indexHandle.createWritable();
     await writable.write(html);
     await writable.close();
+  }
+
+  async function writeAdditionalSitePages(projectDirectory) {
+    for (var index = 0; index < PUBLISH_PAGE_DEFINITIONS.length; index += 1) {
+      var page = PUBLISH_PAGE_DEFINITIONS[index];
+      var pageHtml = buildUnderConstructionPageHtml(page.title);
+      var pageHandle = await projectDirectory.getFileHandle(page.fileName, { create: true });
+      var writable = await pageHandle.createWritable();
+      await writable.write(pageHtml);
+      await writable.close();
+    }
+    return PUBLISH_PAGE_DEFINITIONS.length;
+  }
+
+  function downloadAdditionalSitePages() {
+    PUBLISH_PAGE_DEFINITIONS.forEach(function (page) {
+      downloadFile(page.fileName, buildUnderConstructionPageHtml(page.title), "text/html");
+    });
+    return PUBLISH_PAGE_DEFINITIONS.length;
+  }
+
+  function buildUnderConstructionPageHtml(pageTitle) {
+    return [
+      "<!doctype html>",
+      "<html lang=\"en\">",
+      "<head>",
+      "  <meta charset=\"utf-8\">",
+      "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+      "  <title>" + escapeHtml(pageTitle) + "</title>",
+      "  <link rel=\"stylesheet\" href=\"css/styles.css\">",
+      "</head>",
+      "<body class=\"under-construction-page\">",
+      "  <main class=\"construction-overlay\" aria-label=\"This page is under construction\"></main>",
+      "  <footer class=\"site-footer-fixed\">&copy;VINATECH 2026. All rights reserved.</footer>",
+      "</body>",
+      "</html>"
+    ].join("\n");
   }
 
   async function verifyProjectRootDirectory(projectDirectory) {
@@ -1405,7 +1598,7 @@
     return [
       "*{box-sizing:border-box}",
       "html,body{margin:0;padding:0}",
-      "body{background:" + config.theme.bgColor + ";color:" + config.theme.textColor + ";}",
+      "body{background:" + config.theme.bgColor + ";color:" + config.theme.textColor + ";padding-bottom:44px}",
       ".home-root{min-height:100vh;position:relative;overflow:hidden;isolation:isolate;background:var(--preview-bg);color:var(--preview-text)}",
       ".home-bg{position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;opacity:var(--preview-bg-opacity,.68);z-index:-2}",
       ".home-overlay{position:absolute;inset:0;z-index:-1}",
@@ -1416,9 +1609,11 @@
       ".logo-fallback{font-size:.78rem;font-weight:700;padding:8px 10px;border-radius:10px;border:1px dashed color-mix(in srgb,var(--preview-text) 28%,#fff 72%);background:color-mix(in srgb,var(--preview-surface) 86%,#fff 14%);text-align:center}",
       ".home-nav{display:flex;flex-wrap:wrap;gap:8px}",
       ".home-nav a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}",
+      ".home-tab-selector{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}",
+      ".home-tab-selector a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}",
       ".hero-wrap{max-width:1240px;margin:34px auto 0;padding:0 24px 36px}",
       ".hero-slot{max-width:760px}",
-      ".hero-slot h1{margin:0;line-height:.98;letter-spacing:-.03em;font-size:var(--preview-heading-size)}",
+      ".hero-slot h1{margin:0;line-height:.98;letter-spacing:-.03em;font-size:var(--preview-heading-size);color:var(--preview-text)}",
       ".hero-slot p{margin:20px 0 0;line-height:1.55;font-size:var(--preview-body-size);color:var(--preview-muted);max-width:60ch}",
       ".cta-slot{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}",
       ".cta-slot a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:999px;font-size:var(--preview-button-size)}",
@@ -1426,6 +1621,7 @@
       ".generated-card{border-radius:14px;padding:18px;border:1px solid color-mix(in srgb,var(--preview-text) 22%,#fff 78%);background:color-mix(in srgb,var(--preview-surface) 76%,#fff 24%)}",
       ".generated-card h3{margin:0;font-size:1.1rem}",
       ".generated-card p{margin:8px 0 0;line-height:1.5;color:var(--preview-muted)}",
+      ".site-footer-fixed{position:fixed;left:0;right:0;bottom:0;z-index:999;text-align:left;padding:12px 16px;font-size:.84rem;color:#ffffff;background:transparent}",
       "@media (max-width:760px){.hero-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}.home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px}}"
     ].join("\n");
   }
@@ -1494,6 +1690,11 @@
       state.layout[key].x = parseInt(state.layout[key].x, 10) || 0;
       state.layout[key].y = parseInt(state.layout[key].y, 10) || 0;
     });
+
+    state.display = state.display || {};
+    state.display.tabMode = normalizeTabMode(state.display.tabMode);
+    state.display.topTabsTransparent = !!state.display.topTabsTransparent;
+    state.display.ctaTextOnly = !!state.display.ctaTextOnly;
 
     var backgroundX = parseInt(state.background.x, 10);
     var backgroundY = parseInt(state.background.y, 10);
@@ -1593,6 +1794,7 @@
     merged.hero = Object.assign({}, merged.hero, incoming.hero || {});
     merged.theme = Object.assign({}, merged.theme, incoming.theme || {});
     merged.background = Object.assign({}, merged.background, incoming.background || {});
+    merged.display = Object.assign({}, merged.display, incoming.display || {});
 
     var incomingLayout = incoming.layout || {};
     merged.layout = {
@@ -1796,6 +1998,14 @@
       return candidate;
     }
     return "horizontal";
+  }
+
+  function normalizeTabMode(value) {
+    var mode = String(value || "").trim().toLowerCase();
+    if (mode === "top-only" || mode === "top-and-home") {
+      return mode;
+    }
+    return "top-and-home";
   }
 
   function normalizeTabImageTransparency(value, fallbackValue) {
