@@ -155,6 +155,7 @@
   var dom = {};
   var previewRenderFrame = 0;
   var previewRenderTimeout = 0;
+  var rememberedProjectDirectory = null;
 
   document.addEventListener("DOMContentLoaded", init);
 
@@ -1190,15 +1191,8 @@
 
     try {
       if (typeof window.showDirectoryPicker === "function") {
-        var projectDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
-        if (String(projectDirectory.name || "").toLowerCase() === "images") {
-          setStatus("Select the project root folder (the folder containing index.html), not images/.", true);
-          return;
-        }
-
-        var looksLikeProjectRoot = await verifyProjectRootDirectory(projectDirectory);
-        if (!looksLikeProjectRoot) {
-          setStatus("Selected folder is not your site root. Choose the folder that already contains index.html and configurator.html.", true);
+        var projectDirectory = await resolveProjectDirectoryHandle();
+        if (!projectDirectory) {
           return;
         }
 
@@ -1216,10 +1210,7 @@
       return;
     } catch (error) {
       if (error && error.name === "AbortError") {
-        downloadFile("index.html", html, "text/html");
-        var cancelledAssetsResult = await persistPublishAssets(publishPayload.assets);
-        localStorage.setItem(LAST_PUBLISHED_KEY, html);
-        setStatus("Folder selection was cancelled. Downloaded index.html and image files instead." + assetStatusSuffix(cancelledAssetsResult), false);
+        setStatus("Folder selection canceled.", true);
         return;
       }
 
@@ -1276,19 +1267,8 @@
     var scriptContent = buildRepoDraftScript(state);
 
     try {
-      if (typeof window.showDirectoryPicker === "function") {
-        var projectDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
-        if (String(projectDirectory.name || "").toLowerCase() === "images") {
-          setStatus("Select the project root folder (the folder containing index.html), not images/.", true);
-          return;
-        }
-
-        var looksLikeProjectRoot = await verifyProjectRootDirectory(projectDirectory);
-        if (!looksLikeProjectRoot) {
-          setStatus("Selected folder is not your site root. Choose the folder that already contains index.html and configurator.html.", true);
-          return;
-        }
-
+      if (rememberedProjectDirectory && typeof rememberedProjectDirectory.getDirectoryHandle === "function") {
+        var projectDirectory = rememberedProjectDirectory;
         var jsDirectory = await projectDirectory.getDirectoryHandle("js", { create: true });
         var draftHandle = await jsDirectory.getFileHandle("configurator.draft.js", { create: true });
         var writable = await draftHandle.createWritable();
@@ -1301,13 +1281,11 @@
       }
 
       downloadFile("configurator.draft.js", scriptContent, "application/javascript");
-      setStatus("Browser folder-write API unavailable. Downloaded configurator.draft.js. Place it in js/ and commit it.", false);
+      setStatus("Draft downloaded as configurator.draft.js. Put it in js/ (overwrite existing) and commit.", false);
     } catch (error) {
-      if (error && error.name === "AbortError") {
-        setStatus("Draft save cancelled.", true);
-        return;
-      }
-      setStatus("Could not save draft file automatically. Use Export Draft JSON as fallback.", true);
+      rememberedProjectDirectory = null;
+      downloadFile("configurator.draft.js", scriptContent, "application/javascript");
+      setStatus("Direct folder save was unavailable. Draft downloaded as configurator.draft.js. Put it in js/ and commit.", false);
     }
   }
 
@@ -1648,6 +1626,27 @@
     var writable = await indexHandle.createWritable();
     await writable.write(html);
     await writable.close();
+  }
+
+  async function resolveProjectDirectoryHandle() {
+    if (rememberedProjectDirectory) {
+      return rememberedProjectDirectory;
+    }
+
+    var projectDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
+    if (String(projectDirectory.name || "").toLowerCase() === "images") {
+      setStatus("Select the project root folder (the folder containing index.html), not images/.", true);
+      return null;
+    }
+
+    var looksLikeProjectRoot = await verifyProjectRootDirectory(projectDirectory);
+    if (!looksLikeProjectRoot) {
+      setStatus("Selected folder is not your site root. Choose the folder that already contains index.html and configurator.html.", true);
+      return null;
+    }
+
+    rememberedProjectDirectory = projectDirectory;
+    return rememberedProjectDirectory;
   }
 
   async function verifyProjectRootDirectory(projectDirectory) {
