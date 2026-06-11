@@ -30,6 +30,19 @@
         </div>
       </section>
 
+      <section class="panel">
+        <h2>Colors</h2>
+        <p class="hint">Text changes main heading text color. Muted changes softer text like hero subtitle and card description text.</p>
+        <div class="color-grid">
+          <label>Background<input id="bgColor" type="color"></label>
+          <label>Text<input id="textColor" type="color"></label>
+          <label>Accent<input id="accentColor" type="color"></label>
+          <label>Muted<input id="mutedColor" type="color"></label>
+          <label>Surface<input id="surfaceColor" type="color"></label>
+          <label>Button Text<input id="buttonTextColor" type="color"></label>
+        </div>
+      </section>
+
       <section class="panel logos-panel">
         <h2>Logos Studio</h2>
         <p class="hint">Use drag on preview or fine tune with X/Y, size, rotation (1 deg), and transparency.</p>
@@ -95,6 +108,58 @@
           <input id="buttonTextSize" type="range" min="12" max="32" step="1">
           <span id="buttonTextSizeValue" class="value-pill"></span>
         </label>
+        <div class="layout-grid">
+          <label>Hero Title Font
+            <select id="heroTitleFontFamily">
+              <option value="">Use Site Font</option>
+              <option value="Sora">Sora</option>
+              <option value="Space Grotesk">Space Grotesk</option>
+              <option value="Manrope">Manrope</option>
+              <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+              <option value="Outfit">Outfit</option>
+              <option value="DM Sans">DM Sans</option>
+              <option value="Archivo">Archivo</option>
+              <option value="Karla">Karla</option>
+              <option value="Merriweather">Merriweather</option>
+              <option value="Playfair Display">Playfair Display</option>
+              <option value="Cormorant Garamond">Cormorant Garamond</option>
+              <option value="Bricolage Grotesque">Bricolage Grotesque</option>
+            </select>
+          </label>
+          <label>Hero Title Align
+            <select id="heroTitleAlign">
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </label>
+          <label>Hero Title Color<input id="heroTitleColor" type="color"></label>
+          <label>Hero Subtitle Font
+            <select id="heroSubtitleFontFamily">
+              <option value="">Use Site Font</option>
+              <option value="Sora">Sora</option>
+              <option value="Space Grotesk">Space Grotesk</option>
+              <option value="Manrope">Manrope</option>
+              <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+              <option value="Outfit">Outfit</option>
+              <option value="DM Sans">DM Sans</option>
+              <option value="Archivo">Archivo</option>
+              <option value="Karla">Karla</option>
+              <option value="Merriweather">Merriweather</option>
+              <option value="Playfair Display">Playfair Display</option>
+              <option value="Cormorant Garamond">Cormorant Garamond</option>
+              <option value="Bricolage Grotesque">Bricolage Grotesque</option>
+            </select>
+          </label>
+          <label>Hero Subtitle Align
+            <select id="heroSubtitleAlign">
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </label>
+          <label>Hero Subtitle Color<input id="heroSubtitleColor" type="color"></label>
+        </div>
       </section>
 
       <section class="panel">
@@ -102,30 +167,21 @@
           <h2>Action Buttons</h2>
           <button id="addButton" type="button">Add Button</button>
         </div>
+        <label class="approval"><input id="ctaTextOnly" type="checkbox"> Buttons text only (transparent)</label>
         <div id="buttonsEditor" class="tabs-editor"></div>
-      </section>
-
-      <section class="panel">
-        <h2>Colors</h2>
-        <div class="color-grid">
-          <label>Background<input id="bgColor" type="color"></label>
-          <label>Text<input id="textColor" type="color"></label>
-          <label>Accent<input id="accentColor" type="color"></label>
-          <label>Muted<input id="mutedColor" type="color"></label>
-          <label>Surface<input id="surfaceColor" type="color"></label>
-          <label>Button Text<input id="buttonTextColor" type="color"></label>
-        </div>
       </section>
 
       <section class="panel">
         <h2>Layout</h2>
         <p class="hint">Drag in preview or fine-tune numerically.</p>
-        <p class="hint">Background focus controls apply only when a background image is uploaded.</p>
+        <p class="hint">Background Focus X/Y chooses which point of the background image stays centered in view. It applies only when a background image is uploaded.</p>
         <div class="layout-grid">
           <label>Nav X<input id="navX" type="number" step="1"></label>
           <label>Nav Y<input id="navY" type="number" step="1"></label>
-          <label>Hero Block Horizontal Offset (px)<input id="heroX" type="number" step="1"></label>
-          <label>Hero Block Vertical Offset (px)<input id="heroY" type="number" step="1"></label>
+          <label>Hero Title X<input id="heroTitleX" type="number" step="1"></label>
+          <label>Hero Title Y<input id="heroTitleY" type="number" step="1"></label>
+          <label>Hero Subtitle X<input id="heroSubtitleX" type="number" step="1"></label>
+          <label>Hero Subtitle Y<input id="heroSubtitleY" type="number" step="1"></label>
           <label>CTA Button Horizontal Offset (px)<input id="ctaX" type="number" step="1"></label>
           <label>CTA Button Vertical Offset (px)<input id="ctaY" type="number" step="1"></label>
           <label>Background Focus X (%)<input id="bgX" type="number" min="0" max="100" step="1"></label>
@@ -142,6 +198,13 @@
           <h2>Tabs</h2>
           <button id="addTab" type="button">New Tab</button>
         </div>
+        <label>Tab Display Mode
+          <select id="tabDisplayMode">
+            <option value="top-only">Top only (no tabs/content on main screen)</option>
+            <option value="top-and-home">Top and home (tab selection in both places)</option>
+          </select>
+        </label>
+        <label class="approval"><input id="topTabsTransparent" type="checkbox"> Top tabs fully transparent (text only)</label>
         <p class="hint">Each tab can use custom font and colors for its card and nav pill.</p>
         <div id="tabsEditor" class="tabs-editor"></div>
       </section>
@@ -150,11 +213,15 @@
         <label class="approval"><input id="approval" type="checkbox"> I approve this preview for publish</label>
         <div class="action-row">
           <button id="previewHome" type="button">Preview HOME</button>
-          <button id="publishHome" type="button" class="primary">Publish to index.html</button>
+          <button id="publishHome" type="button" class="primary">Publish all pages</button>
         </div>
         <div class="action-row">
           <button id="exportDraft" type="button" class="ghost">Export Draft JSON</button>
           <label class="import-btn ghost">Import Draft JSON<input id="importDraft" type="file" accept="application/json"></label>
+        </div>
+        <div class="action-row">
+          <button id="saveRepoDraft" type="button" class="ghost">Save Draft to Repo File</button>
+          <button id="loadRepoDraft" type="button" class="ghost">Load Draft from Repo File</button>
         </div>
         <button id="resetDraft" type="button" class="danger">Reset Draft</button>
         <p id="statusMessage" class="status" aria-live="polite"></p>
@@ -170,10 +237,13 @@
         <a href="index.html" class="inline-link" target="_blank" rel="noreferrer">Open current published home</a>
       </header>
       <div id="previewViewport" class="preview-viewport"></div>
-      <p class="hint foot-hint">Tip: drag logo 1, logo 2, nav, hero block, and CTA directly on stage.</p>
+      <p class="hint foot-hint">Tip: drag logo 1, logo 2, nav, hero title, hero subtitle, and CTA directly on stage.</p>
     </main>
   </div>
 
-  <script src="js/configurator.app.js"></script>
+  <footer class="site-footer-fixed">&copy;VINATECH 2026. All rights reserved.</footer>
+
+  <script src="js/configurator.draft.js?v=20260611c"></script>
+  <script src="js/configurator.app.js?v=20260611c"></script>
 </body>
 </html>

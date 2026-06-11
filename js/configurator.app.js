@@ -3,6 +3,8 @@
 
   var STORAGE_KEY = "home-config-draft-v1";
   var LAST_PUBLISHED_KEY = "home-config-last-published-v1";
+  var REPO_DRAFT_GLOBAL_KEY = "__CONFIGURATOR_DRAFT__";
+  var REPO_DRAFT_FILE_PATH = "js/configurator.draft.js";
   var FONT_FAMILIES = [
     "Sora",
     "Space Grotesk",
@@ -28,6 +30,12 @@
     hero: {
       title: "We Build Financial Software With Human Clarity",
       subtitle: "Experiment with colors, typography, and layout to shape your homepage before publishing.",
+      titleFontFamily: "",
+      subtitleFontFamily: "",
+      titleAlign: "left",
+      subtitleAlign: "left",
+      titleColor: "#102822",
+      subtitleColor: "#4f6962",
       buttons: [
         {
           label: "Explore Products",
@@ -58,12 +66,20 @@
       logo: { x: 0, y: 0 },
       nav: { x: 0, y: 0 },
       hero: { x: 0, y: 0 },
+      heroTitle: { x: 0, y: 0 },
+      heroSubtitle: { x: 0, y: 0 },
       cta: { x: 0, y: 0 }
+    },
+    display: {
+      tabMode: "top-and-home",
+      topTabsTransparent: false,
+      ctaTextOnly: false
     },
     tabs: [
       {
         label: "About",
         sectionId: "about",
+        pageHref: "about.html",
         sectionTitle: "About",
         sectionText: "Describe who you are, what the company stands for, and why your approach is different.",
         sectionFontFamily: "",
@@ -88,6 +104,7 @@
       {
         label: "Products",
         sectionId: "products",
+        pageHref: "products.html",
         sectionTitle: "Products",
         sectionText: "Summarize your core products and the value each one delivers for clients.",
         sectionFontFamily: "",
@@ -112,6 +129,7 @@
       {
         label: "Privacy",
         sectionId: "privacy",
+        pageHref: "privacy.html",
         sectionTitle: "Privacy",
         sectionText: "Explain privacy and compliance commitments in simple language people can trust.",
         sectionFontFamily: "",
@@ -140,11 +158,16 @@
   var dom = {};
   var previewRenderFrame = 0;
   var previewRenderTimeout = 0;
+  var rememberedProjectDirectory = null;
 
   document.addEventListener("DOMContentLoaded", init);
 
   function init() {
     collectDom();
+    var startupRepoDraft = getRepoDraft();
+    if (startupRepoDraft) {
+      state = mergeConfig(defaultConfig, startupRepoDraft);
+    }
     sanitizeState();
     bindCoreInputs();
     bindActions();
@@ -167,6 +190,12 @@
     dom.clearBackground = document.getElementById("clearBackground");
 
     dom.fontFamily = document.getElementById("fontFamily");
+    dom.heroTitleFontFamily = document.getElementById("heroTitleFontFamily");
+    dom.heroSubtitleFontFamily = document.getElementById("heroSubtitleFontFamily");
+    dom.heroTitleAlign = document.getElementById("heroTitleAlign");
+    dom.heroSubtitleAlign = document.getElementById("heroSubtitleAlign");
+    dom.heroTitleColor = document.getElementById("heroTitleColor");
+    dom.heroSubtitleColor = document.getElementById("heroSubtitleColor");
     dom.headingSize = document.getElementById("headingSize");
     dom.bodySize = document.getElementById("bodySize");
     dom.buttonTextSize = document.getElementById("buttonTextSize");
@@ -193,8 +222,10 @@
     dom.logo2Transparency = document.getElementById("logo2Transparency");
     dom.navX = document.getElementById("navX");
     dom.navY = document.getElementById("navY");
-    dom.heroX = document.getElementById("heroX");
-    dom.heroY = document.getElementById("heroY");
+    dom.heroX = document.getElementById("heroX") || document.getElementById("heroTitleX");
+    dom.heroY = document.getElementById("heroY") || document.getElementById("heroTitleY");
+    dom.heroSubtitleX = document.getElementById("heroSubtitleX");
+    dom.heroSubtitleY = document.getElementById("heroSubtitleY");
     dom.ctaX = document.getElementById("ctaX");
     dom.ctaY = document.getElementById("ctaY");
     dom.bgX = document.getElementById("bgX");
@@ -205,12 +236,17 @@
     dom.tabsEditor = document.getElementById("tabsEditor");
     dom.buttonsEditor = document.getElementById("buttonsEditor");
     dom.addButton = document.getElementById("addButton");
+    dom.ctaTextOnly = document.getElementById("ctaTextOnly");
     dom.addTab = document.getElementById("addTab");
+    dom.tabDisplayMode = document.getElementById("tabDisplayMode");
+    dom.topTabsTransparent = document.getElementById("topTabsTransparent");
 
     dom.previewHome = document.getElementById("previewHome");
     dom.publishHome = document.getElementById("publishHome");
     dom.exportDraft = document.getElementById("exportDraft");
     dom.importDraft = document.getElementById("importDraft");
+    dom.saveRepoDraft = document.getElementById("saveRepoDraft");
+    dom.loadRepoDraft = document.getElementById("loadRepoDraft");
     dom.resetDraft = document.getElementById("resetDraft");
     dom.approval = document.getElementById("approval");
     dom.statusMessage = document.getElementById("statusMessage");
@@ -232,6 +268,30 @@
       state.theme.fontFamily = value;
     }, "change");
 
+    bindText(dom.heroTitleFontFamily, function (value) {
+      state.hero.titleFontFamily = normalizeFontFamily(value);
+    }, "change");
+
+    bindText(dom.heroSubtitleFontFamily, function (value) {
+      state.hero.subtitleFontFamily = normalizeFontFamily(value);
+    }, "change");
+
+    bindText(dom.heroTitleAlign, function (value) {
+      state.hero.titleAlign = normalizeTextAlign(value);
+    }, "change");
+
+    bindText(dom.heroSubtitleAlign, function (value) {
+      state.hero.subtitleAlign = normalizeTextAlign(value);
+    }, "change");
+
+    bindText(dom.heroTitleColor, function (value) {
+      state.hero.titleColor = normalizeHex(value, state.theme.textColor);
+    }, "input");
+
+    bindText(dom.heroSubtitleColor, function (value) {
+      state.hero.subtitleColor = normalizeHex(value, state.theme.mutedColor);
+    }, "input");
+
     bindNumber(dom.headingSize, function (value) {
       state.theme.headingSize = clamp(value, 32, 120);
     });
@@ -246,16 +306,22 @@
       state.theme.bgColor = value;
     }, "input");
     bindText(dom.textColor, function (value) {
+      var previous = state.theme.textColor;
       state.theme.textColor = value;
+      syncThemeLinkedTabColors("textColor", previous, value);
     }, "input");
     bindText(dom.accentColor, function (value) {
       state.theme.accentColor = value;
     }, "input");
     bindText(dom.mutedColor, function (value) {
+      var previous = state.theme.mutedColor;
       state.theme.mutedColor = value;
+      syncThemeLinkedTabColors("mutedColor", previous, value);
     }, "input");
     bindText(dom.surfaceColor, function (value) {
+      var previous = state.theme.surfaceColor;
       state.theme.surfaceColor = value;
+      syncThemeLinkedTabColors("surfaceColor", previous, value);
     }, "input");
     bindText(dom.buttonTextColor, function (value) {
       state.theme.buttonTextColor = value;
@@ -298,10 +364,16 @@
       state.layout.nav.y = value;
     });
     bindNumber(dom.heroX, function (value) {
-      state.layout.hero.x = value;
+      state.layout.heroTitle.x = value;
     });
     bindNumber(dom.heroY, function (value) {
-      state.layout.hero.y = value;
+      state.layout.heroTitle.y = value;
+    });
+    bindNumber(dom.heroSubtitleX, function (value) {
+      state.layout.heroSubtitle.x = value;
+    });
+    bindNumber(dom.heroSubtitleY, function (value) {
+      state.layout.heroSubtitle.y = value;
     });
     bindNumber(dom.ctaX, function (value) {
       state.layout.cta.x = value;
@@ -317,6 +389,20 @@
     });
     bindNumber(dom.bgTransparency, function (value) {
       state.background.transparency = clamp(value, 0, 95);
+    });
+
+    bindText(dom.tabDisplayMode, function (value) {
+      state.display.tabMode = normalizeTabMode(value);
+    }, "change");
+
+    dom.topTabsTransparent.addEventListener("change", function () {
+      state.display.topTabsTransparent = !!dom.topTabsTransparent.checked;
+      refresh();
+    });
+
+    dom.ctaTextOnly.addEventListener("change", function () {
+      state.display.ctaTextOnly = !!dom.ctaTextOnly.checked;
+      refresh();
     });
 
     dom.logo1Input.addEventListener("change", function (event) {
@@ -381,6 +467,7 @@
       state.tabs.push({
         label: "New Tab " + nextIndex,
         sectionId: uniqueSectionId("new-tab-" + nextIndex),
+        pageHref: "",
         sectionTitle: "New Section " + nextIndex,
         sectionText: "Add content for this section before publishing.",
         sectionFontFamily: "",
@@ -412,6 +499,14 @@
       exportDraft();
     });
 
+    dom.saveRepoDraft.addEventListener("click", function () {
+      saveRepoDraft();
+    });
+
+    dom.loadRepoDraft.addEventListener("click", function () {
+      loadRepoDraft();
+    });
+
     dom.importDraft.addEventListener("change", function (event) {
       importDraft(event);
     });
@@ -427,31 +522,116 @@
   }
 
   function bindText(element, setter, eventName) {
+    if (!element) {
+      return;
+    }
     var inputEvent = eventName || "input";
     element.addEventListener(inputEvent, function () {
       setter(element.value);
-      refresh();
+      saveAndPreview();
     });
   }
 
   function bindNumber(element, setter) {
+    if (!element) {
+      return;
+    }
     element.addEventListener("input", function () {
       var numericValue = parseInt(element.value, 10);
       if (Number.isNaN(numericValue)) {
         return;
       }
       setter(numericValue);
-      if (element.type === "range") {
-        refresh();
-        return;
-      }
+      syncRangeValuePill(element);
       saveAndPreview();
     });
 
     if (element.type === "number") {
       element.addEventListener("change", function () {
-        refresh();
+        saveAndPreview();
       });
+    }
+  }
+
+  function syncRangeValuePill(element) {
+    if (!element || element.type !== "range") {
+      return;
+    }
+    var value = String(element.value || "0");
+    if (element === dom.headingSize && dom.headingSizeValue) {
+      dom.headingSizeValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.bodySize && dom.bodySizeValue) {
+      dom.bodySizeValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.buttonTextSize && dom.buttonTextSizeValue) {
+      dom.buttonTextSizeValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.bgTransparency && dom.bgTransparencyValue) {
+      dom.bgTransparencyValue.textContent = value + "%";
+    }
+  }
+
+  function syncThemeLinkedTabColors(themeKey, previousValue, nextValue) {
+    if (previousValue === nextValue) {
+      return;
+    }
+
+    state.tabs.forEach(function (tab) {
+      if (themeKey === "textColor") {
+        if (tab.sectionTitleColor === previousValue) {
+          tab.sectionTitleColor = nextValue;
+        }
+        if (tab.navTextColor === previousValue) {
+          tab.navTextColor = nextValue;
+        }
+      }
+
+      if (themeKey === "mutedColor" && tab.sectionTextColor === previousValue) {
+        tab.sectionTextColor = nextValue;
+      }
+
+      if (themeKey === "surfaceColor") {
+        if (tab.sectionBackgroundColor === previousValue) {
+          tab.sectionBackgroundColor = nextValue;
+        }
+        if (tab.navBackgroundColor === previousValue) {
+          tab.navBackgroundColor = nextValue;
+        }
+      }
+    });
+
+    syncTabColorInputsFromState();
+  }
+
+  function syncTabColorInputsFromState() {
+    if (!dom.tabsEditor) {
+      return;
+    }
+
+    var rows = dom.tabsEditor.querySelectorAll(".tab-row[data-tab-index]");
+    rows.forEach(function (row) {
+      var index = parseInt(row.getAttribute("data-tab-index"), 10);
+      if (Number.isNaN(index) || !state.tabs[index]) {
+        return;
+      }
+
+      var tab = state.tabs[index];
+      setColorFieldValue(row, "sectionTitleColor", tab.sectionTitleColor);
+      setColorFieldValue(row, "sectionTextColor", tab.sectionTextColor);
+      setColorFieldValue(row, "sectionBackgroundColor", tab.sectionBackgroundColor);
+      setColorFieldValue(row, "navTextColor", tab.navTextColor);
+      setColorFieldValue(row, "navBackgroundColor", tab.navBackgroundColor);
+    });
+  }
+
+  function setColorFieldValue(row, fieldName, value) {
+    var input = row.querySelector("input[type='color'][data-field='" + fieldName + "']");
+    if (input) {
+      input.value = normalizeHex(value, "#000000");
     }
   }
 
@@ -516,45 +696,150 @@
   }
 
   function syncInputsFromState() {
-    dom.brandName.value = state.brand.name;
-    dom.heroTitle.value = state.hero.title;
-    dom.heroSubtitle.value = state.hero.subtitle;
+    if (dom.brandName) {
+      dom.brandName.value = state.brand.name;
+    }
+    if (dom.heroTitle) {
+      dom.heroTitle.value = state.hero.title;
+    }
+    if (dom.heroSubtitle) {
+      dom.heroSubtitle.value = state.hero.subtitle;
+    }
 
-    dom.fontFamily.value = state.theme.fontFamily;
-    dom.headingSize.value = String(state.theme.headingSize);
-    dom.bodySize.value = String(state.theme.bodySize);
-    dom.buttonTextSize.value = String(state.theme.buttonTextSize);
-    dom.headingSizeValue.textContent = state.theme.headingSize + "px";
-    dom.bodySizeValue.textContent = state.theme.bodySize + "px";
-    dom.buttonTextSizeValue.textContent = state.theme.buttonTextSize + "px";
+    if (dom.fontFamily) {
+      dom.fontFamily.value = state.theme.fontFamily;
+    }
+    if (dom.heroTitleFontFamily) {
+      dom.heroTitleFontFamily.value = state.hero.titleFontFamily || "";
+    }
+    if (dom.heroSubtitleFontFamily) {
+      dom.heroSubtitleFontFamily.value = state.hero.subtitleFontFamily || "";
+    }
+    if (dom.heroTitleAlign) {
+      dom.heroTitleAlign.value = state.hero.titleAlign;
+    }
+    if (dom.heroSubtitleAlign) {
+      dom.heroSubtitleAlign.value = state.hero.subtitleAlign;
+    }
+    if (dom.headingSize) {
+      dom.headingSize.value = String(state.theme.headingSize);
+    }
+    if (dom.bodySize) {
+      dom.bodySize.value = String(state.theme.bodySize);
+    }
+    if (dom.buttonTextSize) {
+      dom.buttonTextSize.value = String(state.theme.buttonTextSize);
+    }
+    if (dom.headingSizeValue) {
+      dom.headingSizeValue.textContent = state.theme.headingSize + "px";
+    }
+    if (dom.bodySizeValue) {
+      dom.bodySizeValue.textContent = state.theme.bodySize + "px";
+    }
+    if (dom.buttonTextSizeValue) {
+      dom.buttonTextSizeValue.textContent = state.theme.buttonTextSize + "px";
+    }
 
-    dom.bgColor.value = normalizeHex(state.theme.bgColor, "#f2f7f3");
-    dom.textColor.value = normalizeHex(state.theme.textColor, "#102822");
-    dom.accentColor.value = normalizeHex(state.theme.accentColor, "#0f7b6c");
-    dom.mutedColor.value = normalizeHex(state.theme.mutedColor, "#4f6962");
-    dom.surfaceColor.value = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
-    dom.buttonTextColor.value = normalizeHex(state.theme.buttonTextColor, "#ffffff");
+    if (dom.bgColor) {
+      dom.bgColor.value = normalizeHex(state.theme.bgColor, "#f2f7f3");
+    }
+    if (dom.textColor) {
+      dom.textColor.value = normalizeHex(state.theme.textColor, "#102822");
+    }
+    if (dom.accentColor) {
+      dom.accentColor.value = normalizeHex(state.theme.accentColor, "#0f7b6c");
+    }
+    if (dom.mutedColor) {
+      dom.mutedColor.value = normalizeHex(state.theme.mutedColor, "#4f6962");
+    }
+    if (dom.surfaceColor) {
+      dom.surfaceColor.value = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
+    }
+    if (dom.buttonTextColor) {
+      dom.buttonTextColor.value = normalizeHex(state.theme.buttonTextColor, "#ffffff");
+    }
+    if (dom.heroTitleColor) {
+      dom.heroTitleColor.value = normalizeHex(state.hero.titleColor, state.theme.textColor);
+    }
+    if (dom.heroSubtitleColor) {
+      dom.heroSubtitleColor.value = normalizeHex(state.hero.subtitleColor, state.theme.mutedColor);
+    }
 
-    dom.logo1X.value = String(state.brand.logos[0].x);
-    dom.logo1Y.value = String(state.brand.logos[0].y);
-    dom.logo1Size.value = String(state.brand.logos[0].size);
-    dom.logo1Rotation.value = String(state.brand.logos[0].rotation);
-    dom.logo1Transparency.value = String(state.brand.logos[0].transparency);
-    dom.logo2X.value = String(state.brand.logos[1].x);
-    dom.logo2Y.value = String(state.brand.logos[1].y);
-    dom.logo2Size.value = String(state.brand.logos[1].size);
-    dom.logo2Rotation.value = String(state.brand.logos[1].rotation);
-    dom.logo2Transparency.value = String(state.brand.logos[1].transparency);
-    dom.navX.value = String(state.layout.nav.x);
-    dom.navY.value = String(state.layout.nav.y);
-    dom.heroX.value = String(state.layout.hero.x);
-    dom.heroY.value = String(state.layout.hero.y);
-    dom.ctaX.value = String(state.layout.cta.x);
-    dom.ctaY.value = String(state.layout.cta.y);
-    dom.bgX.value = String(state.background.x);
-    dom.bgY.value = String(state.background.y);
-    dom.bgTransparency.value = String(state.background.transparency);
-    dom.bgTransparencyValue.textContent = state.background.transparency + "%";
+    if (dom.logo1X) {
+      dom.logo1X.value = String(state.brand.logos[0].x);
+    }
+    if (dom.logo1Y) {
+      dom.logo1Y.value = String(state.brand.logos[0].y);
+    }
+    if (dom.logo1Size) {
+      dom.logo1Size.value = String(state.brand.logos[0].size);
+    }
+    if (dom.logo1Rotation) {
+      dom.logo1Rotation.value = String(state.brand.logos[0].rotation);
+    }
+    if (dom.logo1Transparency) {
+      dom.logo1Transparency.value = String(state.brand.logos[0].transparency);
+    }
+    if (dom.logo2X) {
+      dom.logo2X.value = String(state.brand.logos[1].x);
+    }
+    if (dom.logo2Y) {
+      dom.logo2Y.value = String(state.brand.logos[1].y);
+    }
+    if (dom.logo2Size) {
+      dom.logo2Size.value = String(state.brand.logos[1].size);
+    }
+    if (dom.logo2Rotation) {
+      dom.logo2Rotation.value = String(state.brand.logos[1].rotation);
+    }
+    if (dom.logo2Transparency) {
+      dom.logo2Transparency.value = String(state.brand.logos[1].transparency);
+    }
+    if (dom.navX) {
+      dom.navX.value = String(state.layout.nav.x);
+    }
+    if (dom.navY) {
+      dom.navY.value = String(state.layout.nav.y);
+    }
+    if (dom.heroX) {
+      dom.heroX.value = String(state.layout.heroTitle.x);
+    }
+    if (dom.heroY) {
+      dom.heroY.value = String(state.layout.heroTitle.y);
+    }
+    if (dom.heroSubtitleX) {
+      dom.heroSubtitleX.value = String(state.layout.heroSubtitle.x);
+    }
+    if (dom.heroSubtitleY) {
+      dom.heroSubtitleY.value = String(state.layout.heroSubtitle.y);
+    }
+    if (dom.ctaX) {
+      dom.ctaX.value = String(state.layout.cta.x);
+    }
+    if (dom.ctaY) {
+      dom.ctaY.value = String(state.layout.cta.y);
+    }
+    if (dom.bgX) {
+      dom.bgX.value = String(state.background.x);
+    }
+    if (dom.bgY) {
+      dom.bgY.value = String(state.background.y);
+    }
+    if (dom.bgTransparency) {
+      dom.bgTransparency.value = String(state.background.transparency);
+    }
+    if (dom.bgTransparencyValue) {
+      dom.bgTransparencyValue.textContent = state.background.transparency + "%";
+    }
+    if (dom.tabDisplayMode) {
+      dom.tabDisplayMode.value = state.display.tabMode;
+    }
+    if (dom.topTabsTransparent) {
+      dom.topTabsTransparent.checked = !!state.display.topTabsTransparent;
+    }
+    if (dom.ctaTextOnly) {
+      dom.ctaTextOnly.checked = !!state.display.ctaTextOnly;
+    }
   }
 
   function renderButtonsEditor() {
@@ -635,6 +920,7 @@
           "</div>",
           "<label>Label<input type=\"text\" data-field=\"label\" value=\"" + escapeAttr(tab.label) + "\"></label>",
           "<label>Section Id<input type=\"text\" data-field=\"sectionId\" value=\"" + escapeAttr(tab.sectionId) + "\"></label>",
+          "<label>Associated Page (HTML)<input type=\"text\" data-field=\"pageHref\" value=\"" + escapeAttr(tab.pageHref || "") + "\" placeholder=\"about.html\"></label>",
           "<label>Section Title<input type=\"text\" data-field=\"sectionTitle\" value=\"" + escapeAttr(tab.sectionTitle) + "\"></label>",
           "<label>Section Text<textarea rows=\"2\" data-field=\"sectionText\">" + escapeHtml(tab.sectionText) + "</textarea></label>",
           "<label>Section Font Family<select data-field=\"sectionFontFamily\">" + fontOptionsMarkup(tab.sectionFontFamily, true) + "</select></label>",
@@ -672,8 +958,16 @@
       var index = parseInt(row.getAttribute("data-tab-index"), 10);
       var inputs = row.querySelectorAll("input[data-field], textarea[data-field], select[data-field]");
       inputs.forEach(function (input) {
-        var onFieldChange = function () {
+        var onFieldChange = function (event) {
           var field = String(input.getAttribute("data-field") || "");
+
+          // Keep page href typing natural; normalize only when editing is committed.
+          if (field === "pageHref" && event && event.type === "input") {
+            state.tabs[index].pageHref = input.value;
+            saveAndPreview();
+            return;
+          }
+
           state.tabs[index][field] = input.value;
           var valueTargetId = String(input.getAttribute("data-value-id") || "");
           if (valueTargetId) {
@@ -688,6 +982,10 @@
           if (field === "sectionId") {
             state.tabs[index].sectionId = slugify(input.value) || uniqueSectionId("section");
             input.value = state.tabs[index].sectionId;
+          }
+          if (field === "pageHref") {
+            state.tabs[index].pageHref = normalizePageHref(input.value);
+            input.value = state.tabs[index].pageHref;
           }
           saveAndPreview();
         };
@@ -742,6 +1040,7 @@
               state.tabs.push({
                 label: "Home",
                 sectionId: "home",
+                pageHref: "index.html",
                 sectionTitle: "Home",
                 sectionText: "Describe this section.",
                 sectionFontFamily: "",
@@ -842,16 +1141,42 @@
   }
 
   function syncPositionInputsOnly() {
-    dom.logo1X.value = String(state.brand.logos[0].x);
-    dom.logo1Y.value = String(state.brand.logos[0].y);
-    dom.logo2X.value = String(state.brand.logos[1].x);
-    dom.logo2Y.value = String(state.brand.logos[1].y);
-    dom.navX.value = String(state.layout.nav.x);
-    dom.navY.value = String(state.layout.nav.y);
-    dom.heroX.value = String(state.layout.hero.x);
-    dom.heroY.value = String(state.layout.hero.y);
-    dom.ctaX.value = String(state.layout.cta.x);
-    dom.ctaY.value = String(state.layout.cta.y);
+    if (dom.logo1X) {
+      dom.logo1X.value = String(state.brand.logos[0].x);
+    }
+    if (dom.logo1Y) {
+      dom.logo1Y.value = String(state.brand.logos[0].y);
+    }
+    if (dom.logo2X) {
+      dom.logo2X.value = String(state.brand.logos[1].x);
+    }
+    if (dom.logo2Y) {
+      dom.logo2Y.value = String(state.brand.logos[1].y);
+    }
+    if (dom.navX) {
+      dom.navX.value = String(state.layout.nav.x);
+    }
+    if (dom.navY) {
+      dom.navY.value = String(state.layout.nav.y);
+    }
+    if (dom.heroX) {
+      dom.heroX.value = String(state.layout.heroTitle.x);
+    }
+    if (dom.heroY) {
+      dom.heroY.value = String(state.layout.heroTitle.y);
+    }
+    if (dom.heroSubtitleX) {
+      dom.heroSubtitleX.value = String(state.layout.heroSubtitle.x);
+    }
+    if (dom.heroSubtitleY) {
+      dom.heroSubtitleY.value = String(state.layout.heroSubtitle.y);
+    }
+    if (dom.ctaX) {
+      dom.ctaX.value = String(state.layout.cta.x);
+    }
+    if (dom.ctaY) {
+      dom.ctaY.value = String(state.layout.cta.y);
+    }
   }
 
   function openPreviewWindow() {
@@ -884,43 +1209,36 @@
 
     try {
       if (typeof window.showDirectoryPicker === "function") {
-        var projectDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
-        if (String(projectDirectory.name || "").toLowerCase() === "images") {
-          setStatus("Select the project root folder (the folder containing index.html), not images/.", true);
-          return;
-        }
-
-        var looksLikeProjectRoot = await verifyProjectRootDirectory(projectDirectory);
-        if (!looksLikeProjectRoot) {
-          setStatus("Selected folder is not your site root. Choose the folder that already contains index.html and configurator.html.", true);
+        var projectDirectory = await resolveProjectDirectoryHandle();
+        if (!projectDirectory) {
           return;
         }
 
         var savedAssetsResult = await persistPublishAssets(publishPayload.assets, projectDirectory);
         await writeIndexHtml(projectDirectory, html);
+        var writtenAssociatedPagesCount = await writeAssociatedTabPages(projectDirectory, publishPayload.config);
         localStorage.setItem(LAST_PUBLISHED_KEY, html);
-        setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". index.html and uploaded images were saved." + assetStatusSuffix(savedAssetsResult), false);
+        setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". index.html and " + writtenAssociatedPagesCount + " associated page(s) were saved." + assetStatusSuffix(savedAssetsResult), false);
         return;
       }
 
       downloadFile("index.html", html, "text/html");
       var noFsAssetsResult = await persistPublishAssets(publishPayload.assets);
+      var downloadedAssociatedPagesCount = downloadAssociatedTabPages(publishPayload.config);
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
-      setStatus("Browser folder-write API unavailable. Downloaded index.html and image files for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
+      setStatus("Browser folder-write API unavailable. Downloaded index.html and " + downloadedAssociatedPagesCount + " associated page(s) for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
       return;
     } catch (error) {
       if (error && error.name === "AbortError") {
-        downloadFile("index.html", html, "text/html");
-        var cancelledAssetsResult = await persistPublishAssets(publishPayload.assets);
-        localStorage.setItem(LAST_PUBLISHED_KEY, html);
-        setStatus("Folder selection was cancelled. Downloaded index.html and image files instead." + assetStatusSuffix(cancelledAssetsResult), false);
+        setStatus("Folder selection canceled.", true);
         return;
       }
 
       downloadFile("index.html", html, "text/html");
       var fallbackAssetsResult = await persistPublishAssets(publishPayload.assets);
+      var fallbackAssociatedPagesCount = downloadAssociatedTabPages(publishPayload.config);
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
-      setStatus("Publish fallback used because direct folder write is blocked in this context." + assetStatusSuffix(fallbackAssetsResult), false);
+      setStatus("Publish fallback used because direct folder write is blocked in this context. Downloaded " + fallbackAssociatedPagesCount + " associated page(s)." + assetStatusSuffix(fallbackAssetsResult), false);
     }
   }
 
@@ -966,6 +1284,65 @@
     setStatus("Draft exported as JSON.", false);
   }
 
+  async function saveRepoDraft() {
+    var scriptContent = buildRepoDraftScript(state);
+
+    try {
+      if (rememberedProjectDirectory && typeof rememberedProjectDirectory.getDirectoryHandle === "function") {
+        var projectDirectory = rememberedProjectDirectory;
+        var jsDirectory = await projectDirectory.getDirectoryHandle("js", { create: true });
+        var draftHandle = await jsDirectory.getFileHandle("configurator.draft.js", { create: true });
+        var writable = await draftHandle.createWritable();
+        await writable.write(scriptContent);
+        await writable.close();
+
+        window[REPO_DRAFT_GLOBAL_KEY] = deepClone(state);
+        setStatus("Draft saved to " + REPO_DRAFT_FILE_PATH + ". Commit and push this file to reuse the same draft on another PC.", false);
+        return;
+      }
+
+      downloadFile("configurator.draft.js", scriptContent, "application/javascript");
+      setStatus("Draft downloaded as configurator.draft.js. Put it in js/ (overwrite existing) and commit.", false);
+    } catch (error) {
+      rememberedProjectDirectory = null;
+      downloadFile("configurator.draft.js", scriptContent, "application/javascript");
+      setStatus("Direct folder save was unavailable. Draft downloaded as configurator.draft.js. Put it in js/ and commit.", false);
+    }
+  }
+
+  function loadRepoDraft() {
+    var repoDraft = getRepoDraft();
+    if (!repoDraft) {
+      setStatus("No repo draft found in " + REPO_DRAFT_FILE_PATH + ". Save one first.", true);
+      return;
+    }
+
+    state = mergeConfig(defaultConfig, repoDraft);
+    sanitizeState();
+    refresh("Loaded draft from " + REPO_DRAFT_FILE_PATH + ".");
+    dom.approval.checked = false;
+  }
+
+  function buildRepoDraftScript(draftState) {
+    return [
+      "// Auto-generated by Homepage Configurator.",
+      "// Commit this file to keep draft settings synced across devices.",
+      "window." + REPO_DRAFT_GLOBAL_KEY + " = " + JSON.stringify(draftState, null, 2) + ";",
+      ""
+    ].join("\n");
+  }
+
+  function getRepoDraft() {
+    var candidate = window[REPO_DRAFT_GLOBAL_KEY];
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+      return null;
+    }
+    if (Object.keys(candidate).length === 0) {
+      return null;
+    }
+    return candidate;
+  }
+
   function importDraft(event) {
     var file = event.target.files && event.target.files[0];
     if (!file) {
@@ -988,6 +1365,7 @@
 
   function buildPublishedHtml(config) {
     var fontHref = getAllFontsHref();
+
     return [
       "<!doctype html>",
       "<html lang=\"en\">",
@@ -1010,8 +1388,17 @@
   }
 
   function buildHomeMarkup(config, draggable) {
+    var footerMarkup = draggable
+      ? ""
+      : "<footer class=\"site-footer-fixed\">&copy;VINATECH 2026. All rights reserved.</footer>";
+
+    var tabMode = normalizeTabMode(config.display && config.display.tabMode);
+    var topTabsTransparent = !!(config.display && config.display.topTabsTransparent);
+    var ctaTextOnly = !!(config.display && config.display.ctaTextOnly);
+    var showHomeTabSelector = tabMode === "top-and-home";
+    var showTabCards = tabMode === "top-and-home";
     var bgImage = config.background.src
-      ? "style=\"background-image:url('" + escapeAttr(config.background.src) + "');background-position:" +
+      ? "style=\"background-image:url('" + escapeAttr(config.background.src) + "');background-size:115% 115%;background-position:" +
         config.background.x +
         "% " +
         config.background.y +
@@ -1022,17 +1409,31 @@
         config.background.y +
         "%, color-mix(in srgb, var(--preview-accent) 22%, #ffffff 78%) 0%, transparent 58%);\"";
 
-    var navLinks = config.tabs
+    var topNavLinks = config.tabs
       .map(function (tab) {
         var id = slugify(tab.sectionId || tab.label || "section");
+        var linkedPage = normalizePageHref(tab.pageHref);
+        var href = linkedPage || (showTabCards ? "#" + id : "#");
         var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
-        var navStyle = "color:" + escapeAttr(tab.navTextColor || config.theme.textColor) + ";background:" +
-          escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
-          (tab.navFontFamily ? "font-family:'" + escapeAttr(tab.navFontFamily) + "','Segoe UI',sans-serif;" : "") +
-          "font-size:var(--preview-button-size);";
-        return "<a href=\"#" + escapeAttr(id) + "\"" + previewAttrs + " style=\"" + navStyle + "\">" + escapeHtml(tab.label) + "</a>";
+        var navStyle = buildTabPillStyle(tab, config, topTabsTransparent);
+        return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + navStyle + "\">" + escapeHtml(tab.label) + "</a>";
       })
       .join("");
+
+    var homeSelectorLinks = config.tabs
+      .map(function (tab) {
+        var id = slugify(tab.sectionId || tab.label || "section");
+        var linkedPage = normalizePageHref(tab.pageHref);
+        var href = linkedPage || (showTabCards ? "#" + id : "#");
+        var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
+        var navStyle = buildTabPillStyle(tab, config, topTabsTransparent);
+        return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + navStyle + "\">" + escapeHtml(tab.label) + "</a>";
+      })
+      .join("");
+
+    var homeTabSelectorMarkup = showHomeTabSelector
+      ? "<nav class=\"home-tab-selector\">" + homeSelectorLinks + "</nav>"
+      : "";
 
     var cards = config.tabs
       .map(function (tab) {
@@ -1064,9 +1465,12 @@
       .map(function (button) {
         var href = String(button.href || "#").trim() || "#";
         var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
-        return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"background:" +
-          escapeAttr(config.theme.accentColor) + ";color:" +
-          escapeAttr(config.theme.buttonTextColor) + ";font-size:var(--preview-button-size);\">" +
+        var buttonStyle = "background:" + escapeAttr(config.theme.accentColor) + ";color:" +
+          escapeAttr(config.theme.buttonTextColor) + ";font-size:var(--preview-button-size);";
+        if (ctaTextOnly) {
+          buttonStyle += "background:transparent;border-color:transparent;box-shadow:none;";
+        }
+        return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + buttonStyle + "\">" +
           escapeHtml(button.label) +
           "</a>";
       })
@@ -1112,18 +1516,22 @@
         " 86%, #ffffff 14%) 0%, transparent 70%);\"></div>",
       "<header class=\"home-header\">",
       "<div class=\"brand-logos\">" + logos + "</div>",
-      "<nav class=\"home-nav nav-slot\" " + dragAttr("nav", draggable) + transformAttr(config.layout.nav) + ">" + navLinks + "</nav>",
+      "<nav class=\"home-nav nav-slot\" " + dragAttr("nav", draggable) + transformAttr(config.layout.nav) + ">" + topNavLinks + "</nav>",
       "</header>",
       "<main class=\"hero-wrap\">",
-      "<section class=\"hero-slot\" " + dragAttr("hero", draggable) + transformAttr(config.layout.hero) + ">",
-      "<h1>" + escapeHtml(config.hero.title) + "</h1>",
-      "<p>" + escapeHtml(config.hero.subtitle) + "</p>",
+      "<section class=\"hero-title-slot\" " + dragAttr("heroTitle", draggable) + " style=\"transform:translate(" + config.layout.heroTitle.x + "px," + config.layout.heroTitle.y + "px);text-align:" + escapeAttr(config.hero.titleAlign) + ";" + (config.hero.titleFontFamily ? "font-family:'" + escapeAttr(config.hero.titleFontFamily) + "','Segoe UI',sans-serif;" : "") + "\">",
+      "<h1 style=\"color:" + escapeAttr(config.hero.titleColor) + ";\">" + escapeHtml(config.hero.title) + "</h1>",
+      "</section>",
+      "<section class=\"hero-subtitle-slot\" " + dragAttr("heroSubtitle", draggable) + " style=\"transform:translate(" + config.layout.heroSubtitle.x + "px," + config.layout.heroSubtitle.y + "px);text-align:" + escapeAttr(config.hero.subtitleAlign) + ";" + (config.hero.subtitleFontFamily ? "font-family:'" + escapeAttr(config.hero.subtitleFontFamily) + "','Segoe UI',sans-serif;" : "") + "\">",
+      "<p style=\"color:" + escapeAttr(config.hero.subtitleColor) + ";\">" + escapeHtml(config.hero.subtitle) + "</p>",
       "</section>",
       "<div class=\"cta-slot\" " + dragAttr("cta", draggable) + transformAttr(config.layout.cta) + ">",
       buttonLinks,
       "</div>",
+      homeTabSelectorMarkup,
       "</main>",
-      "<section class=\"generated-sections\">" + cards + "</section>",
+      showTabCards ? "<section class=\"generated-sections\">" + cards + "</section>" : "",
+      footerMarkup,
       "</div>"
     ].join("");
   }
@@ -1232,6 +1640,114 @@
     var writable = await indexHandle.createWritable();
     await writable.write(html);
     await writable.close();
+  }
+
+  async function writeAssociatedTabPages(projectDirectory, config) {
+    var pages = getAssociatedTabPages(config);
+    for (var i = 0; i < pages.length; i += 1) {
+      var page = pages[i];
+      var fileHandle = await projectDirectory.getFileHandle(page.fileName, { create: true });
+      var writable = await fileHandle.createWritable();
+      await writable.write(page.html);
+      await writable.close();
+    }
+    return pages.length;
+  }
+
+  function downloadAssociatedTabPages(config) {
+    var pages = getAssociatedTabPages(config);
+    pages.forEach(function (page) {
+      downloadFile(page.fileName, page.html, "text/html");
+    });
+    return pages.length;
+  }
+
+  function getAssociatedTabPages(config) {
+    var pagesByFile = {};
+
+    function addPageFromHref(href, titleFallback) {
+      var normalized = normalizePageHref(href);
+      if (!normalized || /^(https?:|mailto:|tel:|#)/i.test(normalized)) {
+        return;
+      }
+
+      var clean = normalized.split("?")[0].split("#")[0].trim();
+      if (!clean) {
+        return;
+      }
+
+      var lower = clean.toLowerCase();
+      if (lower === "index.html" || lower.indexOf("/") >= 0) {
+        return;
+      }
+
+      if (!pagesByFile[clean]) {
+        pagesByFile[clean] = buildAssociatedTabPageHtml({
+          sectionTitle: titleFallback,
+          label: titleFallback
+        }, config.brand && config.brand.name ? config.brand.name : "VinATech");
+      }
+    }
+
+    config.tabs.forEach(function (tab) {
+      addPageFromHref(tab.pageHref, tab.sectionTitle || tab.label || "Page");
+    });
+
+    if (config.hero && Array.isArray(config.hero.buttons)) {
+      config.hero.buttons.forEach(function (button, index) {
+        var buttonTitle = String((button && button.label) || ("Page " + (index + 1)));
+        addPageFromHref(button && button.href, buttonTitle);
+      });
+    }
+
+    return Object.keys(pagesByFile).map(function (fileName) {
+      return {
+        fileName: fileName,
+        html: pagesByFile[fileName]
+      };
+    });
+  }
+
+  function buildAssociatedTabPageHtml(tab, brandName) {
+    var title = String(tab.sectionTitle || tab.label || "Page");
+    var site = String(brandName || "VinATech");
+
+    return [
+      "<!doctype html>",
+      "<html lang=\"en\">",
+      "<head>",
+      "  <meta charset=\"utf-8\">",
+      "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+      "  <title>" + escapeHtml(title) + " - " + escapeHtml(site) + "</title>",
+      "  <link rel=\"stylesheet\" href=\"css/styles.css\">",
+      "</head>",
+      "<body class=\"under-construction-page\">",
+      "  <main class=\"construction-overlay\" aria-label=\"This page is under construction\"></main>",
+      "  <footer class=\"site-footer-fixed\">&copy;VINATECH 2026. All rights reserved.</footer>",
+      "</body>",
+      "</html>"
+    ].join("\n");
+  }
+
+  async function resolveProjectDirectoryHandle() {
+    if (rememberedProjectDirectory) {
+      return rememberedProjectDirectory;
+    }
+
+    var projectDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
+    if (String(projectDirectory.name || "").toLowerCase() === "images") {
+      setStatus("Select the project root folder (the folder containing index.html), not images/.", true);
+      return null;
+    }
+
+    var looksLikeProjectRoot = await verifyProjectRootDirectory(projectDirectory);
+    if (!looksLikeProjectRoot) {
+      setStatus("Selected folder is not your site root. Choose the folder that already contains index.html and configurator.html.", true);
+      return null;
+    }
+
+    rememberedProjectDirectory = projectDirectory;
+    return rememberedProjectDirectory;
   }
 
   async function verifyProjectRootDirectory(projectDirectory) {
@@ -1405,7 +1921,7 @@
     return [
       "*{box-sizing:border-box}",
       "html,body{margin:0;padding:0}",
-      "body{background:" + config.theme.bgColor + ";color:" + config.theme.textColor + ";}",
+      "body{background:" + config.theme.bgColor + ";color:" + config.theme.textColor + ";padding-bottom:44px}",
       ".home-root{min-height:100vh;position:relative;overflow:hidden;isolation:isolate;background:var(--preview-bg);color:var(--preview-text)}",
       ".home-bg{position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;opacity:var(--preview-bg-opacity,.68);z-index:-2}",
       ".home-overlay{position:absolute;inset:0;z-index:-1}",
@@ -1416,16 +1932,20 @@
       ".logo-fallback{font-size:.78rem;font-weight:700;padding:8px 10px;border-radius:10px;border:1px dashed color-mix(in srgb,var(--preview-text) 28%,#fff 72%);background:color-mix(in srgb,var(--preview-surface) 86%,#fff 14%);text-align:center}",
       ".home-nav{display:flex;flex-wrap:wrap;gap:8px}",
       ".home-nav a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}",
+      ".home-tab-selector{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}",
+      ".home-tab-selector a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}",
       ".hero-wrap{max-width:1240px;margin:34px auto 0;padding:0 24px 36px}",
-      ".hero-slot{max-width:760px}",
-      ".hero-slot h1{margin:0;line-height:.98;letter-spacing:-.03em;font-size:var(--preview-heading-size)}",
-      ".hero-slot p{margin:20px 0 0;line-height:1.55;font-size:var(--preview-body-size);color:var(--preview-muted);max-width:60ch}",
+      ".hero-title-slot,.hero-subtitle-slot{max-width:760px;touch-action:none;cursor:grab}",
+      ".hero-title-slot h1{margin:0;line-height:.98;letter-spacing:-.03em;font-size:var(--preview-heading-size)}",
+      ".hero-subtitle-slot{margin-top:20px}",
+      ".hero-subtitle-slot p{margin:0;line-height:1.55;font-size:var(--preview-body-size);max-width:60ch}",
       ".cta-slot{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}",
       ".cta-slot a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:999px;font-size:var(--preview-button-size)}",
       ".generated-sections{max-width:1240px;margin:0 auto;padding:8px 24px 36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}",
       ".generated-card{border-radius:14px;padding:18px;border:1px solid color-mix(in srgb,var(--preview-text) 22%,#fff 78%);background:color-mix(in srgb,var(--preview-surface) 76%,#fff 24%)}",
       ".generated-card h3{margin:0;font-size:1.1rem}",
       ".generated-card p{margin:8px 0 0;line-height:1.5;color:var(--preview-muted)}",
+      ".site-footer-fixed{position:fixed;left:0;right:0;bottom:0;z-index:999;text-align:center;padding:12px 16px;font-size:.84rem;color:#ffffff;background:transparent}",
       "@media (max-width:760px){.hero-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}.home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px}}"
     ].join("\n");
   }
@@ -1449,6 +1969,12 @@
     state.brand.logoFileName = state.brand.logos[0].fileName;
     state.hero.title = String(state.hero.title || "");
     state.hero.subtitle = String(state.hero.subtitle || "");
+    state.hero.titleFontFamily = normalizeFontFamily(state.hero.titleFontFamily);
+    state.hero.subtitleFontFamily = normalizeFontFamily(state.hero.subtitleFontFamily);
+    state.hero.titleAlign = normalizeTextAlign(state.hero.titleAlign);
+    state.hero.subtitleAlign = normalizeTextAlign(state.hero.subtitleAlign);
+    state.hero.titleColor = normalizeHex(state.hero.titleColor, state.theme.textColor);
+    state.hero.subtitleColor = normalizeHex(state.hero.subtitleColor, state.theme.mutedColor);
 
     if (!Array.isArray(state.hero.buttons) || !state.hero.buttons.length) {
       var legacyLabel = String(state.hero.ctaLabel || "Explore Products");
@@ -1489,11 +2015,31 @@
     state.theme.buttonTextColor = normalizeHex(state.theme.buttonTextColor, "#ffffff");
 
     state.layout = state.layout || {};
-    ["logo", "nav", "hero", "cta"].forEach(function (key) {
+    var hasHeroTitleLayout = !!state.layout.heroTitle;
+    var hasHeroSubtitleLayout = !!state.layout.heroSubtitle;
+    var legacyHeroLayout = state.layout.hero || { x: 0, y: 0 };
+    ["logo", "nav", "hero", "heroTitle", "heroSubtitle", "cta"].forEach(function (key) {
       state.layout[key] = state.layout[key] || { x: 0, y: 0 };
       state.layout[key].x = parseInt(state.layout[key].x, 10) || 0;
       state.layout[key].y = parseInt(state.layout[key].y, 10) || 0;
     });
+    if (!hasHeroTitleLayout) {
+      state.layout.heroTitle = {
+        x: parseInt(legacyHeroLayout.x, 10) || 0,
+        y: parseInt(legacyHeroLayout.y, 10) || 0
+      };
+    }
+    if (!hasHeroSubtitleLayout) {
+      state.layout.heroSubtitle = {
+        x: parseInt(legacyHeroLayout.x, 10) || 0,
+        y: (parseInt(legacyHeroLayout.y, 10) || 0) + 86
+      };
+    }
+
+    state.display = state.display || {};
+    state.display.tabMode = normalizeTabMode(state.display.tabMode);
+    state.display.topTabsTransparent = !!state.display.topTabsTransparent;
+    state.display.ctaTextOnly = !!state.display.ctaTextOnly;
 
     var backgroundX = parseInt(state.background.x, 10);
     var backgroundY = parseInt(state.background.y, 10);
@@ -1520,6 +2066,7 @@
         return {
           label: label,
           sectionId: sectionId || uniqueSectionId("section"),
+          pageHref: normalizePageHref(tab.pageHref),
           sectionTitle: String(tab.sectionTitle || label),
           sectionText: String(tab.sectionText || "Add section content here."),
           sectionFontFamily: normalizeFontFamily(tab.sectionFontFamily),
@@ -1565,6 +2112,11 @@
 
   function loadState() {
     try {
+      var repoDraft = getRepoDraft();
+      if (repoDraft) {
+        return mergeConfig(defaultConfig, repoDraft);
+      }
+
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
         return deepClone(defaultConfig);
@@ -1593,12 +2145,15 @@
     merged.hero = Object.assign({}, merged.hero, incoming.hero || {});
     merged.theme = Object.assign({}, merged.theme, incoming.theme || {});
     merged.background = Object.assign({}, merged.background, incoming.background || {});
+    merged.display = Object.assign({}, merged.display, incoming.display || {});
 
     var incomingLayout = incoming.layout || {};
     merged.layout = {
       logo: Object.assign({}, merged.layout.logo, incomingLayout.logo || {}),
       nav: Object.assign({}, merged.layout.nav, incomingLayout.nav || {}),
       hero: Object.assign({}, merged.layout.hero, incomingLayout.hero || {}),
+      heroTitle: Object.assign({}, merged.layout.heroTitle, incomingLayout.heroTitle || incomingLayout.hero || {}),
+      heroSubtitle: Object.assign({}, merged.layout.heroSubtitle, incomingLayout.heroSubtitle || incomingLayout.hero || {}),
       cta: Object.assign({}, merged.layout.cta, incomingLayout.cta || {})
     };
 
@@ -1607,6 +2162,7 @@
         return {
           label: String(tab.label || "New Tab"),
           sectionId: String(tab.sectionId || slugify(tab.label || "new-tab")),
+          pageHref: String(tab.pageHref || ""),
           sectionTitle: String(tab.sectionTitle || tab.label || "New Section"),
           sectionText: String(tab.sectionText || "Add section content here."),
           sectionFontFamily: String(tab.sectionFontFamily || ""),
@@ -1670,6 +2226,44 @@
       return "";
     }
     return FONT_FAMILIES.indexOf(candidate) >= 0 ? candidate : "";
+  }
+
+  function normalizePageHref(value) {
+    var href = String(value || "").trim();
+    if (!href) {
+      return "";
+    }
+    if (/^(https?:|mailto:|tel:|#)/i.test(href)) {
+      return href;
+    }
+    href = href.replace(/\\+/g, "/");
+    if (!/\.html?$/i.test(href)) {
+      href += ".html";
+    }
+    return href;
+  }
+
+  function buildTabPillStyle(tab, config, transparentMode) {
+    var style = "color:" + escapeAttr(tab.navTextColor || config.theme.textColor) + ";" +
+      "background-color:" + escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
+      "background-image:none;" +
+      "border-color:" + escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
+      (tab.navFontFamily ? "font-family:'" + escapeAttr(tab.navFontFamily) + "','Segoe UI',sans-serif;" : "") +
+      "font-size:var(--preview-button-size);";
+
+    if (transparentMode) {
+      style += "background-color:transparent !important;background-image:none !important;border-color:transparent !important;box-shadow:none !important;";
+    }
+
+    return style;
+  }
+
+  function normalizeTextAlign(value) {
+    var candidate = String(value || "left").toLowerCase();
+    if (candidate !== "left" && candidate !== "center" && candidate !== "right") {
+      return "left";
+    }
+    return candidate;
   }
 
   function normalizeImageSrc(value) {
@@ -1795,7 +2389,23 @@
     if (candidate === "vertical" || candidate === "split" || candidate === "horizontal") {
       return candidate;
     }
+
+    function normalizeTextAlign(value) {
+      var candidate = String(value || "left").toLowerCase();
+      if (candidate !== "left" && candidate !== "center" && candidate !== "right") {
+        return "left";
+      }
+      return candidate;
+    }
     return "horizontal";
+  }
+
+  function normalizeTabMode(value) {
+    var mode = String(value || "").trim().toLowerCase();
+    if (mode === "top-only" || mode === "top-and-home") {
+      return mode;
+    }
+    return "top-and-home";
   }
 
   function normalizeTabImageTransparency(value, fallbackValue) {
