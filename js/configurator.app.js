@@ -3,11 +3,8 @@
 
   var STORAGE_KEY = "home-config-draft-v1";
   var LAST_PUBLISHED_KEY = "home-config-last-published-v1";
-  var PUBLISH_PAGE_DEFINITIONS = [
-    { fileName: "about.html", title: "About - VinATech" },
-    { fileName: "products.html", title: "Products - VinATech" },
-    { fileName: "privacy.html", title: "Privacy Policy - VinATech" }
-  ];
+  var REPO_DRAFT_GLOBAL_KEY = "__CONFIGURATOR_DRAFT__";
+  var REPO_DRAFT_FILE_PATH = "js/configurator.draft.js";
   var FONT_FAMILIES = [
     "Sora",
     "Space Grotesk",
@@ -68,9 +65,9 @@
     layout: {
       logo: { x: 0, y: 0 },
       nav: { x: 0, y: 0 },
-      heroTitle: { x: 0, y: 0 },
-      heroSubtitle: { x: 0, y: 20 },
       hero: { x: 0, y: 0 },
+      heroTitle: { x: 0, y: 0 },
+      heroSubtitle: { x: 0, y: 0 },
       cta: { x: 0, y: 0 }
     },
     display: {
@@ -163,6 +160,10 @@
 
   function init() {
     collectDom();
+    var startupRepoDraft = getRepoDraft();
+    if (startupRepoDraft) {
+      state = mergeConfig(defaultConfig, startupRepoDraft);
+    }
     sanitizeState();
     bindCoreInputs();
     bindActions();
@@ -217,8 +218,8 @@
     dom.logo2Transparency = document.getElementById("logo2Transparency");
     dom.navX = document.getElementById("navX");
     dom.navY = document.getElementById("navY");
-    dom.heroTitleX = document.getElementById("heroTitleX");
-    dom.heroTitleY = document.getElementById("heroTitleY");
+    dom.heroX = document.getElementById("heroX") || document.getElementById("heroTitleX");
+    dom.heroY = document.getElementById("heroY") || document.getElementById("heroTitleY");
     dom.heroSubtitleX = document.getElementById("heroSubtitleX");
     dom.heroSubtitleY = document.getElementById("heroSubtitleY");
     dom.ctaX = document.getElementById("ctaX");
@@ -240,6 +241,8 @@
     dom.publishHome = document.getElementById("publishHome");
     dom.exportDraft = document.getElementById("exportDraft");
     dom.importDraft = document.getElementById("importDraft");
+    dom.saveRepoDraft = document.getElementById("saveRepoDraft");
+    dom.loadRepoDraft = document.getElementById("loadRepoDraft");
     dom.resetDraft = document.getElementById("resetDraft");
     dom.approval = document.getElementById("approval");
     dom.statusMessage = document.getElementById("statusMessage");
@@ -260,23 +263,29 @@
     bindText(dom.fontFamily, function (value) {
       state.theme.fontFamily = value;
     }, "change");
+
     bindText(dom.heroTitleFontFamily, function (value) {
-      state.hero.titleFontFamily = value;
+      state.hero.titleFontFamily = normalizeFontFamily(value);
     }, "change");
+
     bindText(dom.heroSubtitleFontFamily, function (value) {
-      state.hero.subtitleFontFamily = value;
+      state.hero.subtitleFontFamily = normalizeFontFamily(value);
     }, "change");
+
     bindText(dom.heroTitleAlign, function (value) {
-      state.hero.titleAlign = normalizeTextAlign(value, "left");
+      state.hero.titleAlign = normalizeTextAlign(value);
     }, "change");
+
     bindText(dom.heroSubtitleAlign, function (value) {
-      state.hero.subtitleAlign = normalizeTextAlign(value, "left");
+      state.hero.subtitleAlign = normalizeTextAlign(value);
     }, "change");
+
     bindText(dom.heroTitleColor, function (value) {
-      state.hero.titleColor = value;
+      state.hero.titleColor = normalizeHex(value, state.theme.textColor);
     }, "input");
+
     bindText(dom.heroSubtitleColor, function (value) {
-      state.hero.subtitleColor = value;
+      state.hero.subtitleColor = normalizeHex(value, state.theme.mutedColor);
     }, "input");
 
     bindNumber(dom.headingSize, function (value) {
@@ -295,9 +304,6 @@
     bindText(dom.textColor, function (value) {
       var previous = state.theme.textColor;
       state.theme.textColor = value;
-      if (state.hero.titleColor === previous) {
-        state.hero.titleColor = value;
-      }
       syncThemeLinkedTabColors("textColor", previous, value);
     }, "input");
     bindText(dom.accentColor, function (value) {
@@ -306,9 +312,6 @@
     bindText(dom.mutedColor, function (value) {
       var previous = state.theme.mutedColor;
       state.theme.mutedColor = value;
-      if (state.hero.subtitleColor === previous) {
-        state.hero.subtitleColor = value;
-      }
       syncThemeLinkedTabColors("mutedColor", previous, value);
     }, "input");
     bindText(dom.surfaceColor, function (value) {
@@ -356,10 +359,10 @@
     bindNumber(dom.navY, function (value) {
       state.layout.nav.y = value;
     });
-    bindNumber(dom.heroTitleX, function (value) {
+    bindNumber(dom.heroX, function (value) {
       state.layout.heroTitle.x = value;
     });
-    bindNumber(dom.heroTitleY, function (value) {
+    bindNumber(dom.heroY, function (value) {
       state.layout.heroTitle.y = value;
     });
     bindNumber(dom.heroSubtitleX, function (value) {
@@ -491,6 +494,14 @@
       exportDraft();
     });
 
+    dom.saveRepoDraft.addEventListener("click", function () {
+      saveRepoDraft();
+    });
+
+    dom.loadRepoDraft.addEventListener("click", function () {
+      loadRepoDraft();
+    });
+
     dom.importDraft.addEventListener("change", function (event) {
       importDraft(event);
     });
@@ -506,6 +517,9 @@
   }
 
   function bindText(element, setter, eventName) {
+    if (!element) {
+      return;
+    }
     var inputEvent = eventName || "input";
     element.addEventListener(inputEvent, function () {
       setter(element.value);
@@ -514,6 +528,9 @@
   }
 
   function bindNumber(element, setter) {
+    if (!element) {
+      return;
+    }
     element.addEventListener("input", function () {
       var numericValue = parseInt(element.value, 10);
       if (Number.isNaN(numericValue)) {
@@ -674,56 +691,150 @@
   }
 
   function syncInputsFromState() {
-    dom.brandName.value = state.brand.name;
-    dom.heroTitle.value = state.hero.title;
-    dom.heroSubtitle.value = state.hero.subtitle;
+    if (dom.brandName) {
+      dom.brandName.value = state.brand.name;
+    }
+    if (dom.heroTitle) {
+      dom.heroTitle.value = state.hero.title;
+    }
+    if (dom.heroSubtitle) {
+      dom.heroSubtitle.value = state.hero.subtitle;
+    }
 
-    dom.fontFamily.value = state.theme.fontFamily;
-    dom.heroTitleFontFamily.value = state.hero.titleFontFamily;
-    dom.heroSubtitleFontFamily.value = state.hero.subtitleFontFamily;
-    dom.heroTitleAlign.value = state.hero.titleAlign;
-    dom.heroSubtitleAlign.value = state.hero.subtitleAlign;
-    dom.heroTitleColor.value = normalizeHex(state.hero.titleColor, state.theme.textColor);
-    dom.heroSubtitleColor.value = normalizeHex(state.hero.subtitleColor, state.theme.mutedColor);
-    dom.headingSize.value = String(state.theme.headingSize);
-    dom.bodySize.value = String(state.theme.bodySize);
-    dom.buttonTextSize.value = String(state.theme.buttonTextSize);
-    dom.headingSizeValue.textContent = state.theme.headingSize + "px";
-    dom.bodySizeValue.textContent = state.theme.bodySize + "px";
-    dom.buttonTextSizeValue.textContent = state.theme.buttonTextSize + "px";
+    if (dom.fontFamily) {
+      dom.fontFamily.value = state.theme.fontFamily;
+    }
+    if (dom.heroTitleFontFamily) {
+      dom.heroTitleFontFamily.value = state.hero.titleFontFamily || "";
+    }
+    if (dom.heroSubtitleFontFamily) {
+      dom.heroSubtitleFontFamily.value = state.hero.subtitleFontFamily || "";
+    }
+    if (dom.heroTitleAlign) {
+      dom.heroTitleAlign.value = state.hero.titleAlign;
+    }
+    if (dom.heroSubtitleAlign) {
+      dom.heroSubtitleAlign.value = state.hero.subtitleAlign;
+    }
+    if (dom.headingSize) {
+      dom.headingSize.value = String(state.theme.headingSize);
+    }
+    if (dom.bodySize) {
+      dom.bodySize.value = String(state.theme.bodySize);
+    }
+    if (dom.buttonTextSize) {
+      dom.buttonTextSize.value = String(state.theme.buttonTextSize);
+    }
+    if (dom.headingSizeValue) {
+      dom.headingSizeValue.textContent = state.theme.headingSize + "px";
+    }
+    if (dom.bodySizeValue) {
+      dom.bodySizeValue.textContent = state.theme.bodySize + "px";
+    }
+    if (dom.buttonTextSizeValue) {
+      dom.buttonTextSizeValue.textContent = state.theme.buttonTextSize + "px";
+    }
 
-    dom.bgColor.value = normalizeHex(state.theme.bgColor, "#f2f7f3");
-    dom.textColor.value = normalizeHex(state.theme.textColor, "#102822");
-    dom.accentColor.value = normalizeHex(state.theme.accentColor, "#0f7b6c");
-    dom.mutedColor.value = normalizeHex(state.theme.mutedColor, "#4f6962");
-    dom.surfaceColor.value = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
-    dom.buttonTextColor.value = normalizeHex(state.theme.buttonTextColor, "#ffffff");
+    if (dom.bgColor) {
+      dom.bgColor.value = normalizeHex(state.theme.bgColor, "#f2f7f3");
+    }
+    if (dom.textColor) {
+      dom.textColor.value = normalizeHex(state.theme.textColor, "#102822");
+    }
+    if (dom.accentColor) {
+      dom.accentColor.value = normalizeHex(state.theme.accentColor, "#0f7b6c");
+    }
+    if (dom.mutedColor) {
+      dom.mutedColor.value = normalizeHex(state.theme.mutedColor, "#4f6962");
+    }
+    if (dom.surfaceColor) {
+      dom.surfaceColor.value = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
+    }
+    if (dom.buttonTextColor) {
+      dom.buttonTextColor.value = normalizeHex(state.theme.buttonTextColor, "#ffffff");
+    }
+    if (dom.heroTitleColor) {
+      dom.heroTitleColor.value = normalizeHex(state.hero.titleColor, state.theme.textColor);
+    }
+    if (dom.heroSubtitleColor) {
+      dom.heroSubtitleColor.value = normalizeHex(state.hero.subtitleColor, state.theme.mutedColor);
+    }
 
-    dom.logo1X.value = String(state.brand.logos[0].x);
-    dom.logo1Y.value = String(state.brand.logos[0].y);
-    dom.logo1Size.value = String(state.brand.logos[0].size);
-    dom.logo1Rotation.value = String(state.brand.logos[0].rotation);
-    dom.logo1Transparency.value = String(state.brand.logos[0].transparency);
-    dom.logo2X.value = String(state.brand.logos[1].x);
-    dom.logo2Y.value = String(state.brand.logos[1].y);
-    dom.logo2Size.value = String(state.brand.logos[1].size);
-    dom.logo2Rotation.value = String(state.brand.logos[1].rotation);
-    dom.logo2Transparency.value = String(state.brand.logos[1].transparency);
-    dom.navX.value = String(state.layout.nav.x);
-    dom.navY.value = String(state.layout.nav.y);
-    dom.heroTitleX.value = String(state.layout.heroTitle.x);
-    dom.heroTitleY.value = String(state.layout.heroTitle.y);
-    dom.heroSubtitleX.value = String(state.layout.heroSubtitle.x);
-    dom.heroSubtitleY.value = String(state.layout.heroSubtitle.y);
-    dom.ctaX.value = String(state.layout.cta.x);
-    dom.ctaY.value = String(state.layout.cta.y);
-    dom.bgX.value = String(state.background.x);
-    dom.bgY.value = String(state.background.y);
-    dom.bgTransparency.value = String(state.background.transparency);
-    dom.bgTransparencyValue.textContent = state.background.transparency + "%";
-    dom.tabDisplayMode.value = state.display.tabMode;
-    dom.topTabsTransparent.checked = !!state.display.topTabsTransparent;
-    dom.ctaTextOnly.checked = !!state.display.ctaTextOnly;
+    if (dom.logo1X) {
+      dom.logo1X.value = String(state.brand.logos[0].x);
+    }
+    if (dom.logo1Y) {
+      dom.logo1Y.value = String(state.brand.logos[0].y);
+    }
+    if (dom.logo1Size) {
+      dom.logo1Size.value = String(state.brand.logos[0].size);
+    }
+    if (dom.logo1Rotation) {
+      dom.logo1Rotation.value = String(state.brand.logos[0].rotation);
+    }
+    if (dom.logo1Transparency) {
+      dom.logo1Transparency.value = String(state.brand.logos[0].transparency);
+    }
+    if (dom.logo2X) {
+      dom.logo2X.value = String(state.brand.logos[1].x);
+    }
+    if (dom.logo2Y) {
+      dom.logo2Y.value = String(state.brand.logos[1].y);
+    }
+    if (dom.logo2Size) {
+      dom.logo2Size.value = String(state.brand.logos[1].size);
+    }
+    if (dom.logo2Rotation) {
+      dom.logo2Rotation.value = String(state.brand.logos[1].rotation);
+    }
+    if (dom.logo2Transparency) {
+      dom.logo2Transparency.value = String(state.brand.logos[1].transparency);
+    }
+    if (dom.navX) {
+      dom.navX.value = String(state.layout.nav.x);
+    }
+    if (dom.navY) {
+      dom.navY.value = String(state.layout.nav.y);
+    }
+    if (dom.heroX) {
+      dom.heroX.value = String(state.layout.heroTitle.x);
+    }
+    if (dom.heroY) {
+      dom.heroY.value = String(state.layout.heroTitle.y);
+    }
+    if (dom.heroSubtitleX) {
+      dom.heroSubtitleX.value = String(state.layout.heroSubtitle.x);
+    }
+    if (dom.heroSubtitleY) {
+      dom.heroSubtitleY.value = String(state.layout.heroSubtitle.y);
+    }
+    if (dom.ctaX) {
+      dom.ctaX.value = String(state.layout.cta.x);
+    }
+    if (dom.ctaY) {
+      dom.ctaY.value = String(state.layout.cta.y);
+    }
+    if (dom.bgX) {
+      dom.bgX.value = String(state.background.x);
+    }
+    if (dom.bgY) {
+      dom.bgY.value = String(state.background.y);
+    }
+    if (dom.bgTransparency) {
+      dom.bgTransparency.value = String(state.background.transparency);
+    }
+    if (dom.bgTransparencyValue) {
+      dom.bgTransparencyValue.textContent = state.background.transparency + "%";
+    }
+    if (dom.tabDisplayMode) {
+      dom.tabDisplayMode.value = state.display.tabMode;
+    }
+    if (dom.topTabsTransparent) {
+      dom.topTabsTransparent.checked = !!state.display.topTabsTransparent;
+    }
+    if (dom.ctaTextOnly) {
+      dom.ctaTextOnly.checked = !!state.display.ctaTextOnly;
+    }
   }
 
   function renderButtonsEditor() {
@@ -1011,18 +1122,42 @@
   }
 
   function syncPositionInputsOnly() {
-    dom.logo1X.value = String(state.brand.logos[0].x);
-    dom.logo1Y.value = String(state.brand.logos[0].y);
-    dom.logo2X.value = String(state.brand.logos[1].x);
-    dom.logo2Y.value = String(state.brand.logos[1].y);
-    dom.navX.value = String(state.layout.nav.x);
-    dom.navY.value = String(state.layout.nav.y);
-    dom.heroTitleX.value = String(state.layout.heroTitle.x);
-    dom.heroTitleY.value = String(state.layout.heroTitle.y);
-    dom.heroSubtitleX.value = String(state.layout.heroSubtitle.x);
-    dom.heroSubtitleY.value = String(state.layout.heroSubtitle.y);
-    dom.ctaX.value = String(state.layout.cta.x);
-    dom.ctaY.value = String(state.layout.cta.y);
+    if (dom.logo1X) {
+      dom.logo1X.value = String(state.brand.logos[0].x);
+    }
+    if (dom.logo1Y) {
+      dom.logo1Y.value = String(state.brand.logos[0].y);
+    }
+    if (dom.logo2X) {
+      dom.logo2X.value = String(state.brand.logos[1].x);
+    }
+    if (dom.logo2Y) {
+      dom.logo2Y.value = String(state.brand.logos[1].y);
+    }
+    if (dom.navX) {
+      dom.navX.value = String(state.layout.nav.x);
+    }
+    if (dom.navY) {
+      dom.navY.value = String(state.layout.nav.y);
+    }
+    if (dom.heroX) {
+      dom.heroX.value = String(state.layout.heroTitle.x);
+    }
+    if (dom.heroY) {
+      dom.heroY.value = String(state.layout.heroTitle.y);
+    }
+    if (dom.heroSubtitleX) {
+      dom.heroSubtitleX.value = String(state.layout.heroSubtitle.x);
+    }
+    if (dom.heroSubtitleY) {
+      dom.heroSubtitleY.value = String(state.layout.heroSubtitle.y);
+    }
+    if (dom.ctaX) {
+      dom.ctaX.value = String(state.layout.cta.x);
+    }
+    if (dom.ctaY) {
+      dom.ctaY.value = String(state.layout.cta.y);
+    }
   }
 
   function openPreviewWindow() {
@@ -1052,7 +1187,6 @@
 
     var publishPayload = preparePublishPayload(state);
     var html = buildPublishedHtml(publishPayload.config);
-    var publishedExtraPages = 0;
 
     try {
       if (typeof window.showDirectoryPicker === "function") {
@@ -1070,33 +1204,29 @@
 
         var savedAssetsResult = await persistPublishAssets(publishPayload.assets, projectDirectory);
         await writeIndexHtml(projectDirectory, html);
-        publishedExtraPages = await writeAdditionalSitePages(projectDirectory);
         localStorage.setItem(LAST_PUBLISHED_KEY, html);
-        setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". Saved index.html plus " + publishedExtraPages + " additional page(s)." + assetStatusSuffix(savedAssetsResult), false);
+        setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". index.html and uploaded images were saved." + assetStatusSuffix(savedAssetsResult), false);
         return;
       }
 
       downloadFile("index.html", html, "text/html");
-      publishedExtraPages = downloadAdditionalSitePages();
       var noFsAssetsResult = await persistPublishAssets(publishPayload.assets);
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
-      setStatus("Browser folder-write API unavailable. Downloaded index.html plus " + publishedExtraPages + " additional page(s) and image files for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
+      setStatus("Browser folder-write API unavailable. Downloaded index.html and image files for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
       return;
     } catch (error) {
       if (error && error.name === "AbortError") {
         downloadFile("index.html", html, "text/html");
-        publishedExtraPages = downloadAdditionalSitePages();
         var cancelledAssetsResult = await persistPublishAssets(publishPayload.assets);
         localStorage.setItem(LAST_PUBLISHED_KEY, html);
-        setStatus("Folder selection was cancelled. Downloaded index.html plus " + publishedExtraPages + " additional page(s) and image files instead." + assetStatusSuffix(cancelledAssetsResult), false);
+        setStatus("Folder selection was cancelled. Downloaded index.html and image files instead." + assetStatusSuffix(cancelledAssetsResult), false);
         return;
       }
 
       downloadFile("index.html", html, "text/html");
-      publishedExtraPages = downloadAdditionalSitePages();
       var fallbackAssetsResult = await persistPublishAssets(publishPayload.assets);
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
-      setStatus("Publish fallback used because direct folder write is blocked in this context. Downloaded index.html plus " + publishedExtraPages + " additional page(s)." + assetStatusSuffix(fallbackAssetsResult), false);
+      setStatus("Publish fallback used because direct folder write is blocked in this context." + assetStatusSuffix(fallbackAssetsResult), false);
     }
   }
 
@@ -1140,6 +1270,78 @@
     var json = JSON.stringify(state, null, 2);
     downloadFile("home-config-draft.json", json, "application/json");
     setStatus("Draft exported as JSON.", false);
+  }
+
+  async function saveRepoDraft() {
+    var scriptContent = buildRepoDraftScript(state);
+
+    try {
+      if (typeof window.showDirectoryPicker === "function") {
+        var projectDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
+        if (String(projectDirectory.name || "").toLowerCase() === "images") {
+          setStatus("Select the project root folder (the folder containing index.html), not images/.", true);
+          return;
+        }
+
+        var looksLikeProjectRoot = await verifyProjectRootDirectory(projectDirectory);
+        if (!looksLikeProjectRoot) {
+          setStatus("Selected folder is not your site root. Choose the folder that already contains index.html and configurator.html.", true);
+          return;
+        }
+
+        var jsDirectory = await projectDirectory.getDirectoryHandle("js", { create: true });
+        var draftHandle = await jsDirectory.getFileHandle("configurator.draft.js", { create: true });
+        var writable = await draftHandle.createWritable();
+        await writable.write(scriptContent);
+        await writable.close();
+
+        window[REPO_DRAFT_GLOBAL_KEY] = deepClone(state);
+        setStatus("Draft saved to " + REPO_DRAFT_FILE_PATH + ". Commit and push this file to reuse the same draft on another PC.", false);
+        return;
+      }
+
+      downloadFile("configurator.draft.js", scriptContent, "application/javascript");
+      setStatus("Browser folder-write API unavailable. Downloaded configurator.draft.js. Place it in js/ and commit it.", false);
+    } catch (error) {
+      if (error && error.name === "AbortError") {
+        setStatus("Draft save cancelled.", true);
+        return;
+      }
+      setStatus("Could not save draft file automatically. Use Export Draft JSON as fallback.", true);
+    }
+  }
+
+  function loadRepoDraft() {
+    var repoDraft = getRepoDraft();
+    if (!repoDraft) {
+      setStatus("No repo draft found in " + REPO_DRAFT_FILE_PATH + ". Save one first.", true);
+      return;
+    }
+
+    state = mergeConfig(defaultConfig, repoDraft);
+    sanitizeState();
+    refresh("Loaded draft from " + REPO_DRAFT_FILE_PATH + ".");
+    dom.approval.checked = false;
+  }
+
+  function buildRepoDraftScript(draftState) {
+    return [
+      "// Auto-generated by Homepage Configurator.",
+      "// Commit this file to keep draft settings synced across devices.",
+      "window." + REPO_DRAFT_GLOBAL_KEY + " = " + JSON.stringify(draftState, null, 2) + ";",
+      ""
+    ].join("\n");
+  }
+
+  function getRepoDraft() {
+    var candidate = window[REPO_DRAFT_GLOBAL_KEY];
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+      return null;
+    }
+    if (Object.keys(candidate).length === 0) {
+      return null;
+    }
+    return candidate;
   }
 
   function importDraft(event) {
@@ -1282,14 +1484,6 @@
       })
       .join("");
 
-    var heroTitleStyle = "color:" + escapeAttr(config.hero.titleColor || config.theme.textColor) + ";text-align:" +
-      escapeAttr(normalizeTextAlign(config.hero.titleAlign, "left")) + ";" +
-      (config.hero.titleFontFamily ? "font-family:'" + escapeAttr(config.hero.titleFontFamily) + "','Segoe UI',sans-serif;" : "");
-
-    var heroSubtitleStyle = "color:" + escapeAttr(config.hero.subtitleColor || config.theme.mutedColor) + ";text-align:" +
-      escapeAttr(normalizeTextAlign(config.hero.subtitleAlign, "left")) + ";" +
-      (config.hero.subtitleFontFamily ? "font-family:'" + escapeAttr(config.hero.subtitleFontFamily) + "','Segoe UI',sans-serif;" : "");
-
     var logos = ensureTwoLogos(config.brand)
       .map(function (logo, index) {
         var label = index === 0 ? config.brand.name : "Logo 2";
@@ -1333,12 +1527,12 @@
       "<nav class=\"home-nav nav-slot\" " + dragAttr("nav", draggable) + transformAttr(config.layout.nav) + ">" + topNavLinks + "</nav>",
       "</header>",
       "<main class=\"hero-wrap\">",
-      "<div class=\"hero-title-slot\" " + dragAttr("heroTitle", draggable) + transformAttr(config.layout.heroTitle) + ">",
-      "<h1 style=\"" + heroTitleStyle + "\">" + escapeHtml(config.hero.title) + "</h1>",
-      "</div>",
-      "<div class=\"hero-subtitle-slot\" " + dragAttr("heroSubtitle", draggable) + transformAttr(config.layout.heroSubtitle) + ">",
-      "<p style=\"" + heroSubtitleStyle + "\">" + escapeHtml(config.hero.subtitle) + "</p>",
-      "</div>",
+      "<section class=\"hero-title-slot\" " + dragAttr("heroTitle", draggable) + " style=\"transform:translate(" + config.layout.heroTitle.x + "px," + config.layout.heroTitle.y + "px);text-align:" + escapeAttr(config.hero.titleAlign) + ";" + (config.hero.titleFontFamily ? "font-family:'" + escapeAttr(config.hero.titleFontFamily) + "','Segoe UI',sans-serif;" : "") + "\">",
+      "<h1 style=\"color:" + escapeAttr(config.hero.titleColor) + ";\">" + escapeHtml(config.hero.title) + "</h1>",
+      "</section>",
+      "<section class=\"hero-subtitle-slot\" " + dragAttr("heroSubtitle", draggable) + " style=\"transform:translate(" + config.layout.heroSubtitle.x + "px," + config.layout.heroSubtitle.y + "px);text-align:" + escapeAttr(config.hero.subtitleAlign) + ";" + (config.hero.subtitleFontFamily ? "font-family:'" + escapeAttr(config.hero.subtitleFontFamily) + "','Segoe UI',sans-serif;" : "") + "\">",
+      "<p style=\"color:" + escapeAttr(config.hero.subtitleColor) + ";\">" + escapeHtml(config.hero.subtitle) + "</p>",
+      "</section>",
       "<div class=\"cta-slot\" " + dragAttr("cta", draggable) + transformAttr(config.layout.cta) + ">",
       buttonLinks,
       "</div>",
@@ -1454,43 +1648,6 @@
     var writable = await indexHandle.createWritable();
     await writable.write(html);
     await writable.close();
-  }
-
-  async function writeAdditionalSitePages(projectDirectory) {
-    for (var index = 0; index < PUBLISH_PAGE_DEFINITIONS.length; index += 1) {
-      var page = PUBLISH_PAGE_DEFINITIONS[index];
-      var pageHtml = buildUnderConstructionPageHtml(page.title);
-      var pageHandle = await projectDirectory.getFileHandle(page.fileName, { create: true });
-      var writable = await pageHandle.createWritable();
-      await writable.write(pageHtml);
-      await writable.close();
-    }
-    return PUBLISH_PAGE_DEFINITIONS.length;
-  }
-
-  function downloadAdditionalSitePages() {
-    PUBLISH_PAGE_DEFINITIONS.forEach(function (page) {
-      downloadFile(page.fileName, buildUnderConstructionPageHtml(page.title), "text/html");
-    });
-    return PUBLISH_PAGE_DEFINITIONS.length;
-  }
-
-  function buildUnderConstructionPageHtml(pageTitle) {
-    return [
-      "<!doctype html>",
-      "<html lang=\"en\">",
-      "<head>",
-      "  <meta charset=\"utf-8\">",
-      "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
-      "  <title>" + escapeHtml(pageTitle) + "</title>",
-      "  <link rel=\"stylesheet\" href=\"css/styles.css\">",
-      "</head>",
-      "<body class=\"under-construction-page\">",
-      "  <main class=\"construction-overlay\" aria-label=\"This page is under construction\"></main>",
-      "  <footer class=\"site-footer-fixed\">&copy;VINATECH 2026. All rights reserved.</footer>",
-      "</body>",
-      "</html>"
-    ].join("\n");
   }
 
   async function verifyProjectRootDirectory(projectDirectory) {
@@ -1657,12 +1814,6 @@
     if (dragKey === "logo-1") {
       return "logo 2";
     }
-    if (dragKey === "heroTitle") {
-      return "hero title";
-    }
-    if (dragKey === "heroSubtitle") {
-      return "hero subtitle";
-    }
     return dragKey;
   }
 
@@ -1684,18 +1835,18 @@
       ".home-tab-selector{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}",
       ".home-tab-selector a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}",
       ".hero-wrap{max-width:1240px;margin:34px auto 0;padding:0 24px 36px}",
-      ".hero-title-slot,.hero-subtitle-slot{max-width:760px}",
-      ".hero-title-slot h1{margin:0;line-height:.98;letter-spacing:-.03em;font-size:var(--preview-heading-size);color:var(--preview-text)}",
+      ".hero-title-slot,.hero-subtitle-slot{max-width:760px;touch-action:none;cursor:grab}",
+      ".hero-title-slot h1{margin:0;line-height:.98;letter-spacing:-.03em;font-size:var(--preview-heading-size)}",
       ".hero-subtitle-slot{margin-top:20px}",
-      ".hero-subtitle-slot p{margin:0;line-height:1.55;font-size:var(--preview-body-size);color:var(--preview-muted);max-width:60ch}",
+      ".hero-subtitle-slot p{margin:0;line-height:1.55;font-size:var(--preview-body-size);max-width:60ch}",
       ".cta-slot{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}",
       ".cta-slot a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:999px;font-size:var(--preview-button-size)}",
       ".generated-sections{max-width:1240px;margin:0 auto;padding:8px 24px 36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}",
       ".generated-card{border-radius:14px;padding:18px;border:1px solid color-mix(in srgb,var(--preview-text) 22%,#fff 78%);background:color-mix(in srgb,var(--preview-surface) 76%,#fff 24%)}",
       ".generated-card h3{margin:0;font-size:1.1rem}",
       ".generated-card p{margin:8px 0 0;line-height:1.5;color:var(--preview-muted)}",
-      ".site-footer-fixed{position:fixed;left:0;right:0;bottom:0;z-index:999;text-align:left;padding:12px 16px;font-size:.84rem;color:#ffffff;background:transparent}",
-      "@media (max-width:760px){.hero-title-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}.home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px}}"
+      ".site-footer-fixed{position:fixed;left:0;right:0;bottom:0;z-index:999;text-align:center;padding:12px 16px;font-size:.84rem;color:#ffffff;background:transparent}",
+      "@media (max-width:760px){.hero-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}.home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px}}"
     ].join("\n");
   }
 
@@ -1720,8 +1871,10 @@
     state.hero.subtitle = String(state.hero.subtitle || "");
     state.hero.titleFontFamily = normalizeFontFamily(state.hero.titleFontFamily);
     state.hero.subtitleFontFamily = normalizeFontFamily(state.hero.subtitleFontFamily);
-    state.hero.titleAlign = normalizeTextAlign(state.hero.titleAlign, "left");
-    state.hero.subtitleAlign = normalizeTextAlign(state.hero.subtitleAlign, "left");
+    state.hero.titleAlign = normalizeTextAlign(state.hero.titleAlign);
+    state.hero.subtitleAlign = normalizeTextAlign(state.hero.subtitleAlign);
+    state.hero.titleColor = normalizeHex(state.hero.titleColor, state.theme.textColor);
+    state.hero.subtitleColor = normalizeHex(state.hero.subtitleColor, state.theme.mutedColor);
 
     if (!Array.isArray(state.hero.buttons) || !state.hero.buttons.length) {
       var legacyLabel = String(state.hero.ctaLabel || "Explore Products");
@@ -1760,24 +1913,27 @@
     state.theme.mutedColor = normalizeHex(state.theme.mutedColor, "#4f6962");
     state.theme.surfaceColor = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
     state.theme.buttonTextColor = normalizeHex(state.theme.buttonTextColor, "#ffffff");
-    state.hero.titleColor = normalizeHex(state.hero.titleColor, state.theme.textColor);
-    state.hero.subtitleColor = normalizeHex(state.hero.subtitleColor, state.theme.mutedColor);
 
     state.layout = state.layout || {};
+    var hasHeroTitleLayout = !!state.layout.heroTitle;
+    var hasHeroSubtitleLayout = !!state.layout.heroSubtitle;
+    var legacyHeroLayout = state.layout.hero || { x: 0, y: 0 };
     ["logo", "nav", "hero", "heroTitle", "heroSubtitle", "cta"].forEach(function (key) {
       state.layout[key] = state.layout[key] || { x: 0, y: 0 };
       state.layout[key].x = parseInt(state.layout[key].x, 10) || 0;
       state.layout[key].y = parseInt(state.layout[key].y, 10) || 0;
     });
-
-    // Keep backward compatibility for old drafts that stored one shared hero offset.
-    if (state.layout.hero && state.layout.heroTitle.x === 0 && state.layout.heroTitle.y === 0) {
-      state.layout.heroTitle.x = state.layout.hero.x;
-      state.layout.heroTitle.y = state.layout.hero.y;
+    if (!hasHeroTitleLayout) {
+      state.layout.heroTitle = {
+        x: parseInt(legacyHeroLayout.x, 10) || 0,
+        y: parseInt(legacyHeroLayout.y, 10) || 0
+      };
     }
-    if (state.layout.hero && state.layout.heroSubtitle.x === 0 && state.layout.heroSubtitle.y === 0) {
-      state.layout.heroSubtitle.x = state.layout.hero.x;
-      state.layout.heroSubtitle.y = state.layout.hero.y + 20;
+    if (!hasHeroSubtitleLayout) {
+      state.layout.heroSubtitle = {
+        x: parseInt(legacyHeroLayout.x, 10) || 0,
+        y: (parseInt(legacyHeroLayout.y, 10) || 0) + 86
+      };
     }
 
     state.display = state.display || {};
@@ -1855,6 +2011,11 @@
 
   function loadState() {
     try {
+      var repoDraft = getRepoDraft();
+      if (repoDraft) {
+        return mergeConfig(defaultConfig, repoDraft);
+      }
+
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
         return deepClone(defaultConfig);
@@ -1889,9 +2050,9 @@
     merged.layout = {
       logo: Object.assign({}, merged.layout.logo, incomingLayout.logo || {}),
       nav: Object.assign({}, merged.layout.nav, incomingLayout.nav || {}),
+      hero: Object.assign({}, merged.layout.hero, incomingLayout.hero || {}),
       heroTitle: Object.assign({}, merged.layout.heroTitle, incomingLayout.heroTitle || incomingLayout.hero || {}),
       heroSubtitle: Object.assign({}, merged.layout.heroSubtitle, incomingLayout.heroSubtitle || incomingLayout.hero || {}),
-      hero: Object.assign({}, merged.layout.hero, incomingLayout.hero || {}),
       cta: Object.assign({}, merged.layout.cta, incomingLayout.cta || {})
     };
 
@@ -1963,6 +2124,14 @@
       return "";
     }
     return FONT_FAMILIES.indexOf(candidate) >= 0 ? candidate : "";
+  }
+
+  function normalizeTextAlign(value) {
+    var candidate = String(value || "left").toLowerCase();
+    if (candidate !== "left" && candidate !== "center" && candidate !== "right") {
+      return "left";
+    }
+    return candidate;
   }
 
   function normalizeImageSrc(value) {
@@ -2088,6 +2257,14 @@
     if (candidate === "vertical" || candidate === "split" || candidate === "horizontal") {
       return candidate;
     }
+
+    function normalizeTextAlign(value) {
+      var candidate = String(value || "left").toLowerCase();
+      if (candidate !== "left" && candidate !== "center" && candidate !== "right") {
+        return "left";
+      }
+      return candidate;
+    }
     return "horizontal";
   }
 
@@ -2097,14 +2274,6 @@
       return mode;
     }
     return "top-and-home";
-  }
-
-  function normalizeTextAlign(value, fallbackValue) {
-    var candidate = String(value || "").trim().toLowerCase();
-    if (candidate === "left" || candidate === "center" || candidate === "right") {
-      return candidate;
-    }
-    return fallbackValue || "left";
   }
 
   function normalizeTabImageTransparency(value, fallbackValue) {
