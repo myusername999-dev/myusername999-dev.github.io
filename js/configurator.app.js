@@ -33,6 +33,12 @@
     hero: {
       title: "We Build Financial Software With Human Clarity",
       subtitle: "Experiment with colors, typography, and layout to shape your homepage before publishing.",
+      titleFontFamily: "",
+      subtitleFontFamily: "",
+      titleAlign: "left",
+      subtitleAlign: "left",
+      titleColor: "#102822",
+      subtitleColor: "#4f6962",
       buttons: [
         {
           label: "Explore Products",
@@ -62,6 +68,8 @@
     layout: {
       logo: { x: 0, y: 0 },
       nav: { x: 0, y: 0 },
+      heroTitle: { x: 0, y: 0 },
+      heroSubtitle: { x: 0, y: 20 },
       hero: { x: 0, y: 0 },
       cta: { x: 0, y: 0 }
     },
@@ -177,6 +185,12 @@
     dom.clearBackground = document.getElementById("clearBackground");
 
     dom.fontFamily = document.getElementById("fontFamily");
+    dom.heroTitleFontFamily = document.getElementById("heroTitleFontFamily");
+    dom.heroSubtitleFontFamily = document.getElementById("heroSubtitleFontFamily");
+    dom.heroTitleAlign = document.getElementById("heroTitleAlign");
+    dom.heroSubtitleAlign = document.getElementById("heroSubtitleAlign");
+    dom.heroTitleColor = document.getElementById("heroTitleColor");
+    dom.heroSubtitleColor = document.getElementById("heroSubtitleColor");
     dom.headingSize = document.getElementById("headingSize");
     dom.bodySize = document.getElementById("bodySize");
     dom.buttonTextSize = document.getElementById("buttonTextSize");
@@ -203,8 +217,10 @@
     dom.logo2Transparency = document.getElementById("logo2Transparency");
     dom.navX = document.getElementById("navX");
     dom.navY = document.getElementById("navY");
-    dom.heroX = document.getElementById("heroX");
-    dom.heroY = document.getElementById("heroY");
+    dom.heroTitleX = document.getElementById("heroTitleX");
+    dom.heroTitleY = document.getElementById("heroTitleY");
+    dom.heroSubtitleX = document.getElementById("heroSubtitleX");
+    dom.heroSubtitleY = document.getElementById("heroSubtitleY");
     dom.ctaX = document.getElementById("ctaX");
     dom.ctaY = document.getElementById("ctaY");
     dom.bgX = document.getElementById("bgX");
@@ -244,6 +260,24 @@
     bindText(dom.fontFamily, function (value) {
       state.theme.fontFamily = value;
     }, "change");
+    bindText(dom.heroTitleFontFamily, function (value) {
+      state.hero.titleFontFamily = value;
+    }, "change");
+    bindText(dom.heroSubtitleFontFamily, function (value) {
+      state.hero.subtitleFontFamily = value;
+    }, "change");
+    bindText(dom.heroTitleAlign, function (value) {
+      state.hero.titleAlign = normalizeTextAlign(value, "left");
+    }, "change");
+    bindText(dom.heroSubtitleAlign, function (value) {
+      state.hero.subtitleAlign = normalizeTextAlign(value, "left");
+    }, "change");
+    bindText(dom.heroTitleColor, function (value) {
+      state.hero.titleColor = value;
+    }, "input");
+    bindText(dom.heroSubtitleColor, function (value) {
+      state.hero.subtitleColor = value;
+    }, "input");
 
     bindNumber(dom.headingSize, function (value) {
       state.theme.headingSize = clamp(value, 32, 120);
@@ -261,6 +295,9 @@
     bindText(dom.textColor, function (value) {
       var previous = state.theme.textColor;
       state.theme.textColor = value;
+      if (state.hero.titleColor === previous) {
+        state.hero.titleColor = value;
+      }
       syncThemeLinkedTabColors("textColor", previous, value);
     }, "input");
     bindText(dom.accentColor, function (value) {
@@ -269,6 +306,9 @@
     bindText(dom.mutedColor, function (value) {
       var previous = state.theme.mutedColor;
       state.theme.mutedColor = value;
+      if (state.hero.subtitleColor === previous) {
+        state.hero.subtitleColor = value;
+      }
       syncThemeLinkedTabColors("mutedColor", previous, value);
     }, "input");
     bindText(dom.surfaceColor, function (value) {
@@ -316,11 +356,17 @@
     bindNumber(dom.navY, function (value) {
       state.layout.nav.y = value;
     });
-    bindNumber(dom.heroX, function (value) {
-      state.layout.hero.x = value;
+    bindNumber(dom.heroTitleX, function (value) {
+      state.layout.heroTitle.x = value;
     });
-    bindNumber(dom.heroY, function (value) {
-      state.layout.hero.y = value;
+    bindNumber(dom.heroTitleY, function (value) {
+      state.layout.heroTitle.y = value;
+    });
+    bindNumber(dom.heroSubtitleX, function (value) {
+      state.layout.heroSubtitle.x = value;
+    });
+    bindNumber(dom.heroSubtitleY, function (value) {
+      state.layout.heroSubtitle.y = value;
     });
     bindNumber(dom.ctaX, function (value) {
       state.layout.cta.x = value;
@@ -633,6 +679,12 @@
     dom.heroSubtitle.value = state.hero.subtitle;
 
     dom.fontFamily.value = state.theme.fontFamily;
+    dom.heroTitleFontFamily.value = state.hero.titleFontFamily;
+    dom.heroSubtitleFontFamily.value = state.hero.subtitleFontFamily;
+    dom.heroTitleAlign.value = state.hero.titleAlign;
+    dom.heroSubtitleAlign.value = state.hero.subtitleAlign;
+    dom.heroTitleColor.value = normalizeHex(state.hero.titleColor, state.theme.textColor);
+    dom.heroSubtitleColor.value = normalizeHex(state.hero.subtitleColor, state.theme.mutedColor);
     dom.headingSize.value = String(state.theme.headingSize);
     dom.bodySize.value = String(state.theme.bodySize);
     dom.buttonTextSize.value = String(state.theme.buttonTextSize);
@@ -659,8 +711,10 @@
     dom.logo2Transparency.value = String(state.brand.logos[1].transparency);
     dom.navX.value = String(state.layout.nav.x);
     dom.navY.value = String(state.layout.nav.y);
-    dom.heroX.value = String(state.layout.hero.x);
-    dom.heroY.value = String(state.layout.hero.y);
+    dom.heroTitleX.value = String(state.layout.heroTitle.x);
+    dom.heroTitleY.value = String(state.layout.heroTitle.y);
+    dom.heroSubtitleX.value = String(state.layout.heroSubtitle.x);
+    dom.heroSubtitleY.value = String(state.layout.heroSubtitle.y);
     dom.ctaX.value = String(state.layout.cta.x);
     dom.ctaY.value = String(state.layout.cta.y);
     dom.bgX.value = String(state.background.x);
@@ -963,8 +1017,10 @@
     dom.logo2Y.value = String(state.brand.logos[1].y);
     dom.navX.value = String(state.layout.nav.x);
     dom.navY.value = String(state.layout.nav.y);
-    dom.heroX.value = String(state.layout.hero.x);
-    dom.heroY.value = String(state.layout.hero.y);
+    dom.heroTitleX.value = String(state.layout.heroTitle.x);
+    dom.heroTitleY.value = String(state.layout.heroTitle.y);
+    dom.heroSubtitleX.value = String(state.layout.heroSubtitle.x);
+    dom.heroSubtitleY.value = String(state.layout.heroSubtitle.y);
     dom.ctaX.value = String(state.layout.cta.x);
     dom.ctaY.value = String(state.layout.cta.y);
   }
@@ -1226,6 +1282,14 @@
       })
       .join("");
 
+    var heroTitleStyle = "color:" + escapeAttr(config.hero.titleColor || config.theme.textColor) + ";text-align:" +
+      escapeAttr(normalizeTextAlign(config.hero.titleAlign, "left")) + ";" +
+      (config.hero.titleFontFamily ? "font-family:'" + escapeAttr(config.hero.titleFontFamily) + "','Segoe UI',sans-serif;" : "");
+
+    var heroSubtitleStyle = "color:" + escapeAttr(config.hero.subtitleColor || config.theme.mutedColor) + ";text-align:" +
+      escapeAttr(normalizeTextAlign(config.hero.subtitleAlign, "left")) + ";" +
+      (config.hero.subtitleFontFamily ? "font-family:'" + escapeAttr(config.hero.subtitleFontFamily) + "','Segoe UI',sans-serif;" : "");
+
     var logos = ensureTwoLogos(config.brand)
       .map(function (logo, index) {
         var label = index === 0 ? config.brand.name : "Logo 2";
@@ -1269,10 +1333,12 @@
       "<nav class=\"home-nav nav-slot\" " + dragAttr("nav", draggable) + transformAttr(config.layout.nav) + ">" + topNavLinks + "</nav>",
       "</header>",
       "<main class=\"hero-wrap\">",
-      "<section class=\"hero-slot\" " + dragAttr("hero", draggable) + transformAttr(config.layout.hero) + ">",
-      "<h1>" + escapeHtml(config.hero.title) + "</h1>",
-      "<p>" + escapeHtml(config.hero.subtitle) + "</p>",
-      "</section>",
+      "<div class=\"hero-title-slot\" " + dragAttr("heroTitle", draggable) + transformAttr(config.layout.heroTitle) + ">",
+      "<h1 style=\"" + heroTitleStyle + "\">" + escapeHtml(config.hero.title) + "</h1>",
+      "</div>",
+      "<div class=\"hero-subtitle-slot\" " + dragAttr("heroSubtitle", draggable) + transformAttr(config.layout.heroSubtitle) + ">",
+      "<p style=\"" + heroSubtitleStyle + "\">" + escapeHtml(config.hero.subtitle) + "</p>",
+      "</div>",
       "<div class=\"cta-slot\" " + dragAttr("cta", draggable) + transformAttr(config.layout.cta) + ">",
       buttonLinks,
       "</div>",
@@ -1591,6 +1657,12 @@
     if (dragKey === "logo-1") {
       return "logo 2";
     }
+    if (dragKey === "heroTitle") {
+      return "hero title";
+    }
+    if (dragKey === "heroSubtitle") {
+      return "hero subtitle";
+    }
     return dragKey;
   }
 
@@ -1612,9 +1684,10 @@
       ".home-tab-selector{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}",
       ".home-tab-selector a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}",
       ".hero-wrap{max-width:1240px;margin:34px auto 0;padding:0 24px 36px}",
-      ".hero-slot{max-width:760px}",
-      ".hero-slot h1{margin:0;line-height:.98;letter-spacing:-.03em;font-size:var(--preview-heading-size);color:var(--preview-text)}",
-      ".hero-slot p{margin:20px 0 0;line-height:1.55;font-size:var(--preview-body-size);color:var(--preview-muted);max-width:60ch}",
+      ".hero-title-slot,.hero-subtitle-slot{max-width:760px}",
+      ".hero-title-slot h1{margin:0;line-height:.98;letter-spacing:-.03em;font-size:var(--preview-heading-size);color:var(--preview-text)}",
+      ".hero-subtitle-slot{margin-top:20px}",
+      ".hero-subtitle-slot p{margin:0;line-height:1.55;font-size:var(--preview-body-size);color:var(--preview-muted);max-width:60ch}",
       ".cta-slot{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}",
       ".cta-slot a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:999px;font-size:var(--preview-button-size)}",
       ".generated-sections{max-width:1240px;margin:0 auto;padding:8px 24px 36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}",
@@ -1622,7 +1695,7 @@
       ".generated-card h3{margin:0;font-size:1.1rem}",
       ".generated-card p{margin:8px 0 0;line-height:1.5;color:var(--preview-muted)}",
       ".site-footer-fixed{position:fixed;left:0;right:0;bottom:0;z-index:999;text-align:left;padding:12px 16px;font-size:.84rem;color:#ffffff;background:transparent}",
-      "@media (max-width:760px){.hero-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}.home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px}}"
+      "@media (max-width:760px){.hero-title-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}.home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px}}"
     ].join("\n");
   }
 
@@ -1645,6 +1718,10 @@
     state.brand.logoFileName = state.brand.logos[0].fileName;
     state.hero.title = String(state.hero.title || "");
     state.hero.subtitle = String(state.hero.subtitle || "");
+    state.hero.titleFontFamily = normalizeFontFamily(state.hero.titleFontFamily);
+    state.hero.subtitleFontFamily = normalizeFontFamily(state.hero.subtitleFontFamily);
+    state.hero.titleAlign = normalizeTextAlign(state.hero.titleAlign, "left");
+    state.hero.subtitleAlign = normalizeTextAlign(state.hero.subtitleAlign, "left");
 
     if (!Array.isArray(state.hero.buttons) || !state.hero.buttons.length) {
       var legacyLabel = String(state.hero.ctaLabel || "Explore Products");
@@ -1683,13 +1760,25 @@
     state.theme.mutedColor = normalizeHex(state.theme.mutedColor, "#4f6962");
     state.theme.surfaceColor = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
     state.theme.buttonTextColor = normalizeHex(state.theme.buttonTextColor, "#ffffff");
+    state.hero.titleColor = normalizeHex(state.hero.titleColor, state.theme.textColor);
+    state.hero.subtitleColor = normalizeHex(state.hero.subtitleColor, state.theme.mutedColor);
 
     state.layout = state.layout || {};
-    ["logo", "nav", "hero", "cta"].forEach(function (key) {
+    ["logo", "nav", "hero", "heroTitle", "heroSubtitle", "cta"].forEach(function (key) {
       state.layout[key] = state.layout[key] || { x: 0, y: 0 };
       state.layout[key].x = parseInt(state.layout[key].x, 10) || 0;
       state.layout[key].y = parseInt(state.layout[key].y, 10) || 0;
     });
+
+    // Keep backward compatibility for old drafts that stored one shared hero offset.
+    if (state.layout.hero && state.layout.heroTitle.x === 0 && state.layout.heroTitle.y === 0) {
+      state.layout.heroTitle.x = state.layout.hero.x;
+      state.layout.heroTitle.y = state.layout.hero.y;
+    }
+    if (state.layout.hero && state.layout.heroSubtitle.x === 0 && state.layout.heroSubtitle.y === 0) {
+      state.layout.heroSubtitle.x = state.layout.hero.x;
+      state.layout.heroSubtitle.y = state.layout.hero.y + 20;
+    }
 
     state.display = state.display || {};
     state.display.tabMode = normalizeTabMode(state.display.tabMode);
@@ -1800,6 +1889,8 @@
     merged.layout = {
       logo: Object.assign({}, merged.layout.logo, incomingLayout.logo || {}),
       nav: Object.assign({}, merged.layout.nav, incomingLayout.nav || {}),
+      heroTitle: Object.assign({}, merged.layout.heroTitle, incomingLayout.heroTitle || incomingLayout.hero || {}),
+      heroSubtitle: Object.assign({}, merged.layout.heroSubtitle, incomingLayout.heroSubtitle || incomingLayout.hero || {}),
       hero: Object.assign({}, merged.layout.hero, incomingLayout.hero || {}),
       cta: Object.assign({}, merged.layout.cta, incomingLayout.cta || {})
     };
@@ -2006,6 +2097,14 @@
       return mode;
     }
     return "top-and-home";
+  }
+
+  function normalizeTextAlign(value, fallbackValue) {
+    var candidate = String(value || "").trim().toLowerCase();
+    if (candidate === "left" || candidate === "center" || candidate === "right") {
+      return candidate;
+    }
+    return fallbackValue || "left";
   }
 
   function normalizeTabImageTransparency(value, fallbackValue) {

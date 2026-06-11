@@ -329,7 +329,8 @@ button.danger {
 }
 
 .nav-slot,
-.hero-slot,
+.hero-title-slot,
+.hero-subtitle-slot,
 .cta-slot {
   position: relative;
   touch-action: none;
@@ -413,11 +414,12 @@ button.danger {
   padding: 0 24px 36px;
 }
 
-.hero-slot {
+.hero-title-slot,
+.hero-subtitle-slot {
   max-width: 760px;
 }
 
-.hero-slot h1 {
+.hero-title-slot h1 {
   margin: 0;
   line-height: .98;
   letter-spacing: -.03em;
@@ -425,8 +427,12 @@ button.danger {
   color: var(--preview-text);
 }
 
-.hero-slot p {
-  margin: 20px 0 0;
+.hero-subtitle-slot {
+  margin-top: 20px;
+}
+
+.hero-subtitle-slot p {
+  margin: 0;
   max-width: 60ch;
   line-height: 1.5;
   font-size: var(--preview-body-size);
@@ -453,7 +459,9 @@ button.danger {
 }
 
 .cta-slot.dragging a,
-.nav-slot.dragging a {
+.nav-slot.dragging a,
+.hero-title-slot.dragging,
+.hero-subtitle-slot.dragging {
   pointer-events: none;
 }
 
