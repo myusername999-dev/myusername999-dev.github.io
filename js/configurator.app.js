@@ -79,6 +79,7 @@
       {
         label: "About",
         sectionId: "about",
+        pageHref: "about.html",
         sectionTitle: "About",
         sectionText: "Describe who you are, what the company stands for, and why your approach is different.",
         sectionFontFamily: "",
@@ -103,6 +104,7 @@
       {
         label: "Products",
         sectionId: "products",
+        pageHref: "products.html",
         sectionTitle: "Products",
         sectionText: "Summarize your core products and the value each one delivers for clients.",
         sectionFontFamily: "",
@@ -127,6 +129,7 @@
       {
         label: "Privacy",
         sectionId: "privacy",
+        pageHref: "privacy.html",
         sectionTitle: "Privacy",
         sectionText: "Explain privacy and compliance commitments in simple language people can trust.",
         sectionFontFamily: "",
@@ -464,6 +467,7 @@
       state.tabs.push({
         label: "New Tab " + nextIndex,
         sectionId: uniqueSectionId("new-tab-" + nextIndex),
+        pageHref: "",
         sectionTitle: "New Section " + nextIndex,
         sectionText: "Add content for this section before publishing.",
         sectionFontFamily: "",
@@ -916,6 +920,7 @@
           "</div>",
           "<label>Label<input type=\"text\" data-field=\"label\" value=\"" + escapeAttr(tab.label) + "\"></label>",
           "<label>Section Id<input type=\"text\" data-field=\"sectionId\" value=\"" + escapeAttr(tab.sectionId) + "\"></label>",
+          "<label>Associated Page (HTML)<input type=\"text\" data-field=\"pageHref\" value=\"" + escapeAttr(tab.pageHref || "") + "\" placeholder=\"about.html\"></label>",
           "<label>Section Title<input type=\"text\" data-field=\"sectionTitle\" value=\"" + escapeAttr(tab.sectionTitle) + "\"></label>",
           "<label>Section Text<textarea rows=\"2\" data-field=\"sectionText\">" + escapeHtml(tab.sectionText) + "</textarea></label>",
           "<label>Section Font Family<select data-field=\"sectionFontFamily\">" + fontOptionsMarkup(tab.sectionFontFamily, true) + "</select></label>",
@@ -953,8 +958,16 @@
       var index = parseInt(row.getAttribute("data-tab-index"), 10);
       var inputs = row.querySelectorAll("input[data-field], textarea[data-field], select[data-field]");
       inputs.forEach(function (input) {
-        var onFieldChange = function () {
+        var onFieldChange = function (event) {
           var field = String(input.getAttribute("data-field") || "");
+
+          // Keep page href typing natural; normalize only when editing is committed.
+          if (field === "pageHref" && event && event.type === "input") {
+            state.tabs[index].pageHref = input.value;
+            saveAndPreview();
+            return;
+          }
+
           state.tabs[index][field] = input.value;
           var valueTargetId = String(input.getAttribute("data-value-id") || "");
           if (valueTargetId) {
@@ -969,6 +982,10 @@
           if (field === "sectionId") {
             state.tabs[index].sectionId = slugify(input.value) || uniqueSectionId("section");
             input.value = state.tabs[index].sectionId;
+          }
+          if (field === "pageHref") {
+            state.tabs[index].pageHref = normalizePageHref(input.value);
+            input.value = state.tabs[index].pageHref;
           }
           saveAndPreview();
         };
@@ -1023,6 +1040,7 @@
               state.tabs.push({
                 label: "Home",
                 sectionId: "home",
+                pageHref: "index.html",
                 sectionTitle: "Home",
                 sectionText: "Describe this section.",
                 sectionFontFamily: "",
@@ -1198,15 +1216,17 @@
 
         var savedAssetsResult = await persistPublishAssets(publishPayload.assets, projectDirectory);
         await writeIndexHtml(projectDirectory, html);
+        var writtenAssociatedPagesCount = await writeAssociatedTabPages(projectDirectory, publishPayload.config);
         localStorage.setItem(LAST_PUBLISHED_KEY, html);
-        setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". index.html and uploaded images were saved." + assetStatusSuffix(savedAssetsResult), false);
+        setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". index.html and " + writtenAssociatedPagesCount + " associated page(s) were saved." + assetStatusSuffix(savedAssetsResult), false);
         return;
       }
 
       downloadFile("index.html", html, "text/html");
       var noFsAssetsResult = await persistPublishAssets(publishPayload.assets);
+      var downloadedAssociatedPagesCount = downloadAssociatedTabPages(publishPayload.config);
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
-      setStatus("Browser folder-write API unavailable. Downloaded index.html and image files for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
+      setStatus("Browser folder-write API unavailable. Downloaded index.html and " + downloadedAssociatedPagesCount + " associated page(s) for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
       return;
     } catch (error) {
       if (error && error.name === "AbortError") {
@@ -1216,8 +1236,9 @@
 
       downloadFile("index.html", html, "text/html");
       var fallbackAssetsResult = await persistPublishAssets(publishPayload.assets);
+      var fallbackAssociatedPagesCount = downloadAssociatedTabPages(publishPayload.config);
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
-      setStatus("Publish fallback used because direct folder write is blocked in this context." + assetStatusSuffix(fallbackAssetsResult), false);
+      setStatus("Publish fallback used because direct folder write is blocked in this context. Downloaded " + fallbackAssociatedPagesCount + " associated page(s)." + assetStatusSuffix(fallbackAssetsResult), false);
     }
   }
 
@@ -1377,7 +1398,7 @@
     var showHomeTabSelector = tabMode === "top-and-home";
     var showTabCards = tabMode === "top-and-home";
     var bgImage = config.background.src
-      ? "style=\"background-image:url('" + escapeAttr(config.background.src) + "');background-position:" +
+      ? "style=\"background-image:url('" + escapeAttr(config.background.src) + "');background-size:115% 115%;background-position:" +
         config.background.x +
         "% " +
         config.background.y +
@@ -1391,15 +1412,10 @@
     var topNavLinks = config.tabs
       .map(function (tab) {
         var id = slugify(tab.sectionId || tab.label || "section");
-        var href = showTabCards ? "#" + id : "#";
+        var linkedPage = normalizePageHref(tab.pageHref);
+        var href = linkedPage || (showTabCards ? "#" + id : "#");
         var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
-        var navStyle = "color:" + escapeAttr(tab.navTextColor || config.theme.textColor) + ";background:" +
-          escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
-          (tab.navFontFamily ? "font-family:'" + escapeAttr(tab.navFontFamily) + "','Segoe UI',sans-serif;" : "") +
-          "font-size:var(--preview-button-size);";
-        if (topTabsTransparent) {
-          navStyle += "background:transparent;border-color:transparent;box-shadow:none;";
-        }
+        var navStyle = buildTabPillStyle(tab, config, topTabsTransparent);
         return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + navStyle + "\">" + escapeHtml(tab.label) + "</a>";
       })
       .join("");
@@ -1407,12 +1423,10 @@
     var homeSelectorLinks = config.tabs
       .map(function (tab) {
         var id = slugify(tab.sectionId || tab.label || "section");
-        var href = showTabCards ? "#" + id : "#";
+        var linkedPage = normalizePageHref(tab.pageHref);
+        var href = linkedPage || (showTabCards ? "#" + id : "#");
         var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
-        var navStyle = "color:" + escapeAttr(tab.navTextColor || config.theme.textColor) + ";background:" +
-          escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
-          (tab.navFontFamily ? "font-family:'" + escapeAttr(tab.navFontFamily) + "','Segoe UI',sans-serif;" : "") +
-          "font-size:var(--preview-button-size);";
+        var navStyle = buildTabPillStyle(tab, config, topTabsTransparent);
         return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + navStyle + "\">" + escapeHtml(tab.label) + "</a>";
       })
       .join("");
@@ -1626,6 +1640,93 @@
     var writable = await indexHandle.createWritable();
     await writable.write(html);
     await writable.close();
+  }
+
+  async function writeAssociatedTabPages(projectDirectory, config) {
+    var pages = getAssociatedTabPages(config);
+    for (var i = 0; i < pages.length; i += 1) {
+      var page = pages[i];
+      var fileHandle = await projectDirectory.getFileHandle(page.fileName, { create: true });
+      var writable = await fileHandle.createWritable();
+      await writable.write(page.html);
+      await writable.close();
+    }
+    return pages.length;
+  }
+
+  function downloadAssociatedTabPages(config) {
+    var pages = getAssociatedTabPages(config);
+    pages.forEach(function (page) {
+      downloadFile(page.fileName, page.html, "text/html");
+    });
+    return pages.length;
+  }
+
+  function getAssociatedTabPages(config) {
+    var pagesByFile = {};
+
+    function addPageFromHref(href, titleFallback) {
+      var normalized = normalizePageHref(href);
+      if (!normalized || /^(https?:|mailto:|tel:|#)/i.test(normalized)) {
+        return;
+      }
+
+      var clean = normalized.split("?")[0].split("#")[0].trim();
+      if (!clean) {
+        return;
+      }
+
+      var lower = clean.toLowerCase();
+      if (lower === "index.html" || lower.indexOf("/") >= 0) {
+        return;
+      }
+
+      if (!pagesByFile[clean]) {
+        pagesByFile[clean] = buildAssociatedTabPageHtml({
+          sectionTitle: titleFallback,
+          label: titleFallback
+        }, config.brand && config.brand.name ? config.brand.name : "VinATech");
+      }
+    }
+
+    config.tabs.forEach(function (tab) {
+      addPageFromHref(tab.pageHref, tab.sectionTitle || tab.label || "Page");
+    });
+
+    if (config.hero && Array.isArray(config.hero.buttons)) {
+      config.hero.buttons.forEach(function (button, index) {
+        var buttonTitle = String((button && button.label) || ("Page " + (index + 1)));
+        addPageFromHref(button && button.href, buttonTitle);
+      });
+    }
+
+    return Object.keys(pagesByFile).map(function (fileName) {
+      return {
+        fileName: fileName,
+        html: pagesByFile[fileName]
+      };
+    });
+  }
+
+  function buildAssociatedTabPageHtml(tab, brandName) {
+    var title = String(tab.sectionTitle || tab.label || "Page");
+    var site = String(brandName || "VinATech");
+
+    return [
+      "<!doctype html>",
+      "<html lang=\"en\">",
+      "<head>",
+      "  <meta charset=\"utf-8\">",
+      "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+      "  <title>" + escapeHtml(title) + " - " + escapeHtml(site) + "</title>",
+      "  <link rel=\"stylesheet\" href=\"css/styles.css\">",
+      "</head>",
+      "<body class=\"under-construction-page\">",
+      "  <main class=\"construction-overlay\" aria-label=\"This page is under construction\"></main>",
+      "  <footer class=\"site-footer-fixed\">&copy;VINATECH 2026. All rights reserved.</footer>",
+      "</body>",
+      "</html>"
+    ].join("\n");
   }
 
   async function resolveProjectDirectoryHandle() {
@@ -1965,6 +2066,7 @@
         return {
           label: label,
           sectionId: sectionId || uniqueSectionId("section"),
+          pageHref: normalizePageHref(tab.pageHref),
           sectionTitle: String(tab.sectionTitle || label),
           sectionText: String(tab.sectionText || "Add section content here."),
           sectionFontFamily: normalizeFontFamily(tab.sectionFontFamily),
@@ -2060,6 +2162,7 @@
         return {
           label: String(tab.label || "New Tab"),
           sectionId: String(tab.sectionId || slugify(tab.label || "new-tab")),
+          pageHref: String(tab.pageHref || ""),
           sectionTitle: String(tab.sectionTitle || tab.label || "New Section"),
           sectionText: String(tab.sectionText || "Add section content here."),
           sectionFontFamily: String(tab.sectionFontFamily || ""),
@@ -2123,6 +2226,36 @@
       return "";
     }
     return FONT_FAMILIES.indexOf(candidate) >= 0 ? candidate : "";
+  }
+
+  function normalizePageHref(value) {
+    var href = String(value || "").trim();
+    if (!href) {
+      return "";
+    }
+    if (/^(https?:|mailto:|tel:|#)/i.test(href)) {
+      return href;
+    }
+    href = href.replace(/\\+/g, "/");
+    if (!/\.html?$/i.test(href)) {
+      href += ".html";
+    }
+    return href;
+  }
+
+  function buildTabPillStyle(tab, config, transparentMode) {
+    var style = "color:" + escapeAttr(tab.navTextColor || config.theme.textColor) + ";" +
+      "background-color:" + escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
+      "background-image:none;" +
+      "border-color:" + escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
+      (tab.navFontFamily ? "font-family:'" + escapeAttr(tab.navFontFamily) + "','Segoe UI',sans-serif;" : "") +
+      "font-size:var(--preview-button-size);";
+
+    if (transparentMode) {
+      style += "background-color:transparent !important;background-image:none !important;border-color:transparent !important;box-shadow:none !important;";
+    }
+
+    return style;
   }
 
   function normalizeTextAlign(value) {

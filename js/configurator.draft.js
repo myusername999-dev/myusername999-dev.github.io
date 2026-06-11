@@ -27,14 +27,14 @@ window.__CONFIGURATOR_DRAFT__ = {
     ]
   },
   "hero": {
-    "title": "Android  Software, Digital Solutions",
-    "subtitle": "Inspire. Win. Promote.",
+    "title": "Intelligence, Scale and Digital Solutions",
+    "subtitle": "Inspire. Innovate. Ambition.",
     "titleFontFamily": "Sora",
     "subtitleFontFamily": "Manrope",
-    "titleAlign": "left",
+    "titleAlign": "center",
     "subtitleAlign": "center",
     "titleColor": "#f7fcfb",
-    "subtitleColor": "#d1e0dc",
+    "subtitleColor": "#ebefee",
     "buttons": [
       {
         "label": "Solutions",
@@ -43,27 +43,35 @@ window.__CONFIGURATOR_DRAFT__ = {
       {
         "label": "Products",
         "href": "products.html"
+      },
+      {
+        "label": "Support",
+        "href": "support.html"
+      },
+      {
+        "label": "About",
+        "href": "about.html"
       }
     ]
   },
   "theme": {
     "fontFamily": "Sora",
-    "headingSize": 79,
-    "bodySize": 24,
+    "headingSize": 73,
+    "bodySize": 23,
     "buttonTextSize": 16,
-    "bgColor": "#0f100f",
+    "bgColor": "#011301",
     "textColor": "#dbe6e6",
-    "accentColor": "#6b9e97",
-    "mutedColor": "#d3dedb",
-    "surfaceColor": "#c2a8a8",
+    "accentColor": "#011313",
+    "mutedColor": "#87a69e",
+    "surfaceColor": "#9e5757",
     "buttonTextColor": "#e0d1d1"
   },
   "background": {
     "src": "images/nv-photo.png",
     "fileName": "",
     "transparency": 0,
-    "x": 50,
-    "y": 50
+    "x": 0,
+    "y": 17
   },
   "layout": {
     "logo": {
@@ -79,16 +87,16 @@ window.__CONFIGURATOR_DRAFT__ = {
       "y": 0
     },
     "heroTitle": {
-      "x": 278,
-      "y": 35
+      "x": 229,
+      "y": 27
     },
     "heroSubtitle": {
-      "x": 249,
-      "y": 22
+      "x": 234,
+      "y": 19
     },
     "cta": {
-      "x": 621,
-      "y": -297
+      "x": 572,
+      "y": -289
     }
   },
   "display": {
@@ -98,8 +106,83 @@ window.__CONFIGURATOR_DRAFT__ = {
   },
   "tabs": [
     {
-      "label": "Privacy",
+      "label": "HOME",
+      "sectionId": "home",
+      "pageHref": "index.html",
+      "sectionTitle": "home",
+      "sectionText": "Add content for this section before publishing.",
+      "sectionFontFamily": "",
+      "sectionTitleColor": "#4c5757",
+      "sectionTextColor": "#0b322a",
+      "sectionBackgroundColor": "#605252",
+      "navFontFamily": "Sora",
+      "navTextColor": "#0d2b2b",
+      "navBackgroundColor": "#9e5757",
+      "sectionBackgroundSrc": "",
+      "sectionBackgroundFileName": "",
+      "sectionBackgroundTransparency": 36,
+      "galleryLayout": "horizontal",
+      "galleryImageTransparency": 0,
+      "galleryImages": [
+        {
+          "src": "",
+          "fileName": ""
+        },
+        {
+          "src": "",
+          "fileName": ""
+        },
+        {
+          "src": "",
+          "fileName": ""
+        },
+        {
+          "src": "",
+          "fileName": ""
+        }
+      ]
+    },
+    {
+      "label": "NEWS",
+      "sectionId": "news",
+      "pageHref": "news.html",
+      "sectionTitle": "news",
+      "sectionText": "Add section content here.",
+      "sectionFontFamily": "",
+      "sectionTitleColor": "#102822",
+      "sectionTextColor": "#4f6962",
+      "sectionBackgroundColor": "#e5f0ea",
+      "navFontFamily": "",
+      "navTextColor": "#102822",
+      "navBackgroundColor": "#9e5757",
+      "sectionBackgroundSrc": "",
+      "sectionBackgroundFileName": "",
+      "sectionBackgroundTransparency": 36,
+      "galleryLayout": "horizontal",
+      "galleryImageTransparency": 0,
+      "galleryImages": [
+        {
+          "src": "",
+          "fileName": ""
+        },
+        {
+          "src": "",
+          "fileName": ""
+        },
+        {
+          "src": "",
+          "fileName": ""
+        },
+        {
+          "src": "",
+          "fileName": ""
+        }
+      ]
+    },
+    {
+      "label": "PRIVACY POLICY",
       "sectionId": "privacy",
+      "pageHref": "privacy.html",
       "sectionTitle": "Privacy",
       "sectionText": "Add section content here.",
       "sectionFontFamily": "",
@@ -134,9 +217,10 @@ window.__CONFIGURATOR_DRAFT__ = {
       ]
     },
     {
-      "label": "About",
-      "sectionId": "about",
-      "sectionTitle": "About",
+      "label": "CONTACT",
+      "sectionId": "contact",
+      "pageHref": "about.html",
+      "sectionTitle": "contact",
       "sectionText": "Add section content here.",
       "sectionFontFamily": "",
       "sectionTitleColor": "#102822",
@@ -144,43 +228,7 @@ window.__CONFIGURATOR_DRAFT__ = {
       "sectionBackgroundColor": "#e5f0ea",
       "navFontFamily": "",
       "navTextColor": "#102822",
-      "navBackgroundColor": "#c2a8a8",
-      "sectionBackgroundSrc": "",
-      "sectionBackgroundFileName": "",
-      "sectionBackgroundTransparency": 36,
-      "galleryLayout": "horizontal",
-      "galleryImageTransparency": 0,
-      "galleryImages": [
-        {
-          "src": "",
-          "fileName": ""
-        },
-        {
-          "src": "",
-          "fileName": ""
-        },
-        {
-          "src": "",
-          "fileName": ""
-        },
-        {
-          "src": "",
-          "fileName": ""
-        }
-      ]
-    },
-    {
-      "label": "Test",
-      "sectionId": "test",
-      "sectionTitle": "Test",
-      "sectionText": "Add section content here.",
-      "sectionFontFamily": "",
-      "sectionTitleColor": "#102822",
-      "sectionTextColor": "#4f6962",
-      "sectionBackgroundColor": "#e5f0ea",
-      "navFontFamily": "",
-      "navTextColor": "#102822",
-      "navBackgroundColor": "#c2a8a8",
+      "navBackgroundColor": "#9e5757",
       "sectionBackgroundSrc": "",
       "sectionBackgroundFileName": "",
       "sectionBackgroundTransparency": 36,
