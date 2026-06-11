@@ -1685,7 +1685,7 @@
         pagesByFile[clean] = buildAssociatedTabPageHtml({
           sectionTitle: titleFallback,
           label: titleFallback
-        }, config.brand && config.brand.name ? config.brand.name : "VinATech");
+        }, config);
       }
     }
 
@@ -1708,9 +1708,14 @@
     });
   }
 
-  function buildAssociatedTabPageHtml(tab, brandName) {
+  function buildAssociatedTabPageHtml(tab, config) {
+    var pageConfig = deepClone(config);
     var title = String(tab.sectionTitle || tab.label || "Page");
-    var site = String(brandName || "VinATech");
+    var site = String((config && config.brand && config.brand.name) || "VinATech");
+    var subtitle = String((tab && tab.sectionText) || "This page is under construction.");
+
+    pageConfig.hero.title = title;
+    pageConfig.hero.subtitle = subtitle;
 
     return [
       "<!doctype html>",
@@ -1719,11 +1724,15 @@
       "  <meta charset=\"utf-8\">",
       "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
       "  <title>" + escapeHtml(title) + " - " + escapeHtml(site) + "</title>",
-      "  <link rel=\"stylesheet\" href=\"css/styles.css\">",
+      "  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">",
+      "  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>",
+      "  <link href=\"" + getAllFontsHref() + "\" rel=\"stylesheet\">",
+      "  <style>",
+      buildPublishedStyles(pageConfig),
+      "  </style>",
       "</head>",
-      "<body class=\"under-construction-page\">",
-      "  <main class=\"construction-overlay\" aria-label=\"This page is under construction\"></main>",
-      "  <footer class=\"site-footer-fixed\">&copy;VINATECH 2026. All rights reserved.</footer>",
+      "<body>",
+      buildHomeMarkup(pageConfig, false),
       "</body>",
       "</html>"
     ].join("\n");
@@ -1945,7 +1954,7 @@
       ".generated-card{border-radius:14px;padding:18px;border:1px solid color-mix(in srgb,var(--preview-text) 22%,#fff 78%);background:color-mix(in srgb,var(--preview-surface) 76%,#fff 24%)}",
       ".generated-card h3{margin:0;font-size:1.1rem}",
       ".generated-card p{margin:8px 0 0;line-height:1.5;color:var(--preview-muted)}",
-      ".site-footer-fixed{position:fixed;left:0;right:0;bottom:0;z-index:999;text-align:center;padding:12px 16px;font-size:.84rem;color:#ffffff;background:transparent}",
+      ".site-footer-fixed{position:fixed;left:0;right:0;bottom:0;z-index:999;text-align:left;padding:12px 16px;font-size:.84rem;color:#ffffff;background:transparent;text-shadow:0 1px 2px rgba(0,0,0,.55)}",
       "@media (max-width:760px){.hero-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}.home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px}}"
     ].join("\n");
   }
