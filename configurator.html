@@ -18,6 +18,19 @@
         <p class="subtitle">Experiment with style, layout, and content before publishing.</p>
       </header>
 
+      <section class="panel page-mode-panel">
+        <h2>Page Mode</h2>
+        <label>Editor Mode
+          <select id="pageMode">
+            <option value="home">Home</option>
+            <option value="privacy">Privacy</option>
+          </select>
+        </label>
+        <p class="hint">Switch between homepage controls and privacy page controls.</p>
+      </section>
+
+      <div id="homeControls">
+
       <section class="panel">
         <h2>Branding</h2>
         <p class="hint">Publish writes uploaded images into images/ in your selected project folder.</p>
@@ -237,6 +250,52 @@
         <p class="hint">Each tab can use custom font and colors for its card and nav pill.</p>
         <div id="tabsEditor" class="tabs-editor"></div>
       </section>
+      </div>
+
+      <div id="privacyControls" class="page-mode-hidden">
+        <section class="panel">
+          <h2>Privacy Content</h2>
+          <label>Page Title<input id="privacyTitle" type="text"></label>
+          <label>Intro Text<textarea id="privacyIntro" rows="3"></textarea></label>
+          <label>Scope And Principles Text<textarea id="privacyScopeText" rows="4"></textarea></label>
+          <label>Data We Process Text<textarea id="privacyDataText" rows="4"></textarea></label>
+          <label>No Cookies Text<textarea id="privacyNoCookiesText" rows="3"></textarea></label>
+          <label>No Marketing Text<textarea id="privacyNoMarketingText" rows="3"></textarea></label>
+          <label>Enforcement Text<textarea id="privacyEnforcementText" rows="4"></textarea></label>
+        </section>
+
+        <section class="panel">
+          <h2>Privacy Colors</h2>
+          <div class="color-grid">
+            <label>Page Background<input id="privacyBgColor" type="color"></label>
+            <label>Text<input id="privacyTextColor" type="color"></label>
+            <label>Muted Text<input id="privacyMutedColor" type="color"></label>
+            <label>Divider<input id="privacyLineColor" type="color"></label>
+            <label>Accent<input id="privacyAccentColor" type="color"></label>
+            <label>Card Background<input id="privacyCardColor" type="color"></label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Privacy Spacing</h2>
+          <label>Top Band Height (px)
+            <input id="privacyTopBandHeight" type="range" min="48" max="120" step="1">
+            <span id="privacyTopBandHeightValue" class="value-pill"></span>
+          </label>
+          <label>Hero Top Padding (px)
+            <input id="privacyHeroTopPadding" type="range" min="24" max="96" step="1">
+            <span id="privacyHeroTopPaddingValue" class="value-pill"></span>
+          </label>
+          <label>Card Padding (px)
+            <input id="privacyCardPadding" type="range" min="16" max="40" step="1">
+            <span id="privacyCardPaddingValue" class="value-pill"></span>
+          </label>
+          <label>Layout Gap (px)
+            <input id="privacyLayoutGap" type="range" min="12" max="40" step="1">
+            <span id="privacyLayoutGapValue" class="value-pill"></span>
+          </label>
+        </section>
+      </div>
 
       <section class="panel actions">
         <label class="approval"><input id="approval" type="checkbox"> I approve this preview for publish</label>
@@ -264,6 +323,12 @@
           <h2>Interactive Homepage Preview</h2>
         </div>
         <div class="preview-actions">
+          <label>Preview Page
+            <select id="previewPage">
+              <option value="home">HOME (index.html)</option>
+            </select>
+          </label>
+          <label class="preview-mobile-toggle"><input id="previewMobileToggle" type="checkbox"> Mobile Preview</label>
           <label>Preview Device
             <select id="previewDevice">
               <option value="desktop">Desktop</option>

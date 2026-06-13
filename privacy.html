@@ -3,52 +3,493 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Privacy - VinATech</title>
+  <title>Privacy Policy - VinATech</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Sora:wght@400;600;700;800&family=Manrope:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Outfit:wght@400;500;700;800&family=DM+Sans:wght@400;500;700;900&family=Archivo:wght@400;500;700;800&family=Karla:wght@400;500;700;800&family=Merriweather:wght@400;700;900&family=Playfair+Display:wght@400;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{background:#011301;color:#dbe6e6;padding-bottom:44px}
-.home-root{min-height:100vh;position:relative;overflow:hidden;isolation:isolate;background:var(--preview-bg);color:var(--preview-text)}
-.home-bg{position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;opacity:var(--preview-bg-opacity,.68);z-index:-2}
-.home-overlay{position:absolute;inset:0;z-index:-1}
-.home-header{max-width:1240px;margin:0 auto;padding:24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-.brand-logos{position:relative;min-width:280px;min-height:96px;flex:1 1 280px}
-.logo-slot{position:absolute;left:0;top:0;display:flex;align-items:center;justify-content:center;transform-origin:center;touch-action:none}
-.logo-slot img{width:100%;height:100%;object-fit:contain;display:block}
-.logo-fallback{font-size:.78rem;font-weight:700;padding:8px 10px;border-radius:10px;border:1px dashed color-mix(in srgb,var(--preview-text) 28%,#fff 72%);background:color-mix(in srgb,var(--preview-surface) 86%,#fff 14%);text-align:center}
-.home-nav{display:flex;flex-wrap:wrap;gap:8px}
-.home-root.nav-open .home-nav{display:flex}
-.home-nav a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}
-.hamburger{display:none;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid color-mix(in srgb,var(--preview-text) 20%,#fff 80%);border-radius:10px;background:color-mix(in srgb,#fff 92%,var(--preview-surface) 8%);color:var(--preview-text)}
-.hamburger .bar,.hamburger .bar::before,.hamburger .bar::after{display:block;width:18px;height:2px;border-radius:2px;background:currentColor;transition:transform .18s ease,opacity .18s ease}
-.hamburger .bar{position:relative}
-.hamburger .bar::before,.hamburger .bar::after{content:'';position:absolute;left:0}
-.hamburger .bar::before{top:-6px}
-.hamburger .bar::after{top:6px}
-.hamburger[aria-expanded='true'] .bar{transform:rotate(45deg)}
-.hamburger[aria-expanded='true'] .bar::before{transform:rotate(90deg) translateX(6px)}
-.hamburger[aria-expanded='true'] .bar::after{opacity:0}
-.home-tab-selector{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}
-.home-tab-selector a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}
-.hero-wrap{max-width:1240px;margin:34px auto 0;padding:0 24px 36px}
-.hero-title-slot,.hero-subtitle-slot{max-width:760px;touch-action:none;cursor:grab}
-.hero-title-slot h1{margin:0;line-height:.98;letter-spacing:-.03em;font-size:var(--preview-heading-size)}
-.hero-subtitle-slot{margin-top:20px}
-.hero-subtitle-slot p{margin:0;line-height:1.55;font-size:var(--preview-body-size);max-width:60ch}
-.cta-slot{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
-.cta-slot a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:999px;font-size:var(--preview-button-size)}
-.generated-sections{max-width:1240px;margin:0 auto;padding:8px 24px 36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-.generated-card{border-radius:14px;padding:18px;border:1px solid color-mix(in srgb,var(--preview-text) 22%,#fff 78%);background:color-mix(in srgb,var(--preview-surface) 76%,#fff 24%)}
-.generated-card h3{margin:0;font-size:1.1rem}
-.generated-card p{margin:8px 0 0;line-height:1.5;color:var(--preview-muted)}
-.site-footer-fixed{position:fixed;left:0;right:0;bottom:0;z-index:999;text-align:left;padding:12px 16px;font-size:.84rem;color:#ffffff;background:transparent;text-shadow:0 1px 2px rgba(0,0,0,.55)}
-@media (max-width:760px){.hero-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}.home-tab-selector{display:none}.cta-slot{display:none !important}.home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px}.home-header{position:relative;align-items:flex-start;}.hamburger{display:inline-flex;}.home-nav{position:absolute;top:calc(100% - 8px);right:16px;min-width:180px;flex-direction:column;background:color-mix(in srgb,#fff 92%,var(--preview-surface) 8%);border:1px solid color-mix(in srgb,var(--preview-text) 15%,#fff 85%);border-radius:12px;padding:10px;box-shadow:0 10px 28px rgba(13,23,19,.2);display:none;transform:translate(var(--mobile-nav-x),var(--mobile-nav-y)) !important;z-index:20;}.hero-title-slot{transform:translate(var(--mobile-hero-title-x),var(--mobile-hero-title-y)) !important;}.hero-subtitle-slot{transform:translate(var(--mobile-hero-subtitle-x),var(--mobile-hero-subtitle-y)) !important;}.cta-slot{transform:translate(var(--mobile-cta-x),var(--mobile-cta-y)) !important;}}
+    :root {
+      --page-bg: #f8fbfa;
+      --text: #18322b;
+      --muted: #5a736c;
+      --line: #dce6e1;
+      --brand: #0f786b;
+      --brand-soft: #edf6f3;
+      --top-band: linear-gradient(90deg, #0f786b 0%, #17897b 54%, #58b2a4 100%);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--page-bg);
+      line-height: 1.58;
+    }
+
+    .top-band {
+      height: 76px;
+      background: var(--top-band);
+    }
+
+    .site-header {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 220px;
+    }
+
+    .logo-chip {
+      width: 60px;
+      height: 60px;
+      border: 1px dashed #9ebdb5;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #2f6459;
+      background: #f5faf8;
+    }
+
+    .brand-name {
+      margin: 0;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .top-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .top-nav a {
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: .9rem;
+      font-weight: 600;
+      background: #fff;
+    }
+
+    .top-nav a.current {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+    }
+
+    .hero {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 50px 24px 26px;
+    }
+
+    .eyebrow {
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-size: .75rem;
+      color: #35655a;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 12px 0 8px;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: clamp(1.9rem, 3.8vw, 2.8rem);
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 78ch;
+      color: var(--muted);
+    }
+
+    .policy-layout {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 6px 24px 48px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 26px;
+    }
+
+    .policy-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 26px;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(14, 41, 34, .04);
+    }
+
+    .policy-card + .policy-card {
+      margin-top: 16px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 1.14rem;
+      line-height: 1.25;
+    }
+
+    h3 {
+      margin: 20px 0 8px;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 1rem;
+    }
+
+    p { margin: 0 0 10px; }
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    li { margin: 0 0 8px; }
+
+    .policy-note {
+      border-left: 4px solid var(--brand);
+      background: #f3f9f7;
+      padding: 12px 14px;
+      border-radius: 8px;
+      color: #254e45;
+      margin-top: 14px;
+      font-size: .95rem;
+    }
+
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      background: #ffffff;
+      position: sticky;
+      top: 20px;
+      align-self: start;
+      box-shadow: 0 2px 10px rgba(14, 41, 34, .04);
+    }
+
+    .toc h2 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .toc a {
+      display: block;
+      text-decoration: none;
+      color: #1f4f44;
+      font-size: .92rem;
+      padding: 6px 0;
+    }
+
+    .toc a:hover { text-decoration: underline; }
+
+    .site-footer {
+      margin-top: 20px;
+      border-top: 1px solid var(--line);
+      background: #f2f7f5;
+    }
+
+    .footer-band {
+      height: 52px;
+      background: var(--top-band);
+    }
+
+    .footer-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 20px 24px 24px;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .footer-logos {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer-logo-label {
+      width: 72px;
+      height: 72px;
+      border: 1px dashed #9ebdb5;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #2a5d52;
+      background: #f9fcfb;
+    }
+
+    .footer-links h3,
+    .footer-buttons h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: .95rem;
+      color: #2b5a50;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .footer-links-list,
+    .footer-buttons-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .footer-links-list a,
+    .footer-buttons-list a {
+      text-decoration: none;
+      border-radius: 999px;
+      font-size: .9rem;
+      font-weight: 600;
+      padding: 8px 12px;
+    }
+
+    .footer-links-list a {
+      border: 1px solid #cedfd9;
+      color: #1f4f44;
+      background: #ffffff;
+    }
+
+    .footer-buttons-list a {
+      border: 1px solid #177d70;
+      color: #ffffff;
+      background: #177d70;
+    }
+
+    .footer-bottom {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px 18px;
+      color: #49685f;
+      font-size: .9rem;
+    }
+
+    @media (max-width: 980px) {
+      .policy-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .footer-inner {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .site-header,
+      .hero,
+      .policy-layout,
+      .footer-inner,
+      .footer-bottom {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .top-band { height: 64px; }
+      .footer-band { height: 42px; }
+      .logo-chip { width: 52px; height: 52px; }
+      .footer-logo-label { width: 62px; height: 62px; }
+      .policy-card { padding: 20px; }
+    }
   </style>
 </head>
 <body>
-<div class="home-root" style="--preview-bg:#011301;--preview-text:#dbe6e6;--preview-accent:#011313;--preview-muted:#87a69e;--preview-surface:#9e5757;--preview-bg-opacity:1;--preview-button-text:#e0d1d1;--preview-button-size:16px;--preview-heading-size:59px;--preview-body-size:20px;--mobile-nav-x:0px;--mobile-nav-y:0px;--mobile-hero-title-x:0px;--mobile-hero-title-y:0px;--mobile-hero-subtitle-x:0px;--mobile-hero-subtitle-y:0px;--mobile-cta-x:0px;--mobile-cta-y:0px;font-family:'Sora','Segoe UI',sans-serif;"><div class="home-bg" style="background-image:url('images/nv-photo.png');background-size:115% 115%;background-position:0% 17%;"></div><div class="home-overlay" style="background:linear-gradient(160deg, color-mix(in srgb, #9e5757 86%, #ffffff 14%) 0%, transparent 70%);"></div><header class="home-header"><div class="brand-logos"><div class="logo-slot" style="width:72px;height:72px;opacity:1;transform:translate(4px,17px) rotate(0deg);"><span class="logo-fallback">VinATech</span></div><div class="logo-slot" style="width:72px;height:72px;opacity:1;transform:translate(92px,12px) rotate(0deg);"><span class="logo-fallback">Logo 2</span></div></div><button class="hamburger" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav"><span class="bar"></span></button><nav id="site-nav" class="home-nav nav-slot" style="transform:translate(4px,-40px);"><a href="index.html" style="color:#0d2b2b;background-color:#9e5757;background-image:none;border-color:#9e5757;font-family:'Sora','Segoe UI',sans-serif;font-size:var(--preview-button-size);background-color:transparent !important;background-image:none !important;border-color:transparent !important;box-shadow:none !important;">HOME</a><a href="news.html" style="color:#102822;background-color:#9e5757;background-image:none;border-color:#9e5757;font-size:var(--preview-button-size);background-color:transparent !important;background-image:none !important;border-color:transparent !important;box-shadow:none !important;">NEWS</a><a href="privacy.html" style="color:#102822;background-color:#39845b;background-image:none;border-color:#39845b;font-size:var(--preview-button-size);background-color:transparent !important;background-image:none !important;border-color:transparent !important;box-shadow:none !important;">PRIVACY POLICY</a><a href="about.html" style="color:#102822;background-color:#9e5757;background-image:none;border-color:#9e5757;font-size:var(--preview-button-size);background-color:transparent !important;background-image:none !important;border-color:transparent !important;box-shadow:none !important;">CONTACT</a></nav></header><main class="hero-wrap"><section class="hero-title-slot"  style="transform:translate(229px,27px);text-align:center;font-family:'Sora','Segoe UI',sans-serif;"><h1 style="color:#f7fcfb;">Privacy</h1></section><section class="hero-subtitle-slot"  style="transform:translate(234px,19px);text-align:center;font-family:'Manrope','Segoe UI',sans-serif;"><p style="color:#ebefee;">This page is under construction.</p></section><div class="cta-slot" style="transform:translate(572px,-289px);"><a href="solutions.html" style="background:#011313;color:#e0d1d1;font-size:var(--preview-button-size);background:transparent;border-color:transparent;box-shadow:none;">Solutions</a><a href="products.html" style="background:#011313;color:#e0d1d1;font-size:var(--preview-button-size);background:transparent;border-color:transparent;box-shadow:none;">Products</a><a href="support.html" style="background:#011313;color:#e0d1d1;font-size:var(--preview-button-size);background:transparent;border-color:transparent;box-shadow:none;">Support</a><a href="about.html" style="background:#011313;color:#e0d1d1;font-size:var(--preview-button-size);background:transparent;border-color:transparent;box-shadow:none;">About</a></div></main><footer class="site-footer-fixed">&copy;VINATECH 2026. All rights reserved.</footer></div>
+  <div class="top-band" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="brand-group">
+      <span class="logo-chip">VINATECH</span>
+      <span class="logo-chip">LOGO 2</span>
+      <p class="brand-name">VINATECH Limited</p>
+    </div>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="index.html">HOME</a>
+      <a href="news.html">NEWS</a>
+      <a href="privacy.html" class="current">PRIVACY POLICY</a>
+      <a href="about.html">CONTACT</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Privacy And Data Protection</p>
+      <h1>Privacy Policy</h1>
+      <p>
+        VINATECH Limited is committed to lawful, fair, and transparent handling of personal information.
+        This policy explains what data we process, why we process it, and how we protect it.
+      </p>
+    </section>
+
+    <div class="policy-layout">
+      <div>
+        <section id="scope" class="policy-card">
+          <h2>1. Scope And Principles</h2>
+          <p>
+            This policy applies to VINATECH Limited websites, digital services, and business communication channels.
+            We process personal data only where it is relevant to providing our services, supporting customers,
+            protecting security, or complying with legal obligations.
+          </p>
+          <p>
+            We align our practices with key privacy principles reflected in UK GDPR and the Data Protection Act 2018,
+            including purpose limitation, data minimization, accuracy, storage limitation, and confidentiality.
+          </p>
+        </section>
+
+        <section id="data" class="policy-card">
+          <h2>2. Data We Process</h2>
+          <p>Depending on your interaction with us, we may process:</p>
+          <ul>
+            <li>Identity and contact details you submit (for example name, business email, role, company).</li>
+            <li>Service-related communications and support records.</li>
+            <li>Technical event logs required for security, fault analysis, and service continuity.</li>
+          </ul>
+
+          <h3>No Cookies Collected</h3>
+          <p>
+            VINATECH Limited does not use analytics cookies, marketing cookies, or social media tracking cookies on this website.
+            We do not deploy cookie banners for profiling because no such cookies are collected.
+          </p>
+
+          <h3>No Marketing Profiling</h3>
+          <p>
+            We do not build advertising profiles and we do not sell personal data to third parties.
+            Where informational emails are required for active service relationships, they are limited to operational communications.
+          </p>
+        </section>
+
+        <section id="use" class="policy-card">
+          <h2>3. How We Use Information</h2>
+          <ul>
+            <li>To respond to enquiries and deliver requested services.</li>
+            <li>To provide support and maintain platform reliability.</li>
+            <li>To secure systems and investigate misuse or abuse.</li>
+            <li>To comply with regulatory, contractual, and legal duties.</li>
+          </ul>
+        </section>
+
+        <section id="enforcement" class="policy-card">
+          <h2>4. Enforcement And Data Protection Controls</h2>
+          <p>
+            VINATECH Limited applies a structured compliance model informed by public policy approaches from Google Play Developer Content Policy
+            (privacy, deception prevention, responsible data handling, and clear user disclosures)
+            and by data protection governance themes described by the Scottish Judiciary guidance on privacy and data protection.
+          </p>
+          <ul>
+            <li>Periodic policy reviews and internal audits of data processing activities.</li>
+            <li>Role-based access controls and least-privilege data access.</li>
+            <li>Documented incident response and escalation procedures.</li>
+            <li>Corrective action workflow for potential policy breaches, including remediation and recordkeeping.</li>
+            <li>Cooperation with supervisory or competent authorities where legally required.</li>
+          </ul>
+          <div class="policy-note">
+            If you believe your data has been handled in a way that is inconsistent with this policy,
+            contact VINATECH Limited using the support channels listed on this website and we will investigate promptly.
+          </div>
+        </section>
+
+        <section id="rights" class="policy-card">
+          <h2>5. Your Rights</h2>
+          <p>
+            Subject to applicable law, you may request access to personal data, correction of inaccurate data,
+            restriction of processing, erasure where lawful, and information about how your data is used.
+          </p>
+          <p>
+            Requests are reviewed with attention to legal obligations, security requirements, and any applicable exemptions.
+          </p>
+        </section>
+
+        <section id="retention" class="policy-card">
+          <h2>6. Retention, Security, And Updates</h2>
+          <p>
+            We retain personal information only for as long as required by legitimate business purposes or legal obligations.
+            Appropriate technical and organizational safeguards are applied to protect confidentiality and integrity.
+          </p>
+          <p>
+            This policy may be updated from time to time. Material changes will be published on this page.
+          </p>
+          <p><strong>Last updated:</strong> 13 June 2026</p>
+        </section>
+      </div>
+
+      <aside class="toc" aria-label="On this page">
+        <h2>On This Page</h2>
+        <a href="#scope">1. Scope And Principles</a>
+        <a href="#data">2. Data We Process</a>
+        <a href="#use">3. How We Use Information</a>
+        <a href="#enforcement">4. Enforcement</a>
+        <a href="#rights">5. Your Rights</a>
+        <a href="#retention">6. Retention And Security</a>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-band" aria-hidden="true"></div>
+    <div class="footer-inner">
+      <div>
+        <div class="footer-logos">
+          <span class="footer-logo-label">VINATECH</span>
+          <span class="footer-logo-label">LOGO 2</span>
+          <div>
+            <strong>VINATECH Limited</strong><br>
+            Privacy-first digital solutions and support.
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="footer-links">
+          <h3>Tabs</h3>
+          <div class="footer-links-list">
+            <a href="index.html">Home</a>
+            <a href="news.html">News</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="about.html">Contact</a>
+          </div>
+        </div>
+        <div class="footer-buttons" style="margin-top:12px;">
+          <h3>Buttons</h3>
+          <div class="footer-buttons-list">
+            <a href="solutions.html">Solutions</a>
+            <a href="products.html">Products</a>
+            <a href="support.html">Support</a>
+            <a href="about.html">About</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">&copy; VINATECH 2026. All rights reserved.</div>
+  </footer>
 </body>
 </html>

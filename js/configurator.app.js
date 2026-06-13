@@ -78,11 +78,32 @@
       mobileCta: { x: 0, y: 0 }
     },
     display: {
+      pageMode: "home",
       tabMode: "top-and-home",
       topTabsTransparent: false,
       ctaTextOnly: false,
+      previewPage: "home",
       previewDevice: "desktop",
       mobileHeroCenter: true
+    },
+    privacy: {
+      title: "Privacy Policy",
+      intro: "VINATECH Limited is committed to lawful, fair, and transparent handling of personal information. This policy explains what data we process, why we process it, and how we protect it.",
+      scopeText: "This policy applies to VINATECH Limited websites, digital services, and business communication channels. We process personal data only where it is relevant to providing our services, supporting customers, protecting security, or complying with legal obligations.",
+      dataText: "Depending on your interaction with us, we may process identity and contact details, service-related communications, and technical logs required for service continuity and security.",
+      noCookiesText: "VINATECH Limited does not use analytics cookies, marketing cookies, or social media tracking cookies on this website.",
+      noMarketingText: "We do not build advertising profiles and we do not sell personal data to third parties.",
+      enforcementText: "VINATECH Limited applies controls informed by Google Play policy principles and UK data-protection governance themes, including periodic reviews, role-based access, and documented incident response.",
+      bgColor: "#f8fbfa",
+      textColor: "#18322b",
+      mutedColor: "#5a736c",
+      lineColor: "#dce6e1",
+      accentColor: "#0f786b",
+      cardColor: "#ffffff",
+      topBandHeight: 76,
+      heroTopPadding: 50,
+      cardPadding: 26,
+      layoutGap: 26
     },
     tabs: [
       {
@@ -189,6 +210,10 @@
   }
 
   function collectDom() {
+    dom.pageMode = document.getElementById("pageMode");
+    dom.homeControls = document.getElementById("homeControls");
+    dom.privacyControls = document.getElementById("privacyControls");
+
     dom.brandName = document.getElementById("brandName");
     dom.heroTitle = document.getElementById("heroTitle");
     dom.heroSubtitle = document.getElementById("heroSubtitle");
@@ -267,6 +292,8 @@
     dom.topTabsTransparent = document.getElementById("topTabsTransparent");
 
     dom.previewHome = document.getElementById("previewHome");
+    dom.previewPage = document.getElementById("previewPage");
+    dom.previewMobileToggle = document.getElementById("previewMobileToggle");
     dom.previewDevice = document.getElementById("previewDevice");
     dom.publishHome = document.getElementById("publishHome");
     dom.exportDraft = document.getElementById("exportDraft");
@@ -277,9 +304,44 @@
     dom.approval = document.getElementById("approval");
     dom.statusMessage = document.getElementById("statusMessage");
     dom.previewViewport = document.getElementById("previewViewport");
+
+    dom.privacyTitle = document.getElementById("privacyTitle");
+    dom.privacyIntro = document.getElementById("privacyIntro");
+    dom.privacyScopeText = document.getElementById("privacyScopeText");
+    dom.privacyDataText = document.getElementById("privacyDataText");
+    dom.privacyNoCookiesText = document.getElementById("privacyNoCookiesText");
+    dom.privacyNoMarketingText = document.getElementById("privacyNoMarketingText");
+    dom.privacyEnforcementText = document.getElementById("privacyEnforcementText");
+    dom.privacyBgColor = document.getElementById("privacyBgColor");
+    dom.privacyTextColor = document.getElementById("privacyTextColor");
+    dom.privacyMutedColor = document.getElementById("privacyMutedColor");
+    dom.privacyLineColor = document.getElementById("privacyLineColor");
+    dom.privacyAccentColor = document.getElementById("privacyAccentColor");
+    dom.privacyCardColor = document.getElementById("privacyCardColor");
+    dom.privacyTopBandHeight = document.getElementById("privacyTopBandHeight");
+    dom.privacyTopBandHeightValue = document.getElementById("privacyTopBandHeightValue");
+    dom.privacyHeroTopPadding = document.getElementById("privacyHeroTopPadding");
+    dom.privacyHeroTopPaddingValue = document.getElementById("privacyHeroTopPaddingValue");
+    dom.privacyCardPadding = document.getElementById("privacyCardPadding");
+    dom.privacyCardPaddingValue = document.getElementById("privacyCardPaddingValue");
+    dom.privacyLayoutGap = document.getElementById("privacyLayoutGap");
+    dom.privacyLayoutGapValue = document.getElementById("privacyLayoutGapValue");
   }
 
   function bindCoreInputs() {
+    bindText(dom.pageMode, function (value) {
+      state.display.pageMode = normalizePageMode(value);
+      if (state.display.pageMode === "privacy") {
+        state.display.previewPage = "page:privacy.html";
+      } else {
+        state.display.previewPage = "home";
+      }
+      if (dom.previewPage) {
+        dom.previewPage.value = state.display.previewPage;
+      }
+      applyPageModeUI();
+    }, "change");
+
     bindText(dom.brandName, function (value) {
       state.brand.name = value;
     });
@@ -351,9 +413,85 @@
     if (dom.previewDevice) {
       dom.previewDevice.addEventListener("change", function () {
         state.display.previewDevice = normalizePreviewDevice(dom.previewDevice.value);
+        if (dom.previewMobileToggle) {
+          dom.previewMobileToggle.checked = state.display.previewDevice === "mobile";
+        }
         saveAndPreview();
       });
     }
+
+    if (dom.previewMobileToggle) {
+      dom.previewMobileToggle.addEventListener("change", function () {
+        state.display.previewDevice = dom.previewMobileToggle.checked ? "mobile" : "desktop";
+        if (dom.previewDevice) {
+          dom.previewDevice.value = state.display.previewDevice;
+        }
+        saveAndPreview();
+      });
+    }
+
+    if (dom.previewPage) {
+      dom.previewPage.addEventListener("change", function () {
+        state.display.previewPage = normalizePreviewPageValue(dom.previewPage.value, state);
+        state.display.pageMode = state.display.previewPage === "page:privacy.html" ? "privacy" : "home";
+        applyPageModeUI();
+        saveAndPreview();
+      });
+    }
+
+    bindText(dom.privacyTitle, function (value) {
+      state.privacy.title = String(value || "");
+    });
+    bindText(dom.privacyIntro, function (value) {
+      state.privacy.intro = String(value || "");
+    });
+    bindText(dom.privacyScopeText, function (value) {
+      state.privacy.scopeText = String(value || "");
+    });
+    bindText(dom.privacyDataText, function (value) {
+      state.privacy.dataText = String(value || "");
+    });
+    bindText(dom.privacyNoCookiesText, function (value) {
+      state.privacy.noCookiesText = String(value || "");
+    });
+    bindText(dom.privacyNoMarketingText, function (value) {
+      state.privacy.noMarketingText = String(value || "");
+    });
+    bindText(dom.privacyEnforcementText, function (value) {
+      state.privacy.enforcementText = String(value || "");
+    });
+
+    bindText(dom.privacyBgColor, function (value) {
+      state.privacy.bgColor = normalizeHex(value, "#f8fbfa");
+    }, "input");
+    bindText(dom.privacyTextColor, function (value) {
+      state.privacy.textColor = normalizeHex(value, "#18322b");
+    }, "input");
+    bindText(dom.privacyMutedColor, function (value) {
+      state.privacy.mutedColor = normalizeHex(value, "#5a736c");
+    }, "input");
+    bindText(dom.privacyLineColor, function (value) {
+      state.privacy.lineColor = normalizeHex(value, "#dce6e1");
+    }, "input");
+    bindText(dom.privacyAccentColor, function (value) {
+      state.privacy.accentColor = normalizeHex(value, "#0f786b");
+    }, "input");
+    bindText(dom.privacyCardColor, function (value) {
+      state.privacy.cardColor = normalizeHex(value, "#ffffff");
+    }, "input");
+
+    bindNumber(dom.privacyTopBandHeight, function (value) {
+      state.privacy.topBandHeight = clamp(value, 48, 120);
+    });
+    bindNumber(dom.privacyHeroTopPadding, function (value) {
+      state.privacy.heroTopPadding = clamp(value, 24, 96);
+    });
+    bindNumber(dom.privacyCardPadding, function (value) {
+      state.privacy.cardPadding = clamp(value, 16, 40);
+    });
+    bindNumber(dom.privacyLayoutGap, function (value) {
+      state.privacy.layoutGap = clamp(value, 12, 40);
+    });
 
     bindText(dom.bgColor, function (value) {
       state.theme.bgColor = value;
@@ -658,6 +796,22 @@
     }
     if (element === dom.bgTransparency && dom.bgTransparencyValue) {
       dom.bgTransparencyValue.textContent = value + "%";
+      return;
+    }
+    if (element === dom.privacyTopBandHeight && dom.privacyTopBandHeightValue) {
+      dom.privacyTopBandHeightValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.privacyHeroTopPadding && dom.privacyHeroTopPaddingValue) {
+      dom.privacyHeroTopPaddingValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.privacyCardPadding && dom.privacyCardPaddingValue) {
+      dom.privacyCardPaddingValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.privacyLayoutGap && dom.privacyLayoutGapValue) {
+      dom.privacyLayoutGapValue.textContent = value + "px";
     }
   }
 
@@ -782,6 +936,10 @@
   }
 
   function syncInputsFromState() {
+    if (dom.pageMode) {
+      dom.pageMode.value = normalizePageMode(state.display && state.display.pageMode);
+    }
+
     if (dom.brandName) {
       dom.brandName.value = state.brand.name;
     }
@@ -960,8 +1118,12 @@
     if (dom.mobileHeroCenter) {
       dom.mobileHeroCenter.checked = !!state.display.mobileHeroCenter;
     }
+    refreshPreviewPageOptions();
     if (dom.previewDevice) {
       dom.previewDevice.value = normalizePreviewDevice(state.display.previewDevice);
+    }
+    if (dom.previewMobileToggle) {
+      dom.previewMobileToggle.checked = normalizePreviewDevice(state.display.previewDevice) === "mobile";
     }
     if (dom.tabDisplayMode) {
       dom.tabDisplayMode.value = state.display.tabMode;
@@ -971,6 +1133,82 @@
     }
     if (dom.ctaTextOnly) {
       dom.ctaTextOnly.checked = !!state.display.ctaTextOnly;
+    }
+
+    if (dom.privacyTitle) {
+      dom.privacyTitle.value = String(state.privacy.title || "");
+    }
+    if (dom.privacyIntro) {
+      dom.privacyIntro.value = String(state.privacy.intro || "");
+    }
+    if (dom.privacyScopeText) {
+      dom.privacyScopeText.value = String(state.privacy.scopeText || "");
+    }
+    if (dom.privacyDataText) {
+      dom.privacyDataText.value = String(state.privacy.dataText || "");
+    }
+    if (dom.privacyNoCookiesText) {
+      dom.privacyNoCookiesText.value = String(state.privacy.noCookiesText || "");
+    }
+    if (dom.privacyNoMarketingText) {
+      dom.privacyNoMarketingText.value = String(state.privacy.noMarketingText || "");
+    }
+    if (dom.privacyEnforcementText) {
+      dom.privacyEnforcementText.value = String(state.privacy.enforcementText || "");
+    }
+    if (dom.privacyBgColor) {
+      dom.privacyBgColor.value = state.privacy.bgColor;
+    }
+    if (dom.privacyTextColor) {
+      dom.privacyTextColor.value = state.privacy.textColor;
+    }
+    if (dom.privacyMutedColor) {
+      dom.privacyMutedColor.value = state.privacy.mutedColor;
+    }
+    if (dom.privacyLineColor) {
+      dom.privacyLineColor.value = state.privacy.lineColor;
+    }
+    if (dom.privacyAccentColor) {
+      dom.privacyAccentColor.value = state.privacy.accentColor;
+    }
+    if (dom.privacyCardColor) {
+      dom.privacyCardColor.value = state.privacy.cardColor;
+    }
+    if (dom.privacyTopBandHeight) {
+      dom.privacyTopBandHeight.value = String(state.privacy.topBandHeight);
+    }
+    if (dom.privacyTopBandHeightValue) {
+      dom.privacyTopBandHeightValue.textContent = state.privacy.topBandHeight + "px";
+    }
+    if (dom.privacyHeroTopPadding) {
+      dom.privacyHeroTopPadding.value = String(state.privacy.heroTopPadding);
+    }
+    if (dom.privacyHeroTopPaddingValue) {
+      dom.privacyHeroTopPaddingValue.textContent = state.privacy.heroTopPadding + "px";
+    }
+    if (dom.privacyCardPadding) {
+      dom.privacyCardPadding.value = String(state.privacy.cardPadding);
+    }
+    if (dom.privacyCardPaddingValue) {
+      dom.privacyCardPaddingValue.textContent = state.privacy.cardPadding + "px";
+    }
+    if (dom.privacyLayoutGap) {
+      dom.privacyLayoutGap.value = String(state.privacy.layoutGap);
+    }
+    if (dom.privacyLayoutGapValue) {
+      dom.privacyLayoutGapValue.textContent = state.privacy.layoutGap + "px";
+    }
+
+    applyPageModeUI();
+  }
+
+  function applyPageModeUI() {
+    var mode = normalizePageMode(state.display && state.display.pageMode);
+    if (dom.homeControls) {
+      dom.homeControls.classList.toggle("page-mode-hidden", mode !== "home");
+    }
+    if (dom.privacyControls) {
+      dom.privacyControls.classList.toggle("page-mode-hidden", mode !== "privacy");
     }
   }
 
@@ -1209,7 +1447,15 @@
 
   function renderPreview() {
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
-    dom.previewViewport.innerHTML = buildHomeMarkup(getPreviewConfig(previewDevice), true);
+    var previewSelection = normalizePreviewPage(state.display && state.display.previewPage, state);
+    var previewConfig = getPreviewConfig(previewDevice);
+
+    if (previewSelection.value === "home") {
+      dom.previewViewport.innerHTML = buildHomeMarkup(previewConfig, true);
+    } else {
+      dom.previewViewport.innerHTML = buildAssociatedPageMarkup(previewSelection.page, previewConfig, true);
+    }
+
     dom.previewViewport.classList.toggle("preview-mobile", previewDevice === "mobile");
     dom.previewViewport.classList.toggle("preview-mobile-center-hero", previewDevice === "mobile" && !!(state.display && state.display.mobileHeroCenter));
 
@@ -1375,7 +1621,21 @@
   }
 
   function openPreviewWindow() {
-    var html = buildPublishedHtml(state);
+    var previewSelection = normalizePreviewPage(state.display && state.display.previewPage, state);
+    if (previewSelection.value !== "home" && isPrivacyPolicyDescriptor(previewSelection.page)) {
+      var privacyHref = normalizePageHref(previewSelection.page && previewSelection.page.fileName) || "privacy.html";
+      var directWindow = window.open(privacyHref, "_blank", "noopener,noreferrer");
+      if (!directWindow) {
+        setStatus("Preview popup blocked by browser.", true);
+        return;
+      }
+      setStatus("Opened " + previewSelection.label + " preview in new tab.", false);
+      return;
+    }
+
+    var html = previewSelection.value === "home"
+      ? buildPublishedHtml(state)
+      : buildAssociatedPublishedHtml(previewSelection.page, state);
     var previewWindow = window.open("", "_blank", "noopener,noreferrer");
     if (!previewWindow) {
       setStatus("Preview popup blocked by browser.", true);
@@ -1384,7 +1644,7 @@
     previewWindow.document.open();
     previewWindow.document.write(html);
     previewWindow.document.close();
-    setStatus("Opened HOME preview in new tab.", false);
+    setStatus("Opened " + previewSelection.label + " preview in new tab.", false);
   }
 
   async function handlePublish() {
@@ -1401,6 +1661,7 @@
 
     var publishPayload = preparePublishPayload(state);
     var html = buildPublishedHtml(publishPayload.config);
+    var privacyHtml = buildPrivacyPolicyPageHtml(publishPayload.config);
     var publishStage = "start";
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     var includeAssociatedPages = previewDevice !== "mobile";
@@ -1421,6 +1682,9 @@
           publishStage = "write-index";
           await writeIndexHtml(projectDirectory, html);
 
+          publishStage = "write-privacy";
+          await writeSinglePage(projectDirectory, "privacy.html", privacyHtml);
+
           var writtenAssociatedPagesCount = 0;
           if (includeAssociatedPages) {
             publishStage = "write-associated-pages";
@@ -1430,9 +1694,9 @@
           publishStage = "completed";
           localStorage.setItem(LAST_PUBLISHED_KEY, html);
           if (includeAssociatedPages) {
-            setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". index.html and " + writtenAssociatedPagesCount + " associated page(s) were saved." + assetStatusSuffix(savedAssetsResult), false);
+            setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". Saved index.html, privacy.html, and " + writtenAssociatedPagesCount + " associated page(s)." + assetStatusSuffix(savedAssetsResult), false);
           } else {
-            setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". Saved index.html only." + assetStatusSuffix(savedAssetsResult), false);
+            setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". Saved index.html and privacy.html." + assetStatusSuffix(savedAssetsResult), false);
           }
           return;
         } catch (writeError) {
@@ -1445,6 +1709,7 @@
       }
 
       downloadFile("index.html", html, "text/html");
+      downloadFile("privacy.html", privacyHtml, "text/html");
       var noFsAssetsResult = await persistPublishAssets(publishPayload.assets);
       var downloadedAssociatedPagesCount = 0;
       if (includeAssociatedPages) {
@@ -1452,9 +1717,9 @@
       }
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
       if (includeAssociatedPages) {
-        setStatus("Browser folder-write API unavailable. Downloaded index.html and " + downloadedAssociatedPagesCount + " associated page(s) for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
+        setStatus("Browser folder-write API unavailable. Downloaded index.html, privacy.html, and " + downloadedAssociatedPagesCount + " associated page(s) for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
       } else {
-        setStatus("Browser folder-write API unavailable. Downloaded index.html only for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
+        setStatus("Browser folder-write API unavailable. Downloaded index.html and privacy.html for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
       }
       return;
     } catch (error) {
@@ -1473,6 +1738,7 @@
 
   async function publishByDownloadFallback(publishPayload, html, includeAssociatedPages, cause) {
     downloadFile("index.html", html, "text/html");
+    downloadFile("privacy.html", buildPrivacyPolicyPageHtml(publishPayload.config), "text/html");
     var assetsResult = await persistPublishAssets(publishPayload.assets);
     var associatedCount = 0;
     if (includeAssociatedPages) {
@@ -1481,9 +1747,9 @@
     localStorage.setItem(LAST_PUBLISHED_KEY, html);
 
     if (includeAssociatedPages) {
-      setStatus("Folder write unavailable (" + cause + "). Downloaded index.html and " + associatedCount + " associated page(s)." + assetStatusSuffix(assetsResult), false);
+      setStatus("Folder write unavailable (" + cause + "). Downloaded index.html, privacy.html, and " + associatedCount + " associated page(s)." + assetStatusSuffix(assetsResult), false);
     } else {
-      setStatus("Folder write unavailable (" + cause + "). Downloaded index.html only." + assetStatusSuffix(assetsResult), false);
+      setStatus("Folder write unavailable (" + cause + "). Downloaded index.html and privacy.html." + assetStatusSuffix(assetsResult), false);
     }
   }
 
@@ -1911,6 +2177,13 @@
     await writable.close();
   }
 
+  async function writeSinglePage(projectDirectory, fileName, html) {
+    var pageHandle = await projectDirectory.getFileHandle(fileName, { create: true });
+    var writable = await pageHandle.createWritable();
+    await writable.write(html);
+    await writable.close();
+  }
+
   async function writeAssociatedTabPages(projectDirectory, config) {
     var pages = getAssociatedTabPages(config);
     for (var i = 0; i < pages.length; i += 1) {
@@ -1932,9 +2205,23 @@
   }
 
   function getAssociatedTabPages(config) {
+    var descriptors = getAssociatedPageDescriptors(config);
+    return descriptors
+      .filter(function (descriptor) {
+        return !isPrivacyPolicyDescriptor(descriptor);
+      })
+      .map(function (descriptor) {
+      return {
+        fileName: descriptor.fileName,
+        html: buildAssociatedTabPageHtml(descriptor, config)
+      };
+    });
+  }
+
+  function getAssociatedPageDescriptors(config) {
     var pagesByFile = {};
 
-    function addPageFromHref(href, titleFallback) {
+    function addPageFromHref(href, titleFallback, subtitleFallback) {
       var normalized = normalizePageHref(href);
       if (!normalized || /^(https?:|mailto:|tel:|#)/i.test(normalized)) {
         return;
@@ -1951,40 +2238,38 @@
       }
 
       if (!pagesByFile[clean]) {
-        pagesByFile[clean] = buildAssociatedTabPageHtml({
-          sectionTitle: titleFallback,
-          label: titleFallback
-        }, config);
+        pagesByFile[clean] = {
+          fileName: clean,
+          sectionTitle: String(titleFallback || "Page"),
+          sectionText: String(subtitleFallback || "This page is under construction."),
+          label: String(titleFallback || "Page")
+        };
       }
     }
 
     config.tabs.forEach(function (tab) {
-      addPageFromHref(tab.pageHref, tab.sectionTitle || tab.label || "Page");
+      addPageFromHref(tab.pageHref, tab.sectionTitle || tab.label || "Page", tab.sectionText || "This page is under construction.");
     });
 
     if (config.hero && Array.isArray(config.hero.buttons)) {
       config.hero.buttons.forEach(function (button, index) {
         var buttonTitle = String((button && button.label) || ("Page " + (index + 1)));
-        addPageFromHref(button && button.href, buttonTitle);
+        addPageFromHref(button && button.href, buttonTitle, "This page is under construction.");
       });
     }
 
     return Object.keys(pagesByFile).map(function (fileName) {
-      return {
-        fileName: fileName,
-        html: pagesByFile[fileName]
-      };
+      return pagesByFile[fileName];
     });
   }
 
   function buildAssociatedTabPageHtml(tab, config) {
-    var pageConfig = deepClone(config);
-    var title = String(tab.sectionTitle || tab.label || "Page");
-    var site = String((config && config.brand && config.brand.name) || "VinATech");
-    var subtitle = String((tab && tab.sectionText) || "This page is under construction.");
+    if (isPrivacyPolicyDescriptor(tab)) {
+      return buildPrivacyPolicyPageHtml(config);
+    }
 
-    pageConfig.hero.title = title;
-    pageConfig.hero.subtitle = subtitle;
+    var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
+    var site = String((config && config.brand && config.brand.name) || "VinATech");
 
     return [
       "<!doctype html>",
@@ -1997,13 +2282,229 @@
       "  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>",
       "  <link href=\"" + getAllFontsHref() + "\" rel=\"stylesheet\">",
       "  <style>",
-      buildPublishedStyles(pageConfig),
+      buildPublishedStyles(config),
       "  </style>",
       "</head>",
       "<body>",
-      buildHomeMarkup(pageConfig, false),
+      buildAssociatedPageMarkup(tab, config, false),
+      "<script>(function(){var b=document.querySelector('.hamburger');var r=document.querySelector('.home-root');if(!b||!r){return;}b.addEventListener('click',function(){var o=r.classList.toggle('nav-open');b.setAttribute('aria-expanded',o?'true':'false');});})();</script>",
       "</body>",
       "</html>"
+    ].join("\n");
+  }
+
+  function buildAssociatedPageMarkup(tab, config, draggable) {
+    if (isPrivacyPolicyDescriptor(tab)) {
+      return buildExternalFilePreviewMarkup(normalizePageHref(tab && tab.fileName) || "privacy.html");
+    }
+
+    var pageConfig = deepClone(config);
+    pageConfig.hero.title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
+    pageConfig.hero.subtitle = String((tab && tab.sectionText) || "This page is under construction.");
+    return buildHomeMarkup(pageConfig, draggable);
+  }
+
+  function buildAssociatedPublishedHtml(tab, config) {
+    if (isPrivacyPolicyDescriptor(tab)) {
+      return buildPrivacyPolicyPageHtml(config);
+    }
+
+    var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
+    var site = String((config && config.brand && config.brand.name) || "VinATech");
+    return [
+      "<!doctype html>",
+      "<html lang=\"en\">",
+      "<head>",
+      "  <meta charset=\"utf-8\">",
+      "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+      "  <title>" + escapeHtml(title) + " - " + escapeHtml(site) + "</title>",
+      "  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">",
+      "  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>",
+      "  <link href=\"" + getAllFontsHref() + "\" rel=\"stylesheet\">",
+      "  <style>",
+      buildPublishedStyles(config),
+      "  </style>",
+      "</head>",
+      "<body>",
+      buildAssociatedPageMarkup(tab, config, false),
+      "<script>(function(){var b=document.querySelector('.hamburger');var r=document.querySelector('.home-root');if(!b||!r){return;}b.addEventListener('click',function(){var o=r.classList.toggle('nav-open');b.setAttribute('aria-expanded',o?'true':'false');});})();</script>",
+      "</body>",
+      "</html>"
+    ].join("\n");
+  }
+
+  function refreshPreviewPageOptions() {
+    if (!dom.previewPage) {
+      return;
+    }
+
+    var previousPreviewPage = state.display && state.display.previewPage;
+    var options = getPreviewPageOptions(state);
+    dom.previewPage.innerHTML = options
+      .map(function (option) {
+        return "<option value=\"" + escapeAttr(option.value) + "\">" + escapeHtml(option.label) + "</option>";
+      })
+      .join("");
+
+    state.display.previewPage = normalizePreviewPageValue(state.display && state.display.previewPage, state);
+    dom.previewPage.value = state.display.previewPage;
+    if (state.display.previewPage !== previousPreviewPage) {
+      saveState();
+    }
+  }
+
+  function getPreviewPageOptions(config) {
+    var options = [{
+      value: "home",
+      label: "HOME (index.html)",
+      page: null
+    }];
+
+    options.push({
+      value: "page:privacy.html",
+      label: "Privacy Policy (privacy.html)",
+      page: {
+        fileName: "privacy.html",
+        sectionTitle: (config && config.privacy && config.privacy.title) || "Privacy Policy",
+        label: "Privacy"
+      }
+    });
+
+    getAssociatedPageDescriptors(config).forEach(function (descriptor) {
+      if (String(descriptor.fileName || "").toLowerCase() === "privacy.html") {
+        return;
+      }
+      options.push({
+        value: "page:" + descriptor.fileName,
+        label: String(descriptor.sectionTitle || descriptor.label || "Page") + " (" + descriptor.fileName + ")",
+        page: descriptor
+      });
+    });
+
+    return options;
+  }
+
+  function normalizePreviewPage(value, config) {
+    var options = getPreviewPageOptions(config);
+    var selectedValue = normalizePreviewPageValue(value, config);
+    for (var index = 0; index < options.length; index += 1) {
+      if (options[index].value === selectedValue) {
+        return options[index];
+      }
+    }
+    return options[0];
+  }
+
+  function isPrivacyPolicyDescriptor(tab) {
+    var fileName = String((tab && tab.fileName) || (tab && tab.pageHref) || "").toLowerCase();
+    var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "").toLowerCase();
+    return fileName === "privacy.html" || title.indexOf("privacy") >= 0;
+  }
+
+  function buildExternalFilePreviewMarkup(fileHref) {
+    return "<div class=\"preview-iframe-shell\"><iframe src=\"" + escapeAttr(fileHref) + "\" title=\"External page preview\" loading=\"lazy\"></iframe></div>";
+  }
+
+  function buildPrivacyPolicyPageHtml(config) {
+    var privacyTitle = String((config && config.privacy && config.privacy.title) || "Privacy Policy");
+    return [
+      "<!doctype html>",
+      "<html lang=\"en\">",
+      "<head>",
+      "  <meta charset=\"utf-8\">",
+      "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+      "  <title>" + escapeHtml(privacyTitle) + " - " + escapeHtml(config.brand && config.brand.name ? config.brand.name : "VinATech") + "</title>",
+      "  <style>",
+      buildPrivacyPolicyPageStyles(config),
+      "  </style>",
+      "</head>",
+      "<body>",
+      buildPrivacyPolicyPageMarkup(config, false),
+      "</body>",
+      "</html>"
+    ].join("\n");
+  }
+
+  function buildPrivacyPolicyPageMarkup(config, previewMode) {
+    var brandName = String((config && config.brand && config.brand.name) || "VINATECH");
+    var privacy = (config && config.privacy) || {};
+    var title = String(privacy.title || "Privacy Policy");
+    var intro = String(privacy.intro || "");
+    var scopeText = String(privacy.scopeText || "");
+    var dataText = String(privacy.dataText || "");
+    var noCookiesText = String(privacy.noCookiesText || "");
+    var noMarketingText = String(privacy.noMarketingText || "");
+    var enforcementText = String(privacy.enforcementText || "");
+    var navLinks = (config && Array.isArray(config.tabs) ? config.tabs : [])
+      .slice(0, 4)
+      .map(function (tab) {
+        var href = normalizePageHref(tab.pageHref) || "#";
+        var isPrivacy = /privacy/i.test(String(tab.sectionTitle || tab.label || "")) || /privacy\.html/i.test(href);
+        var attrs = previewMode ? " target=\"_blank\" rel=\"noreferrer\"" : "";
+        return "<a href=\"" + escapeAttr(href) + "\"" + attrs + (isPrivacy ? " class=\"current\"" : "") + ">" + escapeHtml(String(tab.label || "Page")) + "</a>";
+      })
+      .join("");
+
+    if (!navLinks) {
+      navLinks = "<a href=\"index.html\">HOME</a><a href=\"privacy.html\" class=\"current\">PRIVACY POLICY</a>";
+    }
+
+    return [
+      "<div class=\"privacy-root\">",
+      "<div class=\"top-band\" aria-hidden=\"true\"></div>",
+      "<header class=\"site-header\"><div class=\"brand\">" + escapeHtml(brandName) + " Limited</div><nav class=\"top-nav\">" + navLinks + "</nav></header>",
+      "<main class=\"main-wrap\">",
+      "<section class=\"hero\"><p class=\"eyebrow\">Privacy And Data Protection</p><h1>" + escapeHtml(title) + "</h1><p>" + escapeHtml(intro) + "</p></section>",
+      "<section class=\"policy-grid\">",
+      "<article class=\"policy-card\"><h2>Scope And Principles</h2><p>" + escapeHtml(scopeText) + "</p></article>",
+      "<article class=\"policy-card\"><h2>Data We Process</h2><p>" + escapeHtml(dataText) + "</p></article>",
+      "<article class=\"policy-card\"><h2>No Cookies</h2><p>" + escapeHtml(noCookiesText) + "</p></article>",
+      "<article class=\"policy-card\"><h2>No Marketing Profiling</h2><p>" + escapeHtml(noMarketingText) + "</p></article>",
+      "<article class=\"policy-card policy-card-wide\"><h2>Enforcement And Compliance</h2><p>" + escapeHtml(enforcementText) + "</p></article>",
+      "</section>",
+      "</main>",
+      "<footer class=\"footer\"><div class=\"footer-band\" aria-hidden=\"true\"></div><div class=\"footer-inner\">&copy; " + escapeHtml(brandName.toUpperCase()) + " 2026. All rights reserved.</div></footer>",
+      "</div>"
+    ].join("");
+  }
+
+  function buildPrivacyPolicyPageStyles(config) {
+    var privacy = (config && config.privacy) || {};
+    var bgColor = normalizeHex(privacy.bgColor, "#f8fbfa");
+    var textColor = normalizeHex(privacy.textColor, "#18322b");
+    var mutedColor = normalizeHex(privacy.mutedColor, "#5a736c");
+    var lineColor = normalizeHex(privacy.lineColor, "#dce6e1");
+    var accentColor = normalizeHex(privacy.accentColor, "#0f786b");
+    var cardColor = normalizeHex(privacy.cardColor, "#ffffff");
+    var topBandHeight = clamp(parseInt(privacy.topBandHeight, 10) || 76, 48, 120);
+    var heroTopPadding = clamp(parseInt(privacy.heroTopPadding, 10) || 50, 24, 96);
+    var cardPadding = clamp(parseInt(privacy.cardPadding, 10) || 26, 16, 40);
+    var layoutGap = clamp(parseInt(privacy.layoutGap, 10) || 26, 12, 40);
+
+    return [
+      "*{box-sizing:border-box}",
+      "html,body{margin:0;padding:0}",
+      "body{font-family:Segoe UI,Arial,sans-serif;background:" + bgColor + ";color:" + textColor + "}",
+      ".top-band{height:" + topBandHeight + "px;background:linear-gradient(90deg," + accentColor + " 0%, color-mix(in srgb," + accentColor + " 86%, #ffffff 14%) 54%, color-mix(in srgb," + accentColor + " 52%, #ffffff 48%) 100%)}",
+      ".site-header{max-width:1180px;margin:0 auto;padding:18px 24px;border-bottom:1px solid " + lineColor + ";background:#fff;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}",
+      ".brand{font-weight:700}",
+      ".top-nav{display:flex;gap:8px;flex-wrap:wrap}",
+      ".top-nav a{text-decoration:none;color:" + textColor + ";border:1px solid " + lineColor + ";border-radius:999px;padding:7px 12px;background:#fff;font-size:.9rem}",
+      ".top-nav a.current{border-color:" + accentColor + ";color:" + accentColor + ";background:color-mix(in srgb," + accentColor + " 10%,#ffffff 90%)}",
+      ".main-wrap{max-width:1180px;margin:0 auto;padding:24px}",
+      ".hero{padding:" + heroTopPadding + "px 0 20px}",
+      ".eyebrow{margin:0 0 8px;text-transform:uppercase;letter-spacing:.12em;font-size:.75rem;color:" + mutedColor + ";font-weight:700}",
+      "h1{margin:0 0 8px;font-size:clamp(1.9rem,3.8vw,2.8rem)}",
+      ".hero p{margin:0;color:" + mutedColor + ";max-width:72ch;line-height:1.58}",
+      ".policy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:" + layoutGap + "px}",
+      ".policy-card{background:" + cardColor + ";border:1px solid " + lineColor + ";border-radius:14px;padding:" + cardPadding + "px;box-shadow:0 2px 10px rgba(14,41,34,.04)}",
+      ".policy-card-wide{grid-column:1 / -1}",
+      ".policy-card h2{margin:0 0 10px;font-size:1.08rem}",
+      ".policy-card p{margin:0 0 14px;line-height:1.56}",
+      ".footer{margin-top:20px;border-top:1px solid " + lineColor + ";background:color-mix(in srgb," + bgColor + " 88%, #ffffff 12%)}",
+      ".footer-band{height:52px;background:linear-gradient(90deg," + accentColor + " 0%, color-mix(in srgb," + accentColor + " 86%, #ffffff 14%) 54%, color-mix(in srgb," + accentColor + " 52%, #ffffff 48%) 100%)}",
+      ".footer-inner{max-width:1180px;margin:0 auto;padding:20px 24px;color:" + mutedColor + "}",
+      "@media (max-width:760px){.top-band{height:" + Math.max(42, topBandHeight - 12) + "px}.footer-band{height:42px}.site-header,.main-wrap,.footer-inner{padding-left:16px;padding-right:16px}.policy-grid{grid-template-columns:1fr}.policy-card{padding:" + Math.max(14, cardPadding - 4) + "px}}"
     ].join("\n");
   }
 
@@ -2548,6 +3049,7 @@
     }
 
     state.display = state.display || {};
+    state.display.pageMode = normalizePageMode(state.display.pageMode);
     state.display.tabMode = normalizeTabMode(state.display.tabMode);
     state.display.topTabsTransparent = !!state.display.topTabsTransparent;
     state.display.ctaTextOnly = !!state.display.ctaTextOnly;
@@ -2559,6 +3061,26 @@
       state.display.mobileHeroCenter = !!state.display.mobileHeroCenter;
     }
     state.display.previewDevice = normalizePreviewDevice(state.display.previewDevice);
+    state.display.previewPage = normalizePreviewPageValue(state.display.previewPage, state);
+
+    state.privacy = state.privacy || {};
+    state.privacy.title = String(state.privacy.title || "Privacy Policy");
+    state.privacy.intro = String(state.privacy.intro || "");
+    state.privacy.scopeText = String(state.privacy.scopeText || "");
+    state.privacy.dataText = String(state.privacy.dataText || "");
+    state.privacy.noCookiesText = String(state.privacy.noCookiesText || "");
+    state.privacy.noMarketingText = String(state.privacy.noMarketingText || "");
+    state.privacy.enforcementText = String(state.privacy.enforcementText || "");
+    state.privacy.bgColor = normalizeHex(state.privacy.bgColor, "#f8fbfa");
+    state.privacy.textColor = normalizeHex(state.privacy.textColor, "#18322b");
+    state.privacy.mutedColor = normalizeHex(state.privacy.mutedColor, "#5a736c");
+    state.privacy.lineColor = normalizeHex(state.privacy.lineColor, "#dce6e1");
+    state.privacy.accentColor = normalizeHex(state.privacy.accentColor, "#0f786b");
+    state.privacy.cardColor = normalizeHex(state.privacy.cardColor, "#ffffff");
+    state.privacy.topBandHeight = clamp(parseInt(state.privacy.topBandHeight, 10) || 76, 48, 120);
+    state.privacy.heroTopPadding = clamp(parseInt(state.privacy.heroTopPadding, 10) || 50, 24, 96);
+    state.privacy.cardPadding = clamp(parseInt(state.privacy.cardPadding, 10) || 26, 16, 40);
+    state.privacy.layoutGap = clamp(parseInt(state.privacy.layoutGap, 10) || 26, 12, 40);
 
     var backgroundX = parseInt(state.background.x, 10);
     var backgroundY = parseInt(state.background.y, 10);
@@ -2665,6 +3187,7 @@
     merged.theme = Object.assign({}, merged.theme, incoming.theme || {});
     merged.background = Object.assign({}, merged.background, incoming.background || {});
     merged.display = Object.assign({}, merged.display, incoming.display || {});
+    merged.privacy = Object.assign({}, merged.privacy, incoming.privacy || {});
 
     var incomingLayout = incoming.layout || {};
     merged.layout = {
@@ -2931,8 +3454,32 @@
     return "top-and-home";
   }
 
+  function normalizePageMode(value) {
+    return String(value || "home").trim().toLowerCase() === "privacy" ? "privacy" : "home";
+  }
+
   function normalizePreviewDevice(value) {
     return String(value || "desktop").trim().toLowerCase() === "mobile" ? "mobile" : "desktop";
+  }
+
+  function normalizePreviewPageValue(value, config) {
+    var candidate = String(value || "home").trim();
+    if (!candidate || candidate === "home") {
+      return "home";
+    }
+
+    if (!/^page:/i.test(candidate)) {
+      return "home";
+    }
+
+    var options = getPreviewPageOptions(config || state);
+    for (var index = 0; index < options.length; index += 1) {
+      if (options[index].value === candidate) {
+        return candidate;
+      }
+    }
+
+    return "home";
   }
 
   function normalizeTabImageTransparency(value, fallbackValue) {
