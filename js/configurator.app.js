@@ -2527,7 +2527,7 @@
       "</head>",
       "<body>",
       buildPrivacyPolicyPageMarkup(config, false),
-      "<script>(function(){var t=document.getElementById('privacyMenuToggle');var r=document.querySelector('.top-band');var m=window.matchMedia('(max-width: 760px)');if(!t||!r){return;}t.addEventListener('click',function(){if(!m.matches){return;}var o=r.classList.toggle('nav-open');t.setAttribute('aria-expanded',o?'true':'false');});window.addEventListener('resize',function(){if(!m.matches){r.classList.remove('nav-open');t.setAttribute('aria-expanded','false');}});})();</script>",
+      "<script>(function(){var p=new URLSearchParams(window.location.search);var preview=p.get('configuratorPreview')==='1';var device=(p.get('pdevice')||'').toLowerCase();if(preview){if(device==='mobile'){document.body.classList.add('preview-force-mobile');document.body.classList.remove('preview-force-desktop');}else if(device==='desktop'){document.body.classList.add('preview-force-desktop');document.body.classList.remove('preview-force-mobile');}}var t=document.getElementById('privacyMenuToggle');var r=document.querySelector('.top-band');var n=document.getElementById('topNav');var m=window.matchMedia('(max-width: 760px)');if(!t||!r||!n){return;}function isMobileMode(){return document.body.classList.contains('preview-force-mobile')||m.matches;}function closeMenu(){r.classList.remove('nav-open');t.setAttribute('aria-expanded','false');}t.addEventListener('click',function(e){if(!isMobileMode()){return;}e.stopPropagation();var o=r.classList.toggle('nav-open');t.setAttribute('aria-expanded',o?'true':'false');});n.addEventListener('click',function(e){if(e.target&&e.target.tagName==='A'){closeMenu();}});document.addEventListener('click',function(e){if(!isMobileMode()||!r.classList.contains('nav-open')){return;}if(!r.contains(e.target)){closeMenu();}});window.addEventListener('resize',function(){if(!isMobileMode()){closeMenu();}});window.addEventListener('keydown',function(e){if(e.key==='Escape'){closeMenu();}});})();</script>",
       "</body>",
       "</html>"
     ].join("\n");
@@ -2613,6 +2613,16 @@
       ".top-band.nav-open .hamburger .bar::after{opacity:0}",
       "body.preview-force-desktop .hamburger{display:none !important}",
       "body.preview-force-desktop .top-nav{position:static !important;right:auto !important;top:auto !important;min-width:0 !important;flex-direction:row !important;display:flex !important;gap:8px !important;background:transparent !important;border:0 !important;border-radius:0 !important;padding:0 !important;box-shadow:none !important}",
+      "body.preview-force-mobile .top-band{min-height:" + Math.max(42, topBandHeight - 12) + "px;position:relative;z-index:30}",
+      "body.preview-force-mobile .top-band-inner{width:calc(100% - 32px);position:relative}",
+      "body.preview-force-mobile .hamburger{display:inline-flex}",
+      "body.preview-force-mobile .top-nav{position:absolute;right:0;top:calc(100% - 8px);min-width:190px;flex-direction:column;gap:6px;display:none;background:rgba(8,24,20,.88);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px;box-shadow:0 12px 28px rgba(0,0,0,.28);z-index:40}",
+      "body.preview-force-mobile .top-band.nav-open .top-nav{display:flex}",
+      "body.preview-force-mobile .top-nav a,body.preview-force-mobile .top-nav a.current{color:#ffffff;border-color:rgba(255,255,255,.24);background:transparent}",
+      "body.preview-force-mobile .top-nav.transparent-tabs a,body.preview-force-mobile .top-nav.transparent-tabs a.current{border:0 !important}",
+      "body.preview-force-mobile .main-wrap,body.preview-force-mobile .footer-inner{padding-left:16px;padding-right:16px}",
+      "body.preview-force-mobile .policy-grid{grid-template-columns:1fr}",
+      "body.preview-force-mobile .policy-card{padding:" + Math.max(14, cardPadding - 4) + "px}",
       ".top-nav a{text-decoration:none;color:" + tabTextColor + ";border:0;border-radius:0;padding:7px 8px;background:transparent;font-size:.9rem;font-weight:600;box-shadow:none}",
       ".top-nav a.current{text-decoration:underline;color:" + tabTextColor + ";background:transparent;border:0}",
       ".top-nav.transparent-tabs a,.top-nav.transparent-tabs a.current{background:transparent !important;border:0 !important;box-shadow:none !important;color:" + tabTextColor + "}",
@@ -2633,7 +2643,7 @@
       ".footer{margin-top:20px}",
       ".footer-band{min-height:52px;background:linear-gradient(90deg," + accentColor + " 0%, color-mix(in srgb," + accentColor + " 86%, #ffffff 14%) 54%, color-mix(in srgb," + accentColor + " 52%, #ffffff 48%) 100%);display:flex;align-items:center}",
       ".footer-inner{max-width:1180px;margin:0 auto;padding:16px 24px;color:#ffffff;font-weight:600}",
-      "@media (max-width:760px){.top-band{min-height:" + Math.max(42, topBandHeight - 12) + "px}.top-band-inner{width:calc(100% - 32px)}.hamburger{display:inline-flex}.top-nav{position:absolute;right:16px;top:calc(100% - 8px);min-width:190px;flex-direction:column;gap:6px;display:none;background:rgba(8,24,20,.88);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px;box-shadow:0 12px 28px rgba(0,0,0,.28);z-index:20}.top-band.nav-open .top-nav{display:flex}.top-nav a,.top-nav a.current{color:#ffffff;border-color:rgba(255,255,255,.24);background:transparent}.top-nav.transparent-tabs a,.top-nav.transparent-tabs a.current{border:0 !important}.main-wrap,.footer-inner{padding-left:16px;padding-right:16px}.policy-grid{grid-template-columns:1fr}.policy-card{padding:" + Math.max(14, cardPadding - 4) + "px}}"
+      "@media (max-width:760px){.top-band{min-height:" + Math.max(42, topBandHeight - 12) + "px;position:relative;z-index:30}.top-band-inner{width:calc(100% - 32px);position:relative}.hamburger{display:inline-flex}.top-nav{position:absolute;right:0;top:calc(100% - 8px);min-width:190px;flex-direction:column;gap:6px;display:none;background:rgba(8,24,20,.88);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px;box-shadow:0 12px 28px rgba(0,0,0,.28);z-index:40}.top-band.nav-open .top-nav{display:flex}.top-nav a,.top-nav a.current{color:#ffffff;border-color:rgba(255,255,255,.24);background:transparent}.top-nav.transparent-tabs a,.top-nav.transparent-tabs a.current{border:0 !important}.main-wrap,.footer-inner{padding-left:16px;padding-right:16px}.policy-grid{grid-template-columns:1fr}.policy-card{padding:" + Math.max(14, cardPadding - 4) + "px}}"
     ].join("\n");
   }
 
