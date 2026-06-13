@@ -261,12 +261,16 @@
           <label>Data We Process Text<textarea id="privacyDataText" rows="4"></textarea></label>
           <label>No Cookies Text<textarea id="privacyNoCookiesText" rows="3"></textarea></label>
           <label>No Marketing Text<textarea id="privacyNoMarketingText" rows="3"></textarea></label>
+          <label>How We Use Information (one bullet per line)<textarea id="privacyHowUseText" rows="4"></textarea></label>
           <label>Enforcement Text<textarea id="privacyEnforcementText" rows="4"></textarea></label>
         </section>
 
         <section class="panel">
           <h2>Privacy Colors</h2>
+          <label class="check-row"><input id="privacyTopTabsTransparent" type="checkbox"> Top tabs fully transparent (text only)</label>
           <div class="color-grid">
+            <label>Top Tab Text<input id="privacyTabTextColor" type="color"></label>
+            <label>Top Tab Background<input id="privacyTabBgColor" type="color"></label>
             <label>Page Background<input id="privacyBgColor" type="color"></label>
             <label>Text<input id="privacyTextColor" type="color"></label>
             <label>Muted Text<input id="privacyMutedColor" type="color"></label>
@@ -301,7 +305,9 @@
         <label class="approval"><input id="approval" type="checkbox"> I approve this preview for publish</label>
         <div class="action-row">
           <button id="previewHome" type="button">Preview HOME</button>
-          <button id="publishHome" type="button" class="primary">Publish all pages</button>
+          <button id="publishHomeOnly" type="button">Publish HOME only</button>
+          <button id="publishPrivacyOnly" type="button">Publish PRIVACY only</button>
+          <button id="publishHome" type="button" class="primary">Publish ALL pages</button>
         </div>
         <div class="action-row">
           <button id="exportDraft" type="button" class="ghost">Export Draft JSON</button>
