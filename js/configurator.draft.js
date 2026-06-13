@@ -56,15 +56,17 @@ window.__CONFIGURATOR_DRAFT__ = {
   },
   "theme": {
     "fontFamily": "Sora",
-    "headingSize": 73,
-    "bodySize": 23,
+    "headingSize": 59,
+    "bodySize": 20,
     "buttonTextSize": 16,
     "bgColor": "#011301",
     "textColor": "#dbe6e6",
     "accentColor": "#011313",
     "mutedColor": "#87a69e",
     "surfaceColor": "#9e5757",
-    "buttonTextColor": "#e0d1d1"
+    "buttonTextColor": "#e0d1d1",
+    "mobileHeadingSize": 73,
+    "mobileBodySize": 23
   },
   "background": {
     "src": "images/nv-photo.png",
@@ -97,12 +99,31 @@ window.__CONFIGURATOR_DRAFT__ = {
     "cta": {
       "x": 572,
       "y": -289
+    },
+    "mobileNav": {
+      "x": 0,
+      "y": 0
+    },
+    "mobileHeroTitle": {
+      "x": 0,
+      "y": 0
+    },
+    "mobileHeroSubtitle": {
+      "x": 0,
+      "y": 0
+    },
+    "mobileCta": {
+      "x": 0,
+      "y": 0
     }
   },
   "display": {
     "tabMode": "top-only",
     "topTabsTransparent": true,
-    "ctaTextOnly": true
+    "ctaTextOnly": true,
+    "previewDevice": "mobile",
+    "mobileHeroCenter": true,
+    "mobileOverrides": false
   },
   "tabs": [
     {

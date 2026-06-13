@@ -191,6 +191,20 @@
             <span id="bgTransparencyValue" class="value-pill"></span>
           </label>
         </div>
+        <fieldset class="panel-group" style="margin-top:12px;border-top:1px dashed rgba(0,0,0,.06);padding-top:12px">
+          <legend style="font-weight:700">Mobile Layout Overrides</legend>
+          <p class="hint">Used only when mobile overrides are enabled. Desktop stays unchanged.</p>
+          <div class="layout-grid">
+            <label>Mobile Nav X<input id="mobileNavX" type="number" step="1"></label>
+            <label>Mobile Nav Y<input id="mobileNavY" type="number" step="1"></label>
+            <label>Mobile Hero Title X<input id="mobileHeroTitleX" type="number" step="1"></label>
+            <label>Mobile Hero Title Y<input id="mobileHeroTitleY" type="number" step="1"></label>
+            <label>Mobile Hero Subtitle X<input id="mobileHeroSubtitleX" type="number" step="1"></label>
+            <label>Mobile Hero Subtitle Y<input id="mobileHeroSubtitleY" type="number" step="1"></label>
+            <label>Mobile CTA X<input id="mobileCtaX" type="number" step="1"></label>
+            <label>Mobile CTA Y<input id="mobileCtaY" type="number" step="1"></label>
+          </div>
+        </fieldset>
       </section>
 
       <section class="panel">
@@ -204,6 +218,21 @@
             <option value="top-and-home">Top and home (tab selection in both places)</option>
           </select>
         </label>
+        <fieldset class="panel-group" style="margin-top:12px;border-top:1px dashed rgba(0,0,0,.06);padding-top:12px">
+          <legend style="font-weight:700">Mobile Overrides</legend>
+          <label style="display:block;margin-top:8px"><input id="mobileOverridesEnabled" type="checkbox"> Enable mobile overrides for published site</label>
+          <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
+            <label style="flex:1">Mobile Heading Size (px)
+              <input id="mobileHeadingSize" type="range" min="28" max="92" step="1">
+              <span id="mobileHeadingSizeValue" class="value-pill"></span>
+            </label>
+            <label style="flex:1">Mobile Body Size (px)
+              <input id="mobileBodySize" type="range" min="12" max="28" step="1">
+              <span id="mobileBodySizeValue" class="value-pill"></span>
+            </label>
+          </div>
+          <label style="display:block;margin-top:8px"><input id="mobileHeroCenter" type="checkbox"> Center hero on mobile</label>
+        </fieldset>
         <label class="approval"><input id="topTabsTransparent" type="checkbox"> Top tabs fully transparent (text only)</label>
         <p class="hint">Each tab can use custom font and colors for its card and nav pill.</p>
         <div id="tabsEditor" class="tabs-editor"></div>
@@ -234,7 +263,15 @@
           <p class="eyebrow">Live Stage</p>
           <h2>Interactive Homepage Preview</h2>
         </div>
-        <a href="index.html" class="inline-link" target="_blank" rel="noreferrer">Open current published home</a>
+        <div class="preview-actions">
+          <label>Preview Device
+            <select id="previewDevice">
+              <option value="desktop">Desktop</option>
+              <option value="mobile">Mobile</option>
+            </select>
+          </label>
+          <a href="index.html" class="inline-link" target="_blank" rel="noreferrer">Open current published home</a>
+        </div>
       </header>
       <div id="previewViewport" class="preview-viewport"></div>
       <p class="hint foot-hint">Tip: drag logo 1, logo 2, nav, hero title, hero subtitle, and CTA directly on stage.</p>

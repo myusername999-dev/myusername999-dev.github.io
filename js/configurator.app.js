@@ -5,6 +5,9 @@
   var LAST_PUBLISHED_KEY = "home-config-last-published-v1";
   var REPO_DRAFT_GLOBAL_KEY = "__CONFIGURATOR_DRAFT__";
   var REPO_DRAFT_FILE_PATH = "js/configurator.draft.js";
+  var FS_HANDLE_DB_NAME = "vinatech-configurator-fs";
+  var FS_HANDLE_STORE_NAME = "handles";
+  var FS_HANDLE_KEY = "project-root";
   var FONT_FAMILIES = [
     "Sora",
     "Space Grotesk",
@@ -68,12 +71,18 @@
       hero: { x: 0, y: 0 },
       heroTitle: { x: 0, y: 0 },
       heroSubtitle: { x: 0, y: 0 },
-      cta: { x: 0, y: 0 }
+      cta: { x: 0, y: 0 },
+      mobileNav: { x: 0, y: 0 },
+      mobileHeroTitle: { x: 0, y: 0 },
+      mobileHeroSubtitle: { x: 0, y: 0 },
+      mobileCta: { x: 0, y: 0 }
     },
     display: {
       tabMode: "top-and-home",
       topTabsTransparent: false,
-      ctaTextOnly: false
+      ctaTextOnly: false,
+      previewDevice: "desktop",
+      mobileHeroCenter: true
     },
     tabs: [
       {
@@ -162,8 +171,9 @@
 
   document.addEventListener("DOMContentLoaded", init);
 
-  function init() {
+  async function init() {
     collectDom();
+    rememberedProjectDirectory = await loadRememberedProjectDirectory();
     var startupRepoDraft = getRepoDraft();
     if (startupRepoDraft) {
       state = mergeConfig(defaultConfig, startupRepoDraft);
@@ -202,6 +212,13 @@
     dom.headingSizeValue = document.getElementById("headingSizeValue");
     dom.bodySizeValue = document.getElementById("bodySizeValue");
     dom.buttonTextSizeValue = document.getElementById("buttonTextSizeValue");
+    // Mobile override controls
+    dom.mobileOverridesEnabled = document.getElementById("mobileOverridesEnabled");
+    dom.mobileHeadingSize = document.getElementById("mobileHeadingSize");
+    dom.mobileHeadingSizeValue = document.getElementById("mobileHeadingSizeValue");
+    dom.mobileBodySize = document.getElementById("mobileBodySize");
+    dom.mobileBodySizeValue = document.getElementById("mobileBodySizeValue");
+    dom.mobileHeroCenter = document.getElementById("mobileHeroCenter");
 
     dom.bgColor = document.getElementById("bgColor");
     dom.textColor = document.getElementById("textColor");
@@ -232,6 +249,14 @@
     dom.bgY = document.getElementById("bgY");
     dom.bgTransparency = document.getElementById("bgTransparency");
     dom.bgTransparencyValue = document.getElementById("bgTransparencyValue");
+    dom.mobileNavX = document.getElementById("mobileNavX");
+    dom.mobileNavY = document.getElementById("mobileNavY");
+    dom.mobileHeroTitleX = document.getElementById("mobileHeroTitleX");
+    dom.mobileHeroTitleY = document.getElementById("mobileHeroTitleY");
+    dom.mobileHeroSubtitleX = document.getElementById("mobileHeroSubtitleX");
+    dom.mobileHeroSubtitleY = document.getElementById("mobileHeroSubtitleY");
+    dom.mobileCtaX = document.getElementById("mobileCtaX");
+    dom.mobileCtaY = document.getElementById("mobileCtaY");
 
     dom.tabsEditor = document.getElementById("tabsEditor");
     dom.buttonsEditor = document.getElementById("buttonsEditor");
@@ -242,6 +267,7 @@
     dom.topTabsTransparent = document.getElementById("topTabsTransparent");
 
     dom.previewHome = document.getElementById("previewHome");
+    dom.previewDevice = document.getElementById("previewDevice");
     dom.publishHome = document.getElementById("publishHome");
     dom.exportDraft = document.getElementById("exportDraft");
     dom.importDraft = document.getElementById("importDraft");
@@ -301,6 +327,33 @@
     bindNumber(dom.buttonTextSize, function (value) {
       state.theme.buttonTextSize = clamp(value, 12, 32);
     });
+
+    // Mobile overrides bindings
+    if (dom.mobileOverridesEnabled) {
+      dom.mobileOverridesEnabled.addEventListener("change", function () {
+        state.display.mobileOverrides = !!dom.mobileOverridesEnabled.checked;
+        saveAndPreview();
+      });
+    }
+    bindNumber(dom.mobileHeadingSize, function (value) {
+      state.theme.mobileHeadingSize = clamp(value, 28, 120);
+    });
+    bindNumber(dom.mobileBodySize, function (value) {
+      state.theme.mobileBodySize = clamp(value, 12, 40);
+    });
+    if (dom.mobileHeroCenter) {
+      dom.mobileHeroCenter.addEventListener("change", function () {
+        state.display.mobileHeroCenter = !!dom.mobileHeroCenter.checked;
+        saveAndPreview();
+      });
+    }
+
+    if (dom.previewDevice) {
+      dom.previewDevice.addEventListener("change", function () {
+        state.display.previewDevice = normalizePreviewDevice(dom.previewDevice.value);
+        saveAndPreview();
+      });
+    }
 
     bindText(dom.bgColor, function (value) {
       state.theme.bgColor = value;
@@ -389,6 +442,31 @@
     });
     bindNumber(dom.bgTransparency, function (value) {
       state.background.transparency = clamp(value, 0, 95);
+    });
+
+    bindNumber(dom.mobileNavX, function (value) {
+      state.layout.mobileNav.x = value;
+    });
+    bindNumber(dom.mobileNavY, function (value) {
+      state.layout.mobileNav.y = value;
+    });
+    bindNumber(dom.mobileHeroTitleX, function (value) {
+      state.layout.mobileHeroTitle.x = value;
+    });
+    bindNumber(dom.mobileHeroTitleY, function (value) {
+      state.layout.mobileHeroTitle.y = value;
+    });
+    bindNumber(dom.mobileHeroSubtitleX, function (value) {
+      state.layout.mobileHeroSubtitle.x = value;
+    });
+    bindNumber(dom.mobileHeroSubtitleY, function (value) {
+      state.layout.mobileHeroSubtitle.y = value;
+    });
+    bindNumber(dom.mobileCtaX, function (value) {
+      state.layout.mobileCta.x = value;
+    });
+    bindNumber(dom.mobileCtaY, function (value) {
+      state.layout.mobileCta.y = value;
     });
 
     bindText(dom.tabDisplayMode, function (value) {
@@ -568,6 +646,14 @@
     }
     if (element === dom.buttonTextSize && dom.buttonTextSizeValue) {
       dom.buttonTextSizeValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.mobileHeadingSize && dom.mobileHeadingSizeValue) {
+      dom.mobileHeadingSizeValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.mobileBodySize && dom.mobileBodySizeValue) {
+      dom.mobileBodySizeValue.textContent = value + "px";
       return;
     }
     if (element === dom.bgTransparency && dom.bgTransparencyValue) {
@@ -831,6 +917,52 @@
     if (dom.bgTransparencyValue) {
       dom.bgTransparencyValue.textContent = state.background.transparency + "%";
     }
+    if (dom.mobileNavX) {
+      dom.mobileNavX.value = String((state.layout.mobileNav && state.layout.mobileNav.x) || 0);
+    }
+    if (dom.mobileNavY) {
+      dom.mobileNavY.value = String((state.layout.mobileNav && state.layout.mobileNav.y) || 0);
+    }
+    if (dom.mobileHeroTitleX) {
+      dom.mobileHeroTitleX.value = String((state.layout.mobileHeroTitle && state.layout.mobileHeroTitle.x) || 0);
+    }
+    if (dom.mobileHeroTitleY) {
+      dom.mobileHeroTitleY.value = String((state.layout.mobileHeroTitle && state.layout.mobileHeroTitle.y) || 0);
+    }
+    if (dom.mobileHeroSubtitleX) {
+      dom.mobileHeroSubtitleX.value = String((state.layout.mobileHeroSubtitle && state.layout.mobileHeroSubtitle.x) || 0);
+    }
+    if (dom.mobileHeroSubtitleY) {
+      dom.mobileHeroSubtitleY.value = String((state.layout.mobileHeroSubtitle && state.layout.mobileHeroSubtitle.y) || 0);
+    }
+    if (dom.mobileCtaX) {
+      dom.mobileCtaX.value = String((state.layout.mobileCta && state.layout.mobileCta.x) || 0);
+    }
+    if (dom.mobileCtaY) {
+      dom.mobileCtaY.value = String((state.layout.mobileCta && state.layout.mobileCta.y) || 0);
+    }
+    // Mobile overrides UI
+    if (dom.mobileOverridesEnabled) {
+      dom.mobileOverridesEnabled.checked = !!state.display.mobileOverrides;
+    }
+    if (dom.mobileHeadingSize) {
+      dom.mobileHeadingSize.value = String(state.theme.mobileHeadingSize || state.theme.headingSize || 48);
+    }
+    if (dom.mobileHeadingSizeValue) {
+      dom.mobileHeadingSizeValue.textContent = String(state.theme.mobileHeadingSize || state.theme.headingSize || 48) + "px";
+    }
+    if (dom.mobileBodySize) {
+      dom.mobileBodySize.value = String(state.theme.mobileBodySize || state.theme.bodySize || 16);
+    }
+    if (dom.mobileBodySizeValue) {
+      dom.mobileBodySizeValue.textContent = String(state.theme.mobileBodySize || state.theme.bodySize || 16) + "px";
+    }
+    if (dom.mobileHeroCenter) {
+      dom.mobileHeroCenter.checked = !!state.display.mobileHeroCenter;
+    }
+    if (dom.previewDevice) {
+      dom.previewDevice.value = normalizePreviewDevice(state.display.previewDevice);
+    }
     if (dom.tabDisplayMode) {
       dom.tabDisplayMode.value = state.display.tabMode;
     }
@@ -1076,8 +1208,47 @@
   }
 
   function renderPreview() {
-    dom.previewViewport.innerHTML = buildHomeMarkup(state, true);
+    var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
+    dom.previewViewport.innerHTML = buildHomeMarkup(getPreviewConfig(previewDevice), true);
+    dom.previewViewport.classList.toggle("preview-mobile", previewDevice === "mobile");
+    dom.previewViewport.classList.toggle("preview-mobile-center-hero", previewDevice === "mobile" && !!(state.display && state.display.mobileHeroCenter));
+
+    if (previewDevice === "mobile") {
+      var homeTabSelector = dom.previewViewport.querySelector(".home-tab-selector");
+      if (homeTabSelector) {
+        homeTabSelector.style.display = "none";
+      }
+    }
+
+    enablePreviewHamburger();
     enableDragging();
+  }
+
+  function getPreviewConfig(previewDevice) {
+    if (previewDevice !== "mobile") {
+      return state;
+    }
+
+    // In mobile preview, render draggable slots from mobile layout coordinates.
+    var previewConfig = deepClone(state);
+    previewConfig.layout.nav = Object.assign({}, previewConfig.layout.mobileNav || { x: 0, y: 0 });
+    previewConfig.layout.heroTitle = Object.assign({}, previewConfig.layout.mobileHeroTitle || { x: 0, y: 0 });
+    previewConfig.layout.heroSubtitle = Object.assign({}, previewConfig.layout.mobileHeroSubtitle || { x: 0, y: 0 });
+    previewConfig.layout.cta = Object.assign({}, previewConfig.layout.mobileCta || { x: 0, y: 0 });
+    return previewConfig;
+  }
+
+  function enablePreviewHamburger() {
+    var button = dom.previewViewport.querySelector(".hamburger");
+    var root = dom.previewViewport.querySelector(".home-root");
+    if (!button || !root) {
+      return;
+    }
+
+    button.addEventListener("click", function () {
+      var isOpen = root.classList.toggle("nav-open");
+      button.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
   }
 
   function enableDragging() {
@@ -1177,6 +1348,30 @@
     if (dom.ctaY) {
       dom.ctaY.value = String(state.layout.cta.y);
     }
+    if (dom.mobileNavX) {
+      dom.mobileNavX.value = String((state.layout.mobileNav && state.layout.mobileNav.x) || 0);
+    }
+    if (dom.mobileNavY) {
+      dom.mobileNavY.value = String((state.layout.mobileNav && state.layout.mobileNav.y) || 0);
+    }
+    if (dom.mobileHeroTitleX) {
+      dom.mobileHeroTitleX.value = String((state.layout.mobileHeroTitle && state.layout.mobileHeroTitle.x) || 0);
+    }
+    if (dom.mobileHeroTitleY) {
+      dom.mobileHeroTitleY.value = String((state.layout.mobileHeroTitle && state.layout.mobileHeroTitle.y) || 0);
+    }
+    if (dom.mobileHeroSubtitleX) {
+      dom.mobileHeroSubtitleX.value = String((state.layout.mobileHeroSubtitle && state.layout.mobileHeroSubtitle.x) || 0);
+    }
+    if (dom.mobileHeroSubtitleY) {
+      dom.mobileHeroSubtitleY.value = String((state.layout.mobileHeroSubtitle && state.layout.mobileHeroSubtitle.y) || 0);
+    }
+    if (dom.mobileCtaX) {
+      dom.mobileCtaX.value = String((state.layout.mobileCta && state.layout.mobileCta.x) || 0);
+    }
+    if (dom.mobileCtaY) {
+      dom.mobileCtaY.value = String((state.layout.mobileCta && state.layout.mobileCta.y) || 0);
+    }
   }
 
   function openPreviewWindow() {
@@ -1206,39 +1401,89 @@
 
     var publishPayload = preparePublishPayload(state);
     var html = buildPublishedHtml(publishPayload.config);
+    var publishStage = "start";
+    var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
+    var includeAssociatedPages = previewDevice !== "mobile";
 
     try {
       if (typeof window.showDirectoryPicker === "function") {
+        publishStage = "resolve-folder";
         var projectDirectory = await resolveProjectDirectoryHandle();
         if (!projectDirectory) {
+          await publishByDownloadFallback(publishPayload, html, includeAssociatedPages, "Folder picker blocked/canceled");
           return;
         }
 
-        var savedAssetsResult = await persistPublishAssets(publishPayload.assets, projectDirectory);
-        await writeIndexHtml(projectDirectory, html);
-        var writtenAssociatedPagesCount = await writeAssociatedTabPages(projectDirectory, publishPayload.config);
-        localStorage.setItem(LAST_PUBLISHED_KEY, html);
-        setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". index.html and " + writtenAssociatedPagesCount + " associated page(s) were saved." + assetStatusSuffix(savedAssetsResult), false);
-        return;
+        try {
+          publishStage = "write-assets";
+          var savedAssetsResult = await persistPublishAssets(publishPayload.assets, projectDirectory);
+
+          publishStage = "write-index";
+          await writeIndexHtml(projectDirectory, html);
+
+          var writtenAssociatedPagesCount = 0;
+          if (includeAssociatedPages) {
+            publishStage = "write-associated-pages";
+            writtenAssociatedPagesCount = await writeAssociatedTabPages(projectDirectory, publishPayload.config);
+          }
+
+          publishStage = "completed";
+          localStorage.setItem(LAST_PUBLISHED_KEY, html);
+          if (includeAssociatedPages) {
+            setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". index.html and " + writtenAssociatedPagesCount + " associated page(s) were saved." + assetStatusSuffix(savedAssetsResult), false);
+          } else {
+            setStatus("Publish complete in " + String(projectDirectory.name || "selected folder") + ". Saved index.html only." + assetStatusSuffix(savedAssetsResult), false);
+          }
+          return;
+        } catch (writeError) {
+          if (writeError && writeError.name === "AbortError") {
+            setStatus("Publish canceled at step: " + publishStage + ". Click Publish again and allow folder write access.", true);
+            return;
+          }
+          throw writeError;
+        }
       }
 
       downloadFile("index.html", html, "text/html");
       var noFsAssetsResult = await persistPublishAssets(publishPayload.assets);
-      var downloadedAssociatedPagesCount = downloadAssociatedTabPages(publishPayload.config);
+      var downloadedAssociatedPagesCount = 0;
+      if (includeAssociatedPages) {
+        downloadedAssociatedPagesCount = downloadAssociatedTabPages(publishPayload.config);
+      }
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
-      setStatus("Browser folder-write API unavailable. Downloaded index.html and " + downloadedAssociatedPagesCount + " associated page(s) for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
+      if (includeAssociatedPages) {
+        setStatus("Browser folder-write API unavailable. Downloaded index.html and " + downloadedAssociatedPagesCount + " associated page(s) for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
+      } else {
+        setStatus("Browser folder-write API unavailable. Downloaded index.html only for manual placement." + assetStatusSuffix(noFsAssetsResult), false);
+      }
       return;
     } catch (error) {
       if (error && error.name === "AbortError") {
-        setStatus("Folder selection canceled.", true);
+        var abortReason = error && error.message ? String(error.message) : "AbortError";
+        await publishByDownloadFallback(publishPayload, html, includeAssociatedPages, "Abort at " + publishStage + " (" + abortReason + ")");
         return;
       }
 
-      downloadFile("index.html", html, "text/html");
-      var fallbackAssetsResult = await persistPublishAssets(publishPayload.assets);
-      var fallbackAssociatedPagesCount = downloadAssociatedTabPages(publishPayload.config);
-      localStorage.setItem(LAST_PUBLISHED_KEY, html);
-      setStatus("Publish fallback used because direct folder write is blocked in this context. Downloaded " + fallbackAssociatedPagesCount + " associated page(s)." + assetStatusSuffix(fallbackAssetsResult), false);
+      rememberedProjectDirectory = null;
+      await clearRememberedProjectDirectory();
+      var reason = error && error.message ? String(error.message) : "Unknown write error";
+      setStatus("Direct folder publish failed at step: " + publishStage + ". " + reason + ". Re-select your project root folder and try again.", true);
+    }
+  }
+
+  async function publishByDownloadFallback(publishPayload, html, includeAssociatedPages, cause) {
+    downloadFile("index.html", html, "text/html");
+    var assetsResult = await persistPublishAssets(publishPayload.assets);
+    var associatedCount = 0;
+    if (includeAssociatedPages) {
+      associatedCount = downloadAssociatedTabPages(publishPayload.config);
+    }
+    localStorage.setItem(LAST_PUBLISHED_KEY, html);
+
+    if (includeAssociatedPages) {
+      setStatus("Folder write unavailable (" + cause + "). Downloaded index.html and " + associatedCount + " associated page(s)." + assetStatusSuffix(assetsResult), false);
+    } else {
+      setStatus("Folder write unavailable (" + cause + "). Downloaded index.html only." + assetStatusSuffix(assetsResult), false);
     }
   }
 
@@ -1288,6 +1533,13 @@
     var scriptContent = buildRepoDraftScript(state);
 
     try {
+      if (!rememberedProjectDirectory && typeof window.showDirectoryPicker === "function") {
+        var chosenDirectory = await resolveProjectDirectoryHandle();
+        if (chosenDirectory) {
+          rememberedProjectDirectory = chosenDirectory;
+        }
+      }
+
       if (rememberedProjectDirectory && typeof rememberedProjectDirectory.getDirectoryHandle === "function") {
         var projectDirectory = rememberedProjectDirectory;
         var jsDirectory = await projectDirectory.getDirectoryHandle("js", { create: true });
@@ -1304,7 +1556,14 @@
       downloadFile("configurator.draft.js", scriptContent, "application/javascript");
       setStatus("Draft downloaded as configurator.draft.js. Put it in js/ (overwrite existing) and commit.", false);
     } catch (error) {
+      if (error && error.name === "AbortError") {
+        downloadFile("configurator.draft.js", scriptContent, "application/javascript");
+        setStatus("Folder selection canceled. Draft downloaded as configurator.draft.js instead.", false);
+        return;
+      }
+
       rememberedProjectDirectory = null;
+      await clearRememberedProjectDirectory();
       downloadFile("configurator.draft.js", scriptContent, "application/javascript");
       setStatus("Direct folder save was unavailable. Draft downloaded as configurator.draft.js. Put it in js/ and commit.", false);
     }
@@ -1382,6 +1641,7 @@
       "</head>",
       "<body>",
       buildHomeMarkup(config, false),
+      "<script>(function(){var b=document.querySelector('.hamburger');var r=document.querySelector('.home-root');if(!b||!r){return;}b.addEventListener('click',function(){var o=r.classList.toggle('nav-open');b.setAttribute('aria-expanded',o?'true':'false');});})();</script>",
       "</body>",
       "</html>"
     ].join("\n");
@@ -1507,6 +1767,14 @@
         config.theme.headingSize +
         "px;--preview-body-size:" +
         config.theme.bodySize +
+        "px;--mobile-nav-x:" + ((config.layout.mobileNav && config.layout.mobileNav.x) || 0) +
+        "px;--mobile-nav-y:" + ((config.layout.mobileNav && config.layout.mobileNav.y) || 0) +
+        "px;--mobile-hero-title-x:" + ((config.layout.mobileHeroTitle && config.layout.mobileHeroTitle.x) || 0) +
+        "px;--mobile-hero-title-y:" + ((config.layout.mobileHeroTitle && config.layout.mobileHeroTitle.y) || 0) +
+        "px;--mobile-hero-subtitle-x:" + ((config.layout.mobileHeroSubtitle && config.layout.mobileHeroSubtitle.x) || 0) +
+        "px;--mobile-hero-subtitle-y:" + ((config.layout.mobileHeroSubtitle && config.layout.mobileHeroSubtitle.y) || 0) +
+        "px;--mobile-cta-x:" + ((config.layout.mobileCta && config.layout.mobileCta.x) || 0) +
+        "px;--mobile-cta-y:" + ((config.layout.mobileCta && config.layout.mobileCta.y) || 0) +
         "px;font-family:'" +
         escapeAttr(config.theme.fontFamily) +
         "','Segoe UI',sans-serif;\">",
@@ -1516,7 +1784,8 @@
         " 86%, #ffffff 14%) 0%, transparent 70%);\"></div>",
       "<header class=\"home-header\">",
       "<div class=\"brand-logos\">" + logos + "</div>",
-      "<nav class=\"home-nav nav-slot\" " + dragAttr("nav", draggable) + transformAttr(config.layout.nav) + ">" + topNavLinks + "</nav>",
+      "<button class=\"hamburger\" type=\"button\" aria-label=\"Toggle navigation\" aria-expanded=\"false\" aria-controls=\"site-nav\"><span class=\"bar\"></span></button>",
+      "<nav id=\"site-nav\" class=\"home-nav nav-slot\" " + dragAttr("nav", draggable) + transformAttr(config.layout.nav) + ">" + topNavLinks + "</nav>",
       "</header>",
       "<main class=\"hero-wrap\">",
       "<section class=\"hero-title-slot\" " + dragAttr("heroTitle", draggable) + " style=\"transform:translate(" + config.layout.heroTitle.x + "px," + config.layout.heroTitle.y + "px);text-align:" + escapeAttr(config.hero.titleAlign) + ";" + (config.hero.titleFontFamily ? "font-family:'" + escapeAttr(config.hero.titleFontFamily) + "','Segoe UI',sans-serif;" : "") + "\">",
@@ -1743,7 +2012,33 @@
       return rememberedProjectDirectory;
     }
 
-    var projectDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
+    if (!window.isSecureContext) {
+      setStatus("Debug resolve-folder: folder picker is unavailable in insecure context. Open configurator via https:// or http://localhost (not file://).", true);
+      return null;
+    }
+
+    if (window.top !== window.self) {
+      setStatus("Debug resolve-folder: folder picker is blocked inside embedded frames. Open configurator in a top-level browser tab.", true);
+      return null;
+    }
+
+    var projectDirectory = null;
+    try {
+      projectDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
+    } catch (pickerError) {
+      if (pickerError && pickerError.name === "AbortError") {
+        setStatus("Debug resolve-folder: folder picker was canceled or blocked before selection. If no picker appeared, run configurator in a top-level tab on http://localhost and try again.", true);
+        return null;
+      }
+      throw pickerError;
+    }
+
+    if (!projectDirectory) {
+      setStatus("Debug resolve-folder: folder picker returned an empty handle.", true);
+      return null;
+    }
+
+    var selectedName = String(projectDirectory.name || "").trim() || "(unknown)";
     if (String(projectDirectory.name || "").toLowerCase() === "images") {
       setStatus("Select the project root folder (the folder containing index.html), not images/.", true);
       return null;
@@ -1751,12 +2046,137 @@
 
     var looksLikeProjectRoot = await verifyProjectRootDirectory(projectDirectory);
     if (!looksLikeProjectRoot) {
-      setStatus("Selected folder is not your site root. Choose the folder that already contains index.html and configurator.html.", true);
+      setStatus("Selected folder '" + selectedName + "' is not your site root. Debug resolve-folder: required files index.html and configurator.html were not found there.", true);
       return null;
     }
 
     rememberedProjectDirectory = projectDirectory;
+    await saveRememberedProjectDirectory(projectDirectory);
     return rememberedProjectDirectory;
+  }
+
+  async function openFsHandleDb() {
+    if (typeof indexedDB === "undefined") {
+      return null;
+    }
+
+    return new Promise(function (resolve) {
+      try {
+        var request = indexedDB.open(FS_HANDLE_DB_NAME, 1);
+        request.onupgradeneeded = function () {
+          var db = request.result;
+          if (!db.objectStoreNames.contains(FS_HANDLE_STORE_NAME)) {
+            db.createObjectStore(FS_HANDLE_STORE_NAME);
+          }
+        };
+        request.onsuccess = function () {
+          resolve(request.result);
+        };
+        request.onerror = function () {
+          resolve(null);
+        };
+      } catch (_error) {
+        resolve(null);
+      }
+    });
+  }
+
+  async function saveRememberedProjectDirectory(handle) {
+    var db = await openFsHandleDb();
+    if (!db || !handle) {
+      return;
+    }
+
+    await new Promise(function (resolve) {
+      try {
+        var tx = db.transaction(FS_HANDLE_STORE_NAME, "readwrite");
+        tx.objectStore(FS_HANDLE_STORE_NAME).put(handle, FS_HANDLE_KEY);
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { resolve(); };
+      } catch (_error) {
+        resolve();
+      }
+    });
+    db.close();
+  }
+
+  async function loadRememberedProjectDirectory() {
+    var db = await openFsHandleDb();
+    if (!db) {
+      return null;
+    }
+
+    var handle = await new Promise(function (resolve) {
+      try {
+        var tx = db.transaction(FS_HANDLE_STORE_NAME, "readonly");
+        var request = tx.objectStore(FS_HANDLE_STORE_NAME).get(FS_HANDLE_KEY);
+        request.onsuccess = function () {
+          resolve(request.result || null);
+        };
+        request.onerror = function () {
+          resolve(null);
+        };
+      } catch (_error) {
+        resolve(null);
+      }
+    });
+    db.close();
+
+    if (!handle || typeof handle.getFileHandle !== "function") {
+      return null;
+    }
+
+    var looksLikeRoot = await verifyProjectRootDirectory(handle);
+    if (!looksLikeRoot) {
+      return null;
+    }
+    return handle;
+  }
+
+  async function clearRememberedProjectDirectory() {
+    var db = await openFsHandleDb();
+    if (!db) {
+      return;
+    }
+
+    await new Promise(function (resolve) {
+      try {
+        var tx = db.transaction(FS_HANDLE_STORE_NAME, "readwrite");
+        tx.objectStore(FS_HANDLE_STORE_NAME).delete(FS_HANDLE_KEY);
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { resolve(); };
+      } catch (_error) {
+        resolve();
+      }
+    });
+    db.close();
+  }
+
+  async function ensureDirectoryReadWritePermission(directoryHandle) {
+    if (!directoryHandle) {
+      return false;
+    }
+
+    // Some browser contexts expose directory handles but do not expose permission APIs.
+    // In that case, trust the remembered handle and attempt the write directly.
+    if (typeof directoryHandle.queryPermission !== "function") {
+      return true;
+    }
+
+    try {
+      var options = { mode: "readwrite" };
+      var state = await directoryHandle.queryPermission(options);
+      if (state === "granted") {
+        return true;
+      }
+      if (state === "prompt") {
+        state = await directoryHandle.requestPermission(options);
+        return state === "granted";
+      }
+      return false;
+    } catch (_error) {
+      return false;
+    }
   }
 
   async function verifyProjectRootDirectory(projectDirectory) {
@@ -1887,6 +2307,21 @@
   }
 
   function getDragPosition(dragKey) {
+    var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
+    if (previewDevice === "mobile") {
+      if (dragKey === "nav") {
+        return state.layout.mobileNav || { x: 0, y: 0 };
+      }
+      if (dragKey === "heroTitle") {
+        return state.layout.mobileHeroTitle || { x: 0, y: 0 };
+      }
+      if (dragKey === "heroSubtitle") {
+        return state.layout.mobileHeroSubtitle || { x: 0, y: 0 };
+      }
+      if (dragKey === "cta") {
+        return state.layout.mobileCta || { x: 0, y: 0 };
+      }
+    }
     if (isLogoDragKey(dragKey)) {
       var logoIndex = logoIndexFromDragKey(dragKey);
       return {
@@ -1904,6 +2339,29 @@
   }
 
   function setDragPosition(dragKey, x, y) {
+    var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
+    if (previewDevice === "mobile") {
+      if (dragKey === "nav") {
+        state.layout.mobileNav.x = x;
+        state.layout.mobileNav.y = y;
+        return;
+      }
+      if (dragKey === "heroTitle") {
+        state.layout.mobileHeroTitle.x = x;
+        state.layout.mobileHeroTitle.y = y;
+        return;
+      }
+      if (dragKey === "heroSubtitle") {
+        state.layout.mobileHeroSubtitle.x = x;
+        state.layout.mobileHeroSubtitle.y = y;
+        return;
+      }
+      if (dragKey === "cta") {
+        state.layout.mobileCta.x = x;
+        state.layout.mobileCta.y = y;
+        return;
+      }
+    }
     if (isLogoDragKey(dragKey)) {
       var logoIndex = logoIndexFromDragKey(dragKey);
       state.brand.logos[logoIndex].x = x;
@@ -1927,7 +2385,7 @@
   }
 
   function buildPublishedStyles(config) {
-    return [
+    var rules = [
       "*{box-sizing:border-box}",
       "html,body{margin:0;padding:0}",
       "body{background:" + config.theme.bgColor + ";color:" + config.theme.textColor + ";padding-bottom:44px}",
@@ -1940,7 +2398,17 @@
       ".logo-slot img{width:100%;height:100%;object-fit:contain;display:block}",
       ".logo-fallback{font-size:.78rem;font-weight:700;padding:8px 10px;border-radius:10px;border:1px dashed color-mix(in srgb,var(--preview-text) 28%,#fff 72%);background:color-mix(in srgb,var(--preview-surface) 86%,#fff 14%);text-align:center}",
       ".home-nav{display:flex;flex-wrap:wrap;gap:8px}",
+      ".home-root.nav-open .home-nav{display:flex}",
       ".home-nav a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}",
+      ".hamburger{display:none;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid color-mix(in srgb,var(--preview-text) 20%,#fff 80%);border-radius:10px;background:color-mix(in srgb,#fff 92%,var(--preview-surface) 8%);color:var(--preview-text)}",
+      ".hamburger .bar,.hamburger .bar::before,.hamburger .bar::after{display:block;width:18px;height:2px;border-radius:2px;background:currentColor;transition:transform .18s ease,opacity .18s ease}",
+      ".hamburger .bar{position:relative}",
+      ".hamburger .bar::before,.hamburger .bar::after{content:'';position:absolute;left:0}",
+      ".hamburger .bar::before{top:-6px}",
+      ".hamburger .bar::after{top:6px}",
+      ".hamburger[aria-expanded='true'] .bar{transform:rotate(45deg)}",
+      ".hamburger[aria-expanded='true'] .bar::before{transform:rotate(90deg) translateX(6px)}",
+      ".hamburger[aria-expanded='true'] .bar::after{opacity:0}",
       ".home-tab-selector{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}",
       ".home-tab-selector a{text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--preview-text) 18%,#fff 82%);padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--preview-surface) 72%,#fff 28%);font-size:var(--preview-button-size)}",
       ".hero-wrap{max-width:1240px;margin:34px auto 0;padding:0 24px 36px}",
@@ -1954,9 +2422,39 @@
       ".generated-card{border-radius:14px;padding:18px;border:1px solid color-mix(in srgb,var(--preview-text) 22%,#fff 78%);background:color-mix(in srgb,var(--preview-surface) 76%,#fff 24%)}",
       ".generated-card h3{margin:0;font-size:1.1rem}",
       ".generated-card p{margin:8px 0 0;line-height:1.5;color:var(--preview-muted)}",
-      ".site-footer-fixed{position:fixed;left:0;right:0;bottom:0;z-index:999;text-align:left;padding:12px 16px;font-size:.84rem;color:#ffffff;background:transparent;text-shadow:0 1px 2px rgba(0,0,0,.55)}",
-      "@media (max-width:760px){.hero-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}.home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px}}"
-    ].join("\n");
+      ".site-footer-fixed{position:fixed;left:0;right:0;bottom:0;z-index:999;text-align:left;padding:12px 16px;font-size:.84rem;color:#ffffff;background:transparent;text-shadow:0 1px 2px rgba(0,0,0,.55)}"
+    ];
+
+    // Add mobile overrides if enabled
+    try {
+      if (config.display && config.display.mobileOverrides) {
+        var mh = parseInt(config.theme.mobileHeadingSize || config.theme.headingSize || 48, 10);
+        var mb = parseInt(config.theme.mobileBodySize || config.theme.bodySize || 16, 10);
+        var mobileRules = "@media (max-width:760px){" +
+          ":root{--preview-heading-size:" + mh + "px;--preview-body-size:" + mb + "px;}" +
+          ".home-tab-selector{display:none;}" +
+          ".cta-slot{display:none !important;}" +
+          ".home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px;}" +
+          ".home-header{position:relative;align-items:flex-start;}" +
+          ".hamburger{display:inline-flex;}" +
+          ".home-nav{position:absolute;top:calc(100% - 8px);right:16px;min-width:180px;flex-direction:column;background:color-mix(in srgb,#fff 92%,var(--preview-surface) 8%);border:1px solid color-mix(in srgb,var(--preview-text) 15%,#fff 85%);border-radius:12px;padding:10px;box-shadow:0 10px 28px rgba(13,23,19,.2);display:none;transform:translate(var(--mobile-nav-x),var(--mobile-nav-y)) !important;z-index:20;}" +
+          ".hero-title-slot{transform:translate(var(--mobile-hero-title-x),var(--mobile-hero-title-y)) !important;}" +
+          ".hero-subtitle-slot{transform:translate(var(--mobile-hero-subtitle-x),var(--mobile-hero-subtitle-y)) !important;}" +
+          ".cta-slot{transform:translate(var(--mobile-cta-x),var(--mobile-cta-y)) !important;}";
+        if (config.display.mobileHeroCenter) {
+          mobileRules += ".hero-title-slot,.hero-subtitle-slot{text-align:center !important;margin-left:auto;margin-right:auto !important;}";
+        }
+        mobileRules += "}";
+        rules.push(mobileRules);
+      } else {
+        // Default responsive fallback
+        rules.push("@media (max-width:760px){.hero-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}.home-tab-selector{display:none}.cta-slot{display:none !important}.home-header,.hero-wrap,.generated-sections{padding-left:16px;padding-right:16px}.home-header{position:relative;align-items:flex-start;}.hamburger{display:inline-flex;}.home-nav{position:absolute;top:calc(100% - 8px);right:16px;min-width:180px;flex-direction:column;background:color-mix(in srgb,#fff 92%,var(--preview-surface) 8%);border:1px solid color-mix(in srgb,var(--preview-text) 15%,#fff 85%);border-radius:12px;padding:10px;box-shadow:0 10px 28px rgba(13,23,19,.2);display:none;transform:translate(var(--mobile-nav-x),var(--mobile-nav-y)) !important;z-index:20;}.hero-title-slot{transform:translate(var(--mobile-hero-title-x),var(--mobile-hero-title-y)) !important;}.hero-subtitle-slot{transform:translate(var(--mobile-hero-subtitle-x),var(--mobile-hero-subtitle-y)) !important;}.cta-slot{transform:translate(var(--mobile-cta-x),var(--mobile-cta-y)) !important;}}");
+      }
+    } catch (_err) {
+      rules.push("@media (max-width:760px){.hero-slot h1{font-size:clamp(2rem,10vw,var(--preview-heading-size))}}");
+    }
+
+    return rules.join("\n");
   }
 
   function setStatus(message, isError) {
@@ -2023,11 +2521,15 @@
     state.theme.surfaceColor = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
     state.theme.buttonTextColor = normalizeHex(state.theme.buttonTextColor, "#ffffff");
 
+    // Mobile theme defaults
+    state.theme.mobileHeadingSize = clamp(parseInt(state.theme.mobileHeadingSize, 10) || state.theme.headingSize || 48, 20, 160);
+    state.theme.mobileBodySize = clamp(parseInt(state.theme.mobileBodySize, 10) || state.theme.bodySize || 16, 10, 72);
+
     state.layout = state.layout || {};
     var hasHeroTitleLayout = !!state.layout.heroTitle;
     var hasHeroSubtitleLayout = !!state.layout.heroSubtitle;
     var legacyHeroLayout = state.layout.hero || { x: 0, y: 0 };
-    ["logo", "nav", "hero", "heroTitle", "heroSubtitle", "cta"].forEach(function (key) {
+    ["logo", "nav", "hero", "heroTitle", "heroSubtitle", "cta", "mobileNav", "mobileHeroTitle", "mobileHeroSubtitle", "mobileCta"].forEach(function (key) {
       state.layout[key] = state.layout[key] || { x: 0, y: 0 };
       state.layout[key].x = parseInt(state.layout[key].x, 10) || 0;
       state.layout[key].y = parseInt(state.layout[key].y, 10) || 0;
@@ -2049,6 +2551,14 @@
     state.display.tabMode = normalizeTabMode(state.display.tabMode);
     state.display.topTabsTransparent = !!state.display.topTabsTransparent;
     state.display.ctaTextOnly = !!state.display.ctaTextOnly;
+    // Mobile display flags
+    state.display.mobileOverrides = !!state.display.mobileOverrides;
+    if (typeof state.display.mobileHeroCenter === "undefined" || state.display.mobileHeroCenter === null) {
+      state.display.mobileHeroCenter = true;
+    } else {
+      state.display.mobileHeroCenter = !!state.display.mobileHeroCenter;
+    }
+    state.display.previewDevice = normalizePreviewDevice(state.display.previewDevice);
 
     var backgroundX = parseInt(state.background.x, 10);
     var backgroundY = parseInt(state.background.y, 10);
@@ -2163,7 +2673,11 @@
       hero: Object.assign({}, merged.layout.hero, incomingLayout.hero || {}),
       heroTitle: Object.assign({}, merged.layout.heroTitle, incomingLayout.heroTitle || incomingLayout.hero || {}),
       heroSubtitle: Object.assign({}, merged.layout.heroSubtitle, incomingLayout.heroSubtitle || incomingLayout.hero || {}),
-      cta: Object.assign({}, merged.layout.cta, incomingLayout.cta || {})
+      cta: Object.assign({}, merged.layout.cta, incomingLayout.cta || {}),
+      mobileNav: Object.assign({}, merged.layout.mobileNav || { x: 0, y: 0 }, incomingLayout.mobileNav || {}),
+      mobileHeroTitle: Object.assign({}, merged.layout.mobileHeroTitle || { x: 0, y: 0 }, incomingLayout.mobileHeroTitle || {}),
+      mobileHeroSubtitle: Object.assign({}, merged.layout.mobileHeroSubtitle || { x: 0, y: 0 }, incomingLayout.mobileHeroSubtitle || {}),
+      mobileCta: Object.assign({}, merged.layout.mobileCta || { x: 0, y: 0 }, incomingLayout.mobileCta || {})
     };
 
     if (Array.isArray(incoming.tabs) && incoming.tabs.length) {
@@ -2415,6 +2929,10 @@
       return mode;
     }
     return "top-and-home";
+  }
+
+  function normalizePreviewDevice(value) {
+    return String(value || "desktop").trim().toLowerCase() === "mobile" ? "mobile" : "desktop";
   }
 
   function normalizeTabImageTransparency(value, fallbackValue) {
