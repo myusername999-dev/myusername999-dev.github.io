@@ -1889,7 +1889,7 @@
     var publishStage = "start";
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     var includeAssociatedPages = previewDevice !== "mobile" && publishScope === "all";
-    var publishHomePage = publishScope === "all" || publishScope === "home";
+    var publishHomePage = publishScope === "all" || publishScope === "home" || publishScope === "contact";
     var publishPrivacyPage = publishScope === "all" || publishScope === "privacy";
     var publishContactPage = publishScope === "all" || publishScope === "contact";
     var publishAssets = publishScope === "all" || publishScope === "home";
@@ -1981,7 +1981,7 @@
 
   async function publishByDownloadFallback(publishPayload, html, includeAssociatedPages, cause, scope) {
     var publishScope = normalizePublishScope(scope);
-    var publishHomePage = publishScope === "all" || publishScope === "home";
+    var publishHomePage = publishScope === "all" || publishScope === "home" || publishScope === "contact";
     var publishPrivacyPage = publishScope === "all" || publishScope === "privacy";
     var publishContactPage = publishScope === "all" || publishScope === "contact";
     var publishAssets = publishScope === "all" || publishScope === "home";
@@ -2022,7 +2022,7 @@
       return base + "Saved privacy.html.";
     }
     if (scope === "contact") {
-      return base + "Saved contact.html.";
+      return base + "Saved contact.html and index.html.";
     }
     if (scope === "home") {
       return base + "Saved index.html." + assetStatusSuffix(assetsResult);
@@ -2038,7 +2038,7 @@
       return "Downloaded privacy.html.";
     }
     if (scope === "contact") {
-      return "Downloaded contact.html.";
+      return "Downloaded contact.html and index.html.";
     }
     if (scope === "home") {
       return "Downloaded index.html.";
@@ -2226,16 +2226,17 @@
 
     function resolveTabHref(tab, id) {
       var label = String((tab && tab.label) || "").trim().toLowerCase();
+      var sectionTitle = String((tab && tab.sectionTitle) || "").trim().toLowerCase();
       if (label === "home") {
         return "index.html";
       }
       if (label === "news") {
         return "news.html";
       }
-      if (label === "contact") {
+      if (label.indexOf("contact") >= 0 || sectionTitle.indexOf("contact") >= 0) {
         return "contact.html";
       }
-      if (label === "privacy" || label === "privacy policy") {
+      if (label.indexOf("privacy") >= 0 || sectionTitle.indexOf("privacy") >= 0) {
         return "privacy.html";
       }
       var linkedPage = normalizePageHref(tab && tab.pageHref);
@@ -3627,12 +3628,21 @@
     state.tabs = state.tabs
       .map(function (tab, index) {
         var label = String(tab.label || "Tab " + (index + 1));
+        var labelLower = label.trim().toLowerCase();
         var sectionId = slugify(String(tab.sectionId || label || "section"));
+        var sectionTitle = String(tab.sectionTitle || label);
+        var sectionTitleLower = sectionTitle.trim().toLowerCase();
+        var normalizedPageHref = normalizePageHref(tab.pageHref);
+        if (labelLower.indexOf("contact") >= 0 || sectionTitleLower.indexOf("contact") >= 0) {
+          normalizedPageHref = "contact.html";
+        } else if (labelLower.indexOf("privacy") >= 0 || sectionTitleLower.indexOf("privacy") >= 0) {
+          normalizedPageHref = "privacy.html";
+        }
         return {
           label: label,
           sectionId: sectionId || uniqueSectionId("section"),
-          pageHref: normalizePageHref(tab.pageHref),
-          sectionTitle: String(tab.sectionTitle || label),
+          pageHref: normalizedPageHref,
+          sectionTitle: sectionTitle,
           sectionText: String(tab.sectionText || "Add section content here."),
           sectionFontFamily: normalizeFontFamily(tab.sectionFontFamily),
           sectionTitleColor: normalizeHex(tab.sectionTitleColor, state.theme.textColor),
