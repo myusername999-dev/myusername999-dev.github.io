@@ -49,8 +49,8 @@ window.__CONFIGURATOR_DRAFT__ = {
         "href": "support.html"
       },
       {
-        "label": "About",
-        "href": "about.html"
+        "label": "Contact",
+        "href": "contact.html"
       }
     ]
   },
@@ -240,7 +240,7 @@ window.__CONFIGURATOR_DRAFT__ = {
     {
       "label": "CONTACT",
       "sectionId": "contact",
-      "pageHref": "about.html",
+      "pageHref": "contact.html",
       "sectionTitle": "contact",
       "sectionText": "Add section content here.",
       "sectionFontFamily": "",
