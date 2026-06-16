@@ -109,6 +109,15 @@
       cardPadding: 26,
       layoutGap: 26
     },
+    contact: {
+      title: "Contact VINATECH Limited",
+      intro: "Tell us about your project needs and our team will respond promptly.",
+      submitLabel: "Submit",
+      emailSubject: "Website Contact Request",
+      formEndpoint: "https://formspree.io/f/mrevdeyn",
+      recipientEmail: "support@vinatech.it.com",
+      fields: createDefaultContactFields()
+    },
     tabs: [
       {
         label: "About",
@@ -209,6 +218,7 @@
     syncInputsFromState();
     renderButtonsEditor();
     renderTabsEditor();
+    renderContactFieldsEditor();
     renderPreview();
     setStatus("Draft loaded. Make edits and review in preview.", false);
   }
@@ -217,6 +227,7 @@
     dom.pageMode = document.getElementById("pageMode");
     dom.homeControls = document.getElementById("homeControls");
     dom.privacyControls = document.getElementById("privacyControls");
+    dom.contactControls = document.getElementById("contactControls");
 
     dom.brandName = document.getElementById("brandName");
     dom.heroTitle = document.getElementById("heroTitle");
@@ -298,6 +309,7 @@
     dom.previewHome = document.getElementById("previewHome");
     dom.publishHomeOnly = document.getElementById("publishHomeOnly");
     dom.publishPrivacyOnly = document.getElementById("publishPrivacyOnly");
+    dom.publishContactOnly = document.getElementById("publishContactOnly");
     dom.previewPage = document.getElementById("previewPage");
     dom.previewMobileToggle = document.getElementById("previewMobileToggle");
     dom.previewDevice = document.getElementById("previewDevice");
@@ -333,6 +345,14 @@
     dom.privacyCardPaddingValue = document.getElementById("privacyCardPaddingValue");
     dom.privacyLayoutGap = document.getElementById("privacyLayoutGap");
     dom.privacyLayoutGapValue = document.getElementById("privacyLayoutGapValue");
+
+    dom.contactTitle = document.getElementById("contactTitle");
+    dom.contactIntro = document.getElementById("contactIntro");
+    dom.contactSubmitLabel = document.getElementById("contactSubmitLabel");
+    dom.contactEmailSubject = document.getElementById("contactEmailSubject");
+    dom.contactFormEndpoint = document.getElementById("contactFormEndpoint");
+    dom.contactFieldsEditor = document.getElementById("contactFieldsEditor");
+    dom.addContactField = document.getElementById("addContactField");
   }
 
   function bindCoreInputs() {
@@ -340,6 +360,8 @@
       state.display.pageMode = normalizePageMode(value);
       if (state.display.pageMode === "privacy") {
         state.display.previewPage = "page:privacy.html";
+      } else if (state.display.pageMode === "contact") {
+        state.display.previewPage = "page:contact.html";
       } else {
         state.display.previewPage = "home";
       }
@@ -440,11 +462,33 @@
     if (dom.previewPage) {
       dom.previewPage.addEventListener("change", function () {
         state.display.previewPage = normalizePreviewPageValue(dom.previewPage.value, state);
-        state.display.pageMode = state.display.previewPage === "page:privacy.html" ? "privacy" : "home";
+        if (state.display.previewPage === "page:privacy.html") {
+          state.display.pageMode = "privacy";
+        } else if (state.display.previewPage === "page:contact.html") {
+          state.display.pageMode = "contact";
+        } else {
+          state.display.pageMode = "home";
+        }
         applyPageModeUI();
         saveAndPreview();
       });
     }
+
+    bindText(dom.contactTitle, function (value) {
+      state.contact.title = String(value || "");
+    });
+    bindText(dom.contactIntro, function (value) {
+      state.contact.intro = String(value || "");
+    });
+    bindText(dom.contactSubmitLabel, function (value) {
+      state.contact.submitLabel = String(value || "");
+    });
+    bindText(dom.contactEmailSubject, function (value) {
+      state.contact.emailSubject = String(value || "");
+    });
+    bindText(dom.contactFormEndpoint, function (value) {
+      state.contact.formEndpoint = String(value || "");
+    });
 
     bindText(dom.privacyTitle, function (value) {
       state.privacy.title = String(value || "");
@@ -741,6 +785,26 @@
       });
     }
 
+    if (dom.publishContactOnly) {
+      dom.publishContactOnly.addEventListener("click", function () {
+        handlePublish("contact");
+      });
+    }
+
+    if (dom.addContactField) {
+      dom.addContactField.addEventListener("click", function () {
+        var nextIndex = (state.contact && Array.isArray(state.contact.fields) ? state.contact.fields.length : 0) + 1;
+        state.contact.fields.push({
+          id: "field-" + nextIndex,
+          label: "New Field " + nextIndex,
+          type: "text",
+          required: false,
+          placeholder: ""
+        });
+        refresh("Contact field added.");
+      });
+    }
+
     dom.publishHome.addEventListener("click", function () {
       handlePublish("all");
     });
@@ -931,6 +995,7 @@
     syncInputsFromState();
     renderButtonsEditor();
     renderTabsEditor();
+    renderContactFieldsEditor();
     schedulePreviewRender();
     if (message) {
       setStatus(message, false);
@@ -1245,6 +1310,22 @@
       dom.privacyLayoutGapValue.textContent = state.privacy.layoutGap + "px";
     }
 
+    if (dom.contactTitle) {
+      dom.contactTitle.value = state.contact.title;
+    }
+    if (dom.contactIntro) {
+      dom.contactIntro.value = state.contact.intro;
+    }
+    if (dom.contactSubmitLabel) {
+      dom.contactSubmitLabel.value = state.contact.submitLabel;
+    }
+    if (dom.contactEmailSubject) {
+      dom.contactEmailSubject.value = state.contact.emailSubject;
+    }
+    if (dom.contactFormEndpoint) {
+      dom.contactFormEndpoint.value = state.contact.formEndpoint;
+    }
+
     applyPageModeUI();
   }
 
@@ -1255,6 +1336,9 @@
     }
     if (dom.privacyControls) {
       dom.privacyControls.classList.toggle("page-mode-hidden", mode !== "privacy");
+    }
+    if (dom.contactControls) {
+      dom.contactControls.classList.toggle("page-mode-hidden", mode !== "contact");
     }
   }
 
@@ -1491,6 +1575,92 @@
     });
   }
 
+  function renderContactFieldsEditor() {
+    if (!dom.contactFieldsEditor) {
+      return;
+    }
+
+    var fields = (state.contact && Array.isArray(state.contact.fields)) ? state.contact.fields : [];
+    dom.contactFieldsEditor.innerHTML = fields
+      .map(function (field, index) {
+        var type = normalizeContactFieldType(field.type);
+        var requiredChecked = field.required ? " checked" : "";
+        var removeDisabled = field.id === "consent" ? " disabled" : "";
+        return [
+          "<div class=\"tab-row\" data-contact-field-index=\"" + index + "\">",
+          "<div class=\"tab-row-head\">",
+          "<strong>Field " + (index + 1) + "</strong>",
+          "<div class=\"tab-actions\">",
+          "<button type=\"button\" data-action=\"up\">Up</button>",
+          "<button type=\"button\" data-action=\"down\">Down</button>",
+          "<button type=\"button\" data-action=\"remove\" class=\"danger\"" + removeDisabled + ">Remove</button>",
+          "</div>",
+          "</div>",
+          "<label>Field Label<input type=\"text\" data-field=\"label\" value=\"" + escapeAttr(field.label) + "\"></label>",
+          "<label>Field Id<input type=\"text\" data-field=\"id\" value=\"" + escapeAttr(field.id) + "\" placeholder=\"field-id\"></label>",
+          "<label>Field Type<select data-field=\"type\">" + contactFieldTypeOptionsMarkup(type) + "</select></label>",
+          "<label>Placeholder<input type=\"text\" data-field=\"placeholder\" value=\"" + escapeAttr(field.placeholder || "") + "\"></label>",
+          "<label class=\"approval\"><input type=\"checkbox\" data-field=\"required\"" + requiredChecked + "> Required</label>",
+          "</div>"
+        ].join("");
+      })
+      .join("");
+
+    var rows = dom.contactFieldsEditor.querySelectorAll(".tab-row");
+    rows.forEach(function (row) {
+      var index = parseInt(row.getAttribute("data-contact-field-index"), 10);
+      var inputs = row.querySelectorAll("input[data-field],select[data-field]");
+      inputs.forEach(function (input) {
+        var eventName = input.type === "checkbox" || input.tagName === "SELECT" ? "change" : "input";
+        input.addEventListener(eventName, function () {
+          var fieldName = String(input.getAttribute("data-field") || "");
+          var targetField = state.contact.fields[index];
+          if (!targetField) {
+            return;
+          }
+          if (fieldName === "required") {
+            targetField.required = !!input.checked;
+          } else if (fieldName === "type") {
+            targetField.type = normalizeContactFieldType(input.value);
+            if (targetField.type === "checkbox") {
+              targetField.required = true;
+            }
+          } else if (fieldName === "id") {
+            targetField.id = slugify(input.value || targetField.label || ("field-" + (index + 1)));
+          } else {
+            targetField[fieldName] = input.value;
+          }
+          saveAndPreview();
+        });
+      });
+
+      var controls = row.querySelectorAll("button[data-action]");
+      controls.forEach(function (buttonControl) {
+        buttonControl.addEventListener("click", function () {
+          var action = String(buttonControl.getAttribute("data-action") || "");
+          if (action === "remove") {
+            if (state.contact.fields[index] && state.contact.fields[index].id === "consent") {
+              setStatus("Consent field cannot be removed.", true);
+              return;
+            }
+            state.contact.fields.splice(index, 1);
+            refresh("Contact field removed.");
+            return;
+          }
+          if (action === "up" && index > 0) {
+            swapArrayItems(state.contact.fields, index, index - 1);
+            refresh();
+            return;
+          }
+          if (action === "down" && index < state.contact.fields.length - 1) {
+            swapArrayItems(state.contact.fields, index, index + 1);
+            refresh();
+          }
+        });
+      });
+    });
+  }
+
   function renderPreview() {
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     var previewSelection = normalizePreviewPage(state.display && state.display.previewPage, state);
@@ -1668,9 +1838,13 @@
 
   function openPreviewWindow() {
     var previewSelection = normalizePreviewPage(state.display && state.display.previewPage, state);
-    if (previewSelection.value !== "home" && isPrivacyPolicyDescriptor(previewSelection.page)) {
-      var privacyHref = normalizePageHref(previewSelection.page && previewSelection.page.fileName) || "privacy.html";
-      var directWindow = window.open(buildPrivacyPreviewHref(privacyHref, state), "_blank", "noopener,noreferrer");
+    if (previewSelection.value !== "home" && (isPrivacyPolicyDescriptor(previewSelection.page) || isContactDescriptor(previewSelection.page))) {
+      var pageHref = normalizePageHref(previewSelection.page && previewSelection.page.fileName)
+        || (isPrivacyPolicyDescriptor(previewSelection.page) ? "privacy.html" : "contact.html");
+      var previewHref = isPrivacyPolicyDescriptor(previewSelection.page)
+        ? buildPrivacyPreviewHref(pageHref, state)
+        : buildContactPreviewHref(pageHref, state);
+      var directWindow = window.open(previewHref, "_blank", "noopener,noreferrer");
       if (!directWindow) {
         setStatus("Preview popup blocked by browser.", true);
         return;
@@ -1700,7 +1874,7 @@
       return;
     }
 
-    if (publishScope !== "privacy") {
+    if (publishScope === "home" || publishScope === "all") {
       var validationErrors = validateState();
       if (validationErrors.length) {
         setStatus(validationErrors[0], true);
@@ -1711,12 +1885,14 @@
     var publishPayload = preparePublishPayload(state);
     var html = buildPublishedHtml(publishPayload.config);
     var privacyHtml = buildPrivacyPolicyPageHtml(publishPayload.config);
+    var contactHtml = buildContactPageHtml(publishPayload.config);
     var publishStage = "start";
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     var includeAssociatedPages = previewDevice !== "mobile" && publishScope === "all";
     var publishHomePage = publishScope === "all" || publishScope === "home";
     var publishPrivacyPage = publishScope === "all" || publishScope === "privacy";
-    var publishAssets = publishScope !== "privacy";
+    var publishContactPage = publishScope === "all" || publishScope === "contact";
+    var publishAssets = publishScope === "all" || publishScope === "home";
 
     try {
       if (typeof window.showDirectoryPicker === "function") {
@@ -1742,6 +1918,11 @@
           if (publishPrivacyPage) {
             publishStage = "write-privacy";
             await writeSinglePage(projectDirectory, "privacy.html", privacyHtml);
+          }
+
+          if (publishContactPage) {
+            publishStage = "write-contact";
+            await writeSinglePage(projectDirectory, "contact.html", contactHtml);
           }
 
           var writtenAssociatedPagesCount = 0;
@@ -1771,6 +1952,9 @@
       if (publishPrivacyPage) {
         downloadFile("privacy.html", privacyHtml, "text/html");
       }
+      if (publishContactPage) {
+        downloadFile("contact.html", contactHtml, "text/html");
+      }
       var noFsAssetsResult = publishAssets ? await persistPublishAssets(publishPayload.assets) : { mode: "none", count: 0 };
       var downloadedAssociatedPagesCount = 0;
       if (includeAssociatedPages) {
@@ -1799,13 +1983,17 @@
     var publishScope = normalizePublishScope(scope);
     var publishHomePage = publishScope === "all" || publishScope === "home";
     var publishPrivacyPage = publishScope === "all" || publishScope === "privacy";
-    var publishAssets = publishScope !== "privacy";
+    var publishContactPage = publishScope === "all" || publishScope === "contact";
+    var publishAssets = publishScope === "all" || publishScope === "home";
 
     if (publishHomePage) {
       downloadFile("index.html", html, "text/html");
     }
     if (publishPrivacyPage) {
       downloadFile("privacy.html", buildPrivacyPolicyPageHtml(publishPayload.config), "text/html");
+    }
+    if (publishContactPage) {
+      downloadFile("contact.html", buildContactPageHtml(publishPayload.config), "text/html");
     }
     var assetsResult = publishAssets ? await persistPublishAssets(publishPayload.assets) : { mode: "none", count: 0 };
     var associatedCount = 0;
@@ -1821,7 +2009,7 @@
 
   function normalizePublishScope(scope) {
     var candidate = String(scope || "all").toLowerCase();
-    if (candidate === "home" || candidate === "privacy" || candidate === "all") {
+    if (candidate === "home" || candidate === "privacy" || candidate === "contact" || candidate === "all") {
       return candidate;
     }
     return "all";
@@ -1833,26 +2021,32 @@
     if (scope === "privacy") {
       return base + "Saved privacy.html.";
     }
+    if (scope === "contact") {
+      return base + "Saved contact.html.";
+    }
     if (scope === "home") {
       return base + "Saved index.html." + assetStatusSuffix(assetsResult);
     }
     if (includeAssociatedPages) {
-      return base + "Saved index.html, privacy.html, and " + associatedCount + " associated page(s)." + assetStatusSuffix(assetsResult);
+      return base + "Saved index.html, privacy.html, contact.html, and " + associatedCount + " associated page(s)." + assetStatusSuffix(assetsResult);
     }
-    return base + "Saved index.html and privacy.html." + assetStatusSuffix(assetsResult);
+    return base + "Saved index.html, privacy.html, and contact.html." + assetStatusSuffix(assetsResult);
   }
 
   function buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount) {
     if (scope === "privacy") {
       return "Downloaded privacy.html.";
     }
+    if (scope === "contact") {
+      return "Downloaded contact.html.";
+    }
     if (scope === "home") {
       return "Downloaded index.html.";
     }
     if (includeAssociatedPages) {
-      return "Downloaded index.html, privacy.html, and " + associatedCount + " associated page(s).";
+      return "Downloaded index.html, privacy.html, contact.html, and " + associatedCount + " associated page(s).";
     }
-    return "Downloaded index.html and privacy.html.";
+    return "Downloaded index.html, privacy.html, and contact.html.";
   }
 
   function buildScopedDownloadMessage(scope, includeAssociatedPages, associatedCount, assetsResult) {
@@ -2373,6 +2567,9 @@
     if (isPrivacyPolicyDescriptor(tab)) {
       return buildPrivacyPolicyPageHtml(config);
     }
+    if (isContactDescriptor(tab)) {
+      return buildContactPageHtml(config);
+    }
 
     var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
     var site = String((config && config.brand && config.brand.name) || "VinATech");
@@ -2404,6 +2601,10 @@
       var privacyHref = normalizePageHref(tab && tab.fileName) || "privacy.html";
       return buildExternalFilePreviewMarkup(buildPrivacyPreviewHref(privacyHref, config));
     }
+    if (isContactDescriptor(tab)) {
+      var contactHref = normalizePageHref(tab && tab.fileName) || "contact.html";
+      return buildExternalFilePreviewMarkup(buildContactPreviewHref(contactHref, config));
+    }
 
     var pageConfig = deepClone(config);
     pageConfig.hero.title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
@@ -2414,6 +2615,9 @@
   function buildAssociatedPublishedHtml(tab, config) {
     if (isPrivacyPolicyDescriptor(tab)) {
       return buildPrivacyPolicyPageHtml(config);
+    }
+    if (isContactDescriptor(tab)) {
+      return buildContactPageHtml(config);
     }
 
     var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
@@ -2477,8 +2681,18 @@
       }
     });
 
+    options.push({
+      value: "page:contact.html",
+      label: "Contact (contact.html)",
+      page: {
+        fileName: "contact.html",
+        sectionTitle: (config && config.contact && config.contact.title) || "Contact",
+        label: "Contact"
+      }
+    });
+
     getAssociatedPageDescriptors(config).forEach(function (descriptor) {
-      if (String(descriptor.fileName || "").toLowerCase() === "privacy.html") {
+      if (isFixedPageFileName(descriptor.fileName)) {
         return;
       }
       options.push({
@@ -2506,6 +2720,17 @@
     var fileName = String((tab && tab.fileName) || (tab && tab.pageHref) || "").toLowerCase();
     var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "").toLowerCase();
     return fileName === "privacy.html" || title.indexOf("privacy") >= 0;
+  }
+
+  function isContactDescriptor(tab) {
+    var fileName = String((tab && tab.fileName) || (tab && tab.pageHref) || "").toLowerCase();
+    var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "").toLowerCase();
+    return fileName === "contact.html" || title === "contact" || title.indexOf("contact") === 0;
+  }
+
+  function isFixedPageFileName(fileName) {
+    var normalized = String(fileName || "").toLowerCase();
+    return normalized === "privacy.html" || normalized === "contact.html";
   }
 
   function buildExternalFilePreviewMarkup(fileHref) {
@@ -2645,6 +2870,111 @@
       ".footer-inner{max-width:1180px;margin:0 auto;padding:16px 24px;color:#ffffff;font-weight:600}",
       "@media (max-width:760px){.top-band{min-height:" + Math.max(42, topBandHeight - 12) + "px;position:relative;z-index:30}.top-band-inner{width:calc(100% - 32px);position:relative}.hamburger{display:inline-flex}.top-nav{position:absolute;right:0;top:calc(100% - 8px);min-width:190px;flex-direction:column;gap:6px;display:none;background:rgba(8,24,20,.88);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px;box-shadow:0 12px 28px rgba(0,0,0,.28);z-index:40}.top-band.nav-open .top-nav{display:flex}.top-nav a,.top-nav a.current{color:#ffffff;border-color:rgba(255,255,255,.24);background:transparent}.top-nav.transparent-tabs a,.top-nav.transparent-tabs a.current{border:0 !important;color:#ffffff !important}.main-wrap,.footer-inner{padding-left:16px;padding-right:16px}.policy-grid{grid-template-columns:1fr}.policy-card{padding:" + Math.max(14, cardPadding - 4) + "px}}"
     ].join("\n");
+  }
+
+  function buildContactPageHtml(config) {
+    var contactTitle = String((config && config.contact && config.contact.title) || "Contact VINATECH Limited");
+    return [
+      "<!doctype html>",
+      "<html lang=\"en\">",
+      "<head>",
+      "  <meta charset=\"utf-8\">",
+      "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+      "  <title>" + escapeHtml(contactTitle) + " - " + escapeHtml(config.brand && config.brand.name ? config.brand.name : "VinATech") + "</title>",
+      "  <style>",
+      buildContactPageStyles(config),
+      "  </style>",
+      "</head>",
+      "<body>",
+      buildContactPageMarkup(config, false),
+      "<script>(function(){var p=new URLSearchParams(window.location.search);var preview=p.get('configuratorPreview')==='1';var device=(p.get('pdevice')||'').toLowerCase();if(preview){if(device==='mobile'){document.body.classList.add('preview-force-mobile');document.body.classList.remove('preview-force-desktop');}else if(device==='desktop'){document.body.classList.add('preview-force-desktop');document.body.classList.remove('preview-force-mobile');}}var b=document.getElementById('contactMenuToggle');var r=document.querySelector('.contact-root');if(b&&r){b.addEventListener('click',function(){var o=r.classList.toggle('nav-open');b.setAttribute('aria-expanded',o?'true':'false');});}var f=document.getElementById('contactForm');if(!f){return;}var titleNode=document.querySelector('.contact-hero h1');var introNode=document.querySelector('.contact-hero p');var submitButton=f.querySelector('button[type=\"submit\"]');var noteNode=document.querySelector('.contact-note');var endpoint=(p.get('cform')||f.getAttribute('action')||'').trim();var subjectPrefix=(p.get('csubject')||f.getAttribute('data-subject-prefix')||'Website Contact Request').trim();if(p.get('ctitle')&&titleNode){titleNode.textContent=p.get('ctitle');}if(p.get('cintro')&&introNode){introNode.textContent=p.get('cintro');}if(p.get('csubmit')&&submitButton){submitButton.textContent=p.get('csubmit');}if(endpoint){f.setAttribute('action',endpoint);}f.setAttribute('data-subject-prefix',subjectPrefix);var hiddenSubject=f.querySelector('input[name=\"_subject\"]');if(hiddenSubject){hiddenSubject.value=subjectPrefix+' - Website';}if(noteNode){noteNode.textContent=endpoint?'Submitting sends your message securely via Formspree.':'Add a Formspree endpoint to enable submit.';}if(!endpoint){f.addEventListener('submit',function(e){e.preventDefault();});}})();</script>",
+      "</body>",
+      "</html>"
+    ].join("\n");
+  }
+
+  function buildContactPageMarkup(config, previewMode) {
+    var brandName = String((config && config.brand && config.brand.name) || "VINATECH");
+    var contact = (config && config.contact) || {};
+    var title = String(contact.title || "Contact VINATECH Limited");
+    var intro = String(contact.intro || "Tell us about your project needs and our team will respond promptly.");
+    var submitLabel = String(contact.submitLabel || "Submit");
+    var subjectPrefix = String(contact.emailSubject || "Website Contact Request");
+    var formEndpoint = String(contact.formEndpoint || "").trim();
+    var fields = normalizeContactFields(contact.fields);
+    var navAttrs = previewMode ? " target=\"_blank\" rel=\"noreferrer\"" : "";
+
+    return [
+      "<div class=\"contact-root\">",
+      "<header class=\"contact-header\"><div class=\"contact-header-inner\"><div class=\"brand\">" + escapeHtml(brandName) + " Limited</div><button class=\"hamburger\" id=\"contactMenuToggle\" type=\"button\" aria-label=\"Toggle navigation\" aria-expanded=\"false\" aria-controls=\"contactNav\"><span class=\"bar\"></span></button><nav class=\"contact-nav\" id=\"contactNav\"><a href=\"index.html\"" + navAttrs + ">HOME</a><a href=\"news.html\"" + navAttrs + ">NEWS</a><a href=\"contact.html\" class=\"current\"" + navAttrs + ">CONTACT</a><a href=\"privacy.html\"" + navAttrs + ">PRIVACY POLICY</a></nav></div></header>",
+      "<main class=\"contact-main\"><section class=\"contact-hero\"><p class=\"eyebrow\">Get In Touch</p><h1>" + escapeHtml(title) + "</h1><p>" + escapeHtml(intro) + "</p></section>",
+      "<section class=\"contact-card\"><form id=\"contactForm\" action=\"" + escapeAttr(formEndpoint) + "\" method=\"POST\" data-subject-prefix=\"" + escapeAttr(subjectPrefix) + "\"><input type=\"hidden\" name=\"_subject\" value=\"" + escapeAttr(subjectPrefix + " - Website") + "\"><input type=\"text\" name=\"_gotcha\" style=\"display:none\" tabindex=\"-1\" autocomplete=\"off\">" + contactFieldsMarkup(fields) + "<button type=\"submit\">" + escapeHtml(submitLabel) + "</button></form><p class=\"contact-note\">" + escapeHtml(formEndpoint ? "Submitting sends your message securely via Formspree." : "Add a Formspree endpoint to enable submit.") + "</p></section></main>",
+      "<footer class=\"contact-footer\">&copy; " + escapeHtml(brandName.toUpperCase()) + " 2026. All rights reserved.</footer>",
+      "</div>"
+    ].join("");
+  }
+
+  function buildContactPageStyles(config) {
+    var theme = (config && config.theme) || {};
+    var privacy = (config && config.privacy) || {};
+    var bg = normalizeHex(privacy.bgColor, normalizeHex(theme.bgColor, "#f8fbfa"));
+    var text = normalizeHex(privacy.textColor, "#18322b");
+    var muted = normalizeHex(privacy.mutedColor, "#5a736c");
+    var accent = normalizeHex(privacy.accentColor, "#0f786b");
+    var surface = normalizeHex(privacy.cardColor, "#ffffff");
+    var line = normalizeHex(privacy.lineColor, "#dce6e1");
+    return [
+      "*{box-sizing:border-box}",
+      "html,body{margin:0;padding:0}",
+      "body{font-family:'Sora','Segoe UI',sans-serif;background:" + bg + ";color:" + text + "}",
+      ".contact-root{min-height:100vh;display:flex;flex-direction:column}",
+      ".contact-header{background:linear-gradient(90deg," + accent + " 0%, color-mix(in srgb," + accent + " 86%, #ffffff 14%) 54%, color-mix(in srgb," + accent + " 52%, #ffffff 48%) 100%)}",
+      ".contact-header-inner{max-width:1160px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;position:relative}",
+      ".brand{font-weight:700;color:#ffffff}",
+      ".contact-nav{display:flex;gap:8px;flex-wrap:wrap}",
+      ".contact-nav a{text-decoration:none;color:#ffffff;border:1px solid rgba(255,255,255,.35);padding:8px 11px;border-radius:999px;font-size:.88rem}",
+      ".contact-nav a.current{text-decoration:underline}",
+      ".hamburger{display:none;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid rgba(255,255,255,.6);border-radius:10px;background:rgba(255,255,255,.12);color:#ffffff}",
+      ".hamburger .bar,.hamburger .bar::before,.hamburger .bar::after{display:block;width:18px;height:2px;border-radius:2px;background:currentColor;transition:transform .18s ease,opacity .18s ease}",
+      ".hamburger .bar{position:relative}",
+      ".hamburger .bar::before,.hamburger .bar::after{content:'';position:absolute;left:0}",
+      ".hamburger .bar::before{top:-6px}",
+      ".hamburger .bar::after{top:6px}",
+      ".contact-main{max-width:1160px;width:100%;margin:0 auto;padding:28px 24px 36px}",
+      ".contact-hero h1{margin:6px 0 10px;font-size:clamp(2rem,4.8vw,3.1rem)}",
+      ".contact-hero p{margin:0;max-width:70ch;line-height:1.56}",
+      ".eyebrow{margin:0;text-transform:uppercase;letter-spacing:.12em;font-size:.75rem;font-weight:700;color:" + muted + "}",
+      ".contact-card{margin-top:18px;background:" + surface + ";border:1px solid " + line + ";border-radius:16px;padding:20px;box-shadow:0 2px 10px rgba(14,41,34,.04)}",
+      "form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}",
+      ".field-row{display:flex;flex-direction:column;gap:6px}",
+      ".field-row.full{grid-column:1 / -1}",
+      "label{font-size:.88rem;font-weight:600}",
+      "input,textarea{width:100%;padding:10px 12px;border:1px solid " + line + ";border-radius:10px;background:#ffffff;color:" + text + ";font:inherit}",
+      "textarea{min-height:110px;resize:vertical}",
+      ".consent{grid-column:1 / -1;display:flex;align-items:flex-start;gap:8px;font-size:.9rem;line-height:1.45}",
+      ".consent input{width:auto;margin-top:3px}",
+      ".consent a{color:" + accent + "}",
+      "button[type='submit']{grid-column:1 / -1;justify-self:start;border:0;border-radius:999px;background:" + accent + ";color:#ffffff;padding:11px 20px;font-weight:700;cursor:pointer}",
+      ".contact-note{margin:12px 0 0;font-size:.84rem;opacity:.86}",
+      ".contact-footer{margin-top:auto;padding:14px 24px;color:#ffffff;background:linear-gradient(90deg," + accent + " 0%, color-mix(in srgb," + accent + " 86%, #ffffff 14%) 54%, color-mix(in srgb," + accent + " 52%, #ffffff 48%) 100%)}",
+      "@media (max-width:760px){.contact-header-inner,.contact-main{padding-left:16px;padding-right:16px}.hamburger{display:inline-flex}.contact-nav{position:absolute;top:calc(100% - 8px);right:16px;min-width:190px;display:none;flex-direction:column;padding:10px;background:rgba(6,30,25,.9);border:1px solid rgba(255,255,255,.2);border-radius:12px;z-index:20}.contact-root.nav-open .contact-nav{display:flex}.contact-nav a{color:#ffffff;border-color:rgba(255,255,255,.25)}form{grid-template-columns:1fr}}"
+    ].join("\n");
+  }
+
+  function contactFieldsMarkup(fields) {
+    return fields.map(function (field) {
+      var type = normalizeContactFieldType(field.type);
+      var requiredAttr = field.required ? " required" : "";
+      var placeholderAttr = field.placeholder ? " placeholder=\"" + escapeAttr(field.placeholder) + "\"" : "";
+      if (type === "checkbox") {
+        return "<label class=\"consent\"><input type=\"checkbox\" name=\"" + escapeAttr(field.label) + "\"" + requiredAttr + "><span>" + escapeHtml(field.label) + " <a href=\"privacy.html\">Privacy Policy</a> of VINATECH Limited.</span></label>";
+      }
+      if (type === "textarea") {
+        return "<div class=\"field-row full\"><label>" + escapeHtml(field.label) + "<textarea name=\"" + escapeAttr(field.label) + "\"" + placeholderAttr + requiredAttr + "></textarea></label></div>";
+      }
+      var inputType = type === "email" ? "email" : "text";
+      return "<div class=\"field-row\"><label>" + escapeHtml(field.label) + "<input type=\"" + inputType + "\" name=\"" + escapeAttr(field.label) + "\"" + placeholderAttr + requiredAttr + "></label></div>";
+    }).join("");
   }
 
   function privacyListItemsMarkup(text) {
@@ -3246,6 +3576,14 @@
     state.privacy.cardPadding = clamp(parseInt(state.privacy.cardPadding, 10) || 26, 16, 40);
     state.privacy.layoutGap = clamp(parseInt(state.privacy.layoutGap, 10) || 26, 12, 40);
 
+    state.contact = state.contact || {};
+    state.contact.title = String(state.contact.title || "Contact VINATECH Limited");
+    state.contact.intro = String(state.contact.intro || "Tell us about your project needs and our team will respond promptly.");
+    state.contact.submitLabel = String(state.contact.submitLabel || "Submit");
+    state.contact.emailSubject = String(state.contact.emailSubject || "Website Contact Request");
+    state.contact.formEndpoint = String(state.contact.formEndpoint || "https://formspree.io/f/mrevdeyn").trim();
+    state.contact.fields = normalizeContactFields(state.contact.fields);
+
     var backgroundX = parseInt(state.background.x, 10);
     var backgroundY = parseInt(state.background.y, 10);
     var backgroundTransparency = parseInt(state.background.transparency, 10);
@@ -3352,6 +3690,7 @@
     merged.background = Object.assign({}, merged.background, incoming.background || {});
     merged.display = Object.assign({}, merged.display, incoming.display || {});
     merged.privacy = Object.assign({}, merged.privacy, incoming.privacy || {});
+    merged.contact = Object.assign({}, merged.contact, incoming.contact || {});
 
     var incomingLayout = incoming.layout || {};
     merged.layout = {
@@ -3402,6 +3741,18 @@
         return {
           label: String(button.label || "Button"),
           href: String(button.href || "#")
+        };
+      });
+    }
+
+    if (incoming.contact && Array.isArray(incoming.contact.fields) && incoming.contact.fields.length) {
+      merged.contact.fields = incoming.contact.fields.map(function (field, index) {
+        return {
+          id: String((field && field.id) || ("field-" + (index + 1))),
+          label: String((field && field.label) || ("Field " + (index + 1))),
+          type: String((field && field.type) || "text"),
+          required: !!(field && field.required),
+          placeholder: String((field && field.placeholder) || "")
         };
       });
     }
@@ -3490,6 +3841,19 @@
     href = addQueryParam(href, "phero", String(clamp(parseInt(privacy.heroTopPadding, 10) || 50, 24, 96)));
     href = addQueryParam(href, "pcardpad", String(clamp(parseInt(privacy.cardPadding, 10) || 26, 16, 40)));
     href = addQueryParam(href, "pgap", String(clamp(parseInt(privacy.layoutGap, 10) || 26, 12, 40)));
+    return href;
+  }
+
+  function buildContactPreviewHref(fileHref, config) {
+    var contact = (config && config.contact) || {};
+    var previewDevice = normalizePreviewDevice(config && config.display && config.display.previewDevice);
+    var href = addQueryParam(fileHref, "configuratorPreview", "1");
+    href = addQueryParam(href, "pdevice", previewDevice);
+    href = addQueryParam(href, "ctitle", String(contact.title || ""));
+    href = addQueryParam(href, "cintro", String(contact.intro || ""));
+    href = addQueryParam(href, "csubmit", String(contact.submitLabel || "Submit"));
+    href = addQueryParam(href, "csubject", String(contact.emailSubject || "Website Contact Request"));
+    href = addQueryParam(href, "cform", String(contact.formEndpoint || "https://formspree.io/f/mrevdeyn"));
     return href;
   }
 
@@ -3617,6 +3981,61 @@
     ];
   }
 
+  function createDefaultContactFields() {
+    return [
+      { id: "first-name", label: "First Name", type: "text", required: true, placeholder: "Your first name" },
+      { id: "last-name", label: "Last Name", type: "text", required: true, placeholder: "Your last name" },
+      { id: "business-email", label: "Business Email", type: "email", required: true, placeholder: "name@company.com" },
+      { id: "company", label: "Company", type: "text", required: true, placeholder: "Company name" },
+      { id: "message", label: "Message", type: "textarea", required: true, placeholder: "How can we help?" },
+      { id: "consent", label: "I agree to the Privacy Policy", type: "checkbox", required: true, placeholder: "" }
+    ];
+  }
+
+  function normalizeContactFieldType(value) {
+    var candidate = String(value || "text").toLowerCase();
+    if (candidate === "email" || candidate === "textarea" || candidate === "checkbox") {
+      return candidate;
+    }
+    return "text";
+  }
+
+  function normalizeContactFields(value) {
+    var source = Array.isArray(value) ? value : createDefaultContactFields();
+    var fields = source
+      .map(function (field, index) {
+        var fallbackLabel = "Field " + (index + 1);
+        var label = String((field && field.label) || fallbackLabel).trim() || fallbackLabel;
+        var type = normalizeContactFieldType(field && field.type);
+        var id = slugify((field && field.id) || label || ("field-" + (index + 1)));
+        return {
+          id: id || ("field-" + (index + 1)),
+          label: label,
+          type: type,
+          required: type === "checkbox" ? true : !!(field && field.required),
+          placeholder: String((field && field.placeholder) || "")
+        };
+      })
+      .filter(function (field) {
+        return !!field.label;
+      });
+
+    if (!fields.some(function (field) { return field.id === "consent"; })) {
+      fields.push({ id: "consent", label: "I agree to the Privacy Policy", type: "checkbox", required: true, placeholder: "" });
+    }
+    return fields;
+  }
+
+  function contactFieldTypeOptionsMarkup(selectedType) {
+    var type = normalizeContactFieldType(selectedType);
+    return [
+      "<option value=\"text\"" + (type === "text" ? " selected" : "") + ">Text</option>",
+      "<option value=\"email\"" + (type === "email" ? " selected" : "") + ">Email</option>",
+      "<option value=\"textarea\"" + (type === "textarea" ? " selected" : "") + ">Textarea</option>",
+      "<option value=\"checkbox\"" + (type === "checkbox" ? " selected" : "") + ">Consent Checkbox</option>"
+    ].join("");
+  }
+
   function normalizeGalleryImages(value) {
     var items = Array.isArray(value) ? value.slice(0, 4) : [];
     while (items.length < 4) {
@@ -3659,7 +4078,11 @@
   }
 
   function normalizePageMode(value) {
-    return String(value || "home").trim().toLowerCase() === "privacy" ? "privacy" : "home";
+    var mode = String(value || "home").trim().toLowerCase();
+    if (mode === "privacy" || mode === "contact") {
+      return mode;
+    }
+    return "home";
   }
 
   function normalizePreviewDevice(value) {
