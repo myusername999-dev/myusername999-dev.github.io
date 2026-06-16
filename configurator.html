@@ -24,9 +24,10 @@
           <select id="pageMode">
             <option value="home">Home</option>
             <option value="privacy">Privacy</option>
+            <option value="contact">Contact</option>
           </select>
         </label>
-        <p class="hint">Switch between homepage controls and privacy page controls.</p>
+        <p class="hint">Switch between homepage, privacy, and contact page controls.</p>
       </section>
 
       <div id="homeControls">
@@ -301,12 +302,34 @@
         </section>
       </div>
 
+      <div id="contactControls" class="page-mode-hidden">
+        <section class="panel">
+          <h2>Contact Content</h2>
+          <label>Page Title<input id="contactTitle" type="text"></label>
+          <label>Intro Text<textarea id="contactIntro" rows="3"></textarea></label>
+          <label>Submit Button Label<input id="contactSubmitLabel" type="text"></label>
+          <label>Email Subject Prefix<input id="contactEmailSubject" type="text"></label>
+          <label>Formspree Endpoint URL<input id="contactFormEndpoint" type="url" placeholder="https://formspree.io/f/xxxxabcd"></label>
+          <p class="hint">Submit posts directly to Formspree from GitHub Pages. Update endpoint any time without code changes.</p>
+        </section>
+
+        <section class="panel">
+          <div class="tabs-head">
+            <h2>Contact Fields</h2>
+            <button id="addContactField" type="button">Add Field</button>
+          </div>
+          <p class="hint">Add, remove, and reorder form fields. Consent field should remain enabled for privacy acknowledgement.</p>
+          <div id="contactFieldsEditor" class="tabs-editor"></div>
+        </section>
+      </div>
+
       <section class="panel actions">
         <label class="approval"><input id="approval" type="checkbox"> I approve this preview for publish</label>
         <div class="action-row">
           <button id="previewHome" type="button">Preview HOME</button>
           <button id="publishHomeOnly" type="button">Publish HOME only</button>
           <button id="publishPrivacyOnly" type="button">Publish PRIVACY only</button>
+          <button id="publishContactOnly" type="button">Publish CONTACT only</button>
           <button id="publishHome" type="button" class="primary">Publish ALL pages</button>
         </div>
         <div class="action-row">
