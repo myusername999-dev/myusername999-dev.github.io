@@ -2223,6 +2223,25 @@
     var ctaTextOnly = !!(config.display && config.display.ctaTextOnly);
     var showHomeTabSelector = tabMode === "top-and-home";
     var showTabCards = tabMode === "top-and-home";
+
+    function resolveTabHref(tab, id) {
+      var label = String((tab && tab.label) || "").trim().toLowerCase();
+      if (label === "home") {
+        return "index.html";
+      }
+      if (label === "news") {
+        return "news.html";
+      }
+      if (label === "contact") {
+        return "contact.html";
+      }
+      if (label === "privacy" || label === "privacy policy") {
+        return "privacy.html";
+      }
+      var linkedPage = normalizePageHref(tab && tab.pageHref);
+      return linkedPage || (showTabCards ? "#" + id : "#");
+    }
+
     var bgImage = config.background.src
       ? "style=\"background-image:url('" + escapeAttr(config.background.src) + "');background-size:115% 115%;background-position:" +
         config.background.x +
@@ -2238,8 +2257,7 @@
     var topNavLinks = config.tabs
       .map(function (tab) {
         var id = slugify(tab.sectionId || tab.label || "section");
-        var linkedPage = normalizePageHref(tab.pageHref);
-        var href = linkedPage || (showTabCards ? "#" + id : "#");
+        var href = resolveTabHref(tab, id);
         var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
         var navStyle = buildTabPillStyle(tab, config, topTabsTransparent);
         return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + navStyle + "\">" + escapeHtml(tab.label) + "</a>";
@@ -2249,8 +2267,7 @@
     var homeSelectorLinks = config.tabs
       .map(function (tab) {
         var id = slugify(tab.sectionId || tab.label || "section");
-        var linkedPage = normalizePageHref(tab.pageHref);
-        var href = linkedPage || (showTabCards ? "#" + id : "#");
+        var href = resolveTabHref(tab, id);
         var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
         var navStyle = buildTabPillStyle(tab, config, topTabsTransparent);
         return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + navStyle + "\">" + escapeHtml(tab.label) + "</a>";
@@ -2695,6 +2712,11 @@
       if (isFixedPageFileName(descriptor.fileName)) {
         return;
       }
+      var descriptorFile = String(descriptor.fileName || "").toLowerCase();
+      var descriptorLabel = String(descriptor.sectionTitle || descriptor.label || "").trim().toLowerCase();
+      if (descriptorLabel === "contact" && descriptorFile !== "contact.html") {
+        return;
+      }
       options.push({
         value: "page:" + descriptor.fileName,
         label: String(descriptor.sectionTitle || descriptor.label || "Page") + " (" + descriptor.fileName + ")",
@@ -2887,7 +2909,7 @@
       "</head>",
       "<body>",
       buildContactPageMarkup(config, false),
-      "<script>(function(){var p=new URLSearchParams(window.location.search);var preview=p.get('configuratorPreview')==='1';var device=(p.get('pdevice')||'').toLowerCase();if(preview){if(device==='mobile'){document.body.classList.add('preview-force-mobile');document.body.classList.remove('preview-force-desktop');}else if(device==='desktop'){document.body.classList.add('preview-force-desktop');document.body.classList.remove('preview-force-mobile');}}var b=document.getElementById('contactMenuToggle');var r=document.querySelector('.contact-root');if(b&&r){b.addEventListener('click',function(){var o=r.classList.toggle('nav-open');b.setAttribute('aria-expanded',o?'true':'false');});}var f=document.getElementById('contactForm');if(!f){return;}var titleNode=document.querySelector('.contact-hero h1');var introNode=document.querySelector('.contact-hero p');var submitButton=f.querySelector('button[type=\"submit\"]');var noteNode=document.querySelector('.contact-note');var endpoint=(p.get('cform')||f.getAttribute('action')||'').trim();var subjectPrefix=(p.get('csubject')||f.getAttribute('data-subject-prefix')||'Website Contact Request').trim();if(p.get('ctitle')&&titleNode){titleNode.textContent=p.get('ctitle');}if(p.get('cintro')&&introNode){introNode.textContent=p.get('cintro');}if(p.get('csubmit')&&submitButton){submitButton.textContent=p.get('csubmit');}if(endpoint){f.setAttribute('action',endpoint);}f.setAttribute('data-subject-prefix',subjectPrefix);var hiddenSubject=f.querySelector('input[name=\"_subject\"]');if(hiddenSubject){hiddenSubject.value=subjectPrefix+' - Website';}if(noteNode){noteNode.textContent=endpoint?'Submitting sends your message securely via Formspree.':'Add a Formspree endpoint to enable submit.';}if(!endpoint){f.addEventListener('submit',function(e){e.preventDefault();});}})();</script>",
+      "<script>(function(){var p=new URLSearchParams(window.location.search);var preview=p.get('configuratorPreview')==='1';var device=(p.get('pdevice')||'').toLowerCase();if(preview){if(device==='mobile'){document.body.classList.add('preview-force-mobile');document.body.classList.remove('preview-force-desktop');}else if(device==='desktop'){document.body.classList.add('preview-force-desktop');document.body.classList.remove('preview-force-mobile');}}var b=document.getElementById('contactMenuToggle');var r=document.querySelector('.contact-root');if(b&&r){b.addEventListener('click',function(){var o=r.classList.toggle('nav-open');b.setAttribute('aria-expanded',o?'true':'false');});}var f=document.getElementById('contactForm');if(!f){return;}var titleNode=document.querySelector('.contact-hero h1');var introNode=document.querySelector('.contact-hero p');var submitButton=f.querySelector('button[type=\"submit\"]');var noteNode=document.querySelector('.contact-note');var endpoint=(f.getAttribute('action')||'').trim();var subjectPrefix=(f.getAttribute('data-subject-prefix')||'Website Contact Request').trim();if(preview){endpoint=(p.get('cform')||endpoint).trim();subjectPrefix=(p.get('csubject')||subjectPrefix).trim();if(p.get('ctitle')&&titleNode){titleNode.textContent=p.get('ctitle');}if(p.get('cintro')&&introNode){introNode.textContent=p.get('cintro');}if(p.get('csubmit')&&submitButton){submitButton.textContent=p.get('csubmit');}}if(endpoint){f.setAttribute('action',endpoint);}f.setAttribute('data-subject-prefix',subjectPrefix);var hiddenSubject=f.querySelector('input[name=\"_subject\"]');if(hiddenSubject){hiddenSubject.value=subjectPrefix+' - Website';}if(noteNode){noteNode.textContent=endpoint?'Submitting sends your message securely via Formspree.':'Add a Formspree endpoint to enable submit.';}if(!endpoint){f.addEventListener('submit',function(e){e.preventDefault();});}})();</script>",
       "</body>",
       "</html>"
     ].join("\n");
