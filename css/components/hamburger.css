@@ -1,0 +1,69 @@
+/* Stage 1 slice: privacy hamburger styles and icon transitions. */
+
+.hamburger {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	border: 1px solid rgba(255, 255, 255, 0.55);
+	border-radius: 10px;
+	background: rgba(255, 255, 255, 0.12);
+	color: #ffffff;
+}
+
+.hamburger .bar,
+.hamburger .bar::before,
+.hamburger .bar::after {
+	display: block;
+	width: 18px;
+	height: 2px;
+	border-radius: 2px;
+	background: currentColor;
+	transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.hamburger .bar {
+	position: relative;
+}
+
+.hamburger .bar::before,
+.hamburger .bar::after {
+	content: "";
+	position: absolute;
+	left: 0;
+}
+
+.hamburger .bar::before {
+	top: -6px;
+}
+
+.hamburger .bar::after {
+	top: 6px;
+}
+
+.top-band.nav-open .hamburger .bar {
+	transform: rotate(45deg);
+}
+
+.top-band.nav-open .hamburger .bar::before {
+	transform: rotate(90deg) translateX(6px);
+}
+
+.top-band.nav-open .hamburger .bar::after {
+	opacity: 0;
+}
+
+body.preview-force-desktop .hamburger {
+	display: none !important;
+}
+
+body.preview-force-mobile .hamburger {
+	display: inline-flex;
+}
+
+@media (max-width: 760px) {
+	.hamburger {
+		display: inline-flex;
+	}
+}
