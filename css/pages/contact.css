@@ -73,6 +73,15 @@ body {
 	text-decoration: underline;
 }
 
+.contact-nav.transparent-tabs a,
+.contact-nav.transparent-tabs a.current {
+	background: transparent !important;
+	border: 0 !important;
+	border-radius: 0;
+	box-shadow: none;
+	padding: 8px 8px;
+}
+
 .hamburger {
 	display: none;
 	align-items: center;
@@ -268,6 +277,11 @@ button[type="submit"] {
 	.contact-nav a {
 		color: #ffffff;
 		border-color: rgba(255, 255, 255, .25);
+	}
+
+	.contact-nav.transparent-tabs a,
+	.contact-nav.transparent-tabs a.current {
+		border-color: transparent;
 	}
 
 	form {

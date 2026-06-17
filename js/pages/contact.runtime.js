@@ -15,6 +15,30 @@
 
   var menuButton = document.getElementById('contactMenuToggle');
   var root = document.querySelector('.contact-root');
+  var nav = document.getElementById('contactNav');
+
+  if (preview && root) {
+    var cbg = params.get('cbg');
+    var ctxt = params.get('ctxt');
+    var cmut = params.get('cmut');
+    var cacc = params.get('cacc');
+    var csurface = params.get('csurface');
+    var cline = params.get('cline');
+    var ctabtransparent = params.get('ctabtransparent');
+
+    if (cbg) { root.style.setProperty('--contact-bg-color', cbg); }
+    if (ctxt) { root.style.setProperty('--contact-text-color', ctxt); }
+    if (cmut) { root.style.setProperty('--contact-muted-color', cmut); }
+    if (cacc) { root.style.setProperty('--contact-accent-color', cacc); }
+    if (csurface) { root.style.setProperty('--contact-surface-color', csurface); }
+    if (cline) { root.style.setProperty('--contact-line-color', cline); }
+
+    if (nav && ctabtransparent === '1') {
+      nav.classList.add('transparent-tabs');
+    } else if (nav && ctabtransparent === '0') {
+      nav.classList.remove('transparent-tabs');
+    }
+  }
 
   if (menuButton && root) {
     menuButton.addEventListener('click', function () {

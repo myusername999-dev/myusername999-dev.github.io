@@ -114,6 +114,7 @@
       intro: "Tell us about your project needs and our team will respond promptly.",
       submitLabel: "Submit",
       emailSubject: "Website Contact Request",
+      topTabsTransparent: false,
       formEndpoint: "https://formspree.io/f/mrevdeyn",
       recipientEmail: "support@vinatech.it.com",
       fields: createDefaultContactFields()
@@ -331,7 +332,10 @@
     dom.privacyNoMarketingText = document.getElementById("privacyNoMarketingText");
     dom.privacyHowUseText = document.getElementById("privacyHowUseText");
     dom.privacyEnforcementText = document.getElementById("privacyEnforcementText");
+    dom.privacyTopTabsTransparent = document.getElementById("privacyTopTabsTransparent");
     dom.privacyBgColor = document.getElementById("privacyBgColor");
+    dom.privacyTabTextColor = document.getElementById("privacyTabTextColor");
+    dom.privacyTabBgColor = document.getElementById("privacyTabBgColor");
     dom.privacyTextColor = document.getElementById("privacyTextColor");
     dom.privacyMutedColor = document.getElementById("privacyMutedColor");
     dom.privacyLineColor = document.getElementById("privacyLineColor");
@@ -350,6 +354,7 @@
     dom.contactIntro = document.getElementById("contactIntro");
     dom.contactSubmitLabel = document.getElementById("contactSubmitLabel");
     dom.contactEmailSubject = document.getElementById("contactEmailSubject");
+    dom.contactTopTabsTransparent = document.getElementById("contactTopTabsTransparent");
     dom.contactFormEndpoint = document.getElementById("contactFormEndpoint");
     dom.contactFieldsEditor = document.getElementById("contactFieldsEditor");
     dom.addContactField = document.getElementById("addContactField");
@@ -486,6 +491,12 @@
     bindText(dom.contactEmailSubject, function (value) {
       state.contact.emailSubject = String(value || "");
     });
+    if (dom.contactTopTabsTransparent) {
+      dom.contactTopTabsTransparent.addEventListener("change", function () {
+        state.contact.topTabsTransparent = !!dom.contactTopTabsTransparent.checked;
+        saveAndPreview();
+      });
+    }
     bindText(dom.contactFormEndpoint, function (value) {
       state.contact.formEndpoint = String(value || "");
     });
@@ -1322,6 +1333,9 @@
     if (dom.contactEmailSubject) {
       dom.contactEmailSubject.value = state.contact.emailSubject;
     }
+    if (dom.contactTopTabsTransparent) {
+      dom.contactTopTabsTransparent.checked = !!state.contact.topTabsTransparent;
+    }
     if (dom.contactFormEndpoint) {
       dom.contactFormEndpoint.value = state.contact.formEndpoint;
     }
@@ -1889,7 +1903,7 @@
     var publishStage = "start";
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     var includeAssociatedPages = previewDevice !== "mobile" && publishScope === "all";
-    var publishHomePage = publishScope === "all" || publishScope === "home" || publishScope === "contact";
+    var publishHomePage = publishScope === "all" || publishScope === "home";
     var publishPrivacyPage = publishScope === "all" || publishScope === "privacy";
     var publishContactPage = publishScope === "all" || publishScope === "contact";
     var publishAssets = publishScope === "all" || publishScope === "home";
@@ -1981,7 +1995,7 @@
 
   async function publishByDownloadFallback(publishPayload, html, includeAssociatedPages, cause, scope) {
     var publishScope = normalizePublishScope(scope);
-    var publishHomePage = publishScope === "all" || publishScope === "home" || publishScope === "contact";
+    var publishHomePage = publishScope === "all" || publishScope === "home";
     var publishPrivacyPage = publishScope === "all" || publishScope === "privacy";
     var publishContactPage = publishScope === "all" || publishScope === "contact";
     var publishAssets = publishScope === "all" || publishScope === "home";
@@ -2022,7 +2036,7 @@
       return base + "Saved privacy.html.";
     }
     if (scope === "contact") {
-      return base + "Saved contact.html and index.html.";
+      return base + "Saved contact.html.";
     }
     if (scope === "home") {
       return base + "Saved index.html." + assetStatusSuffix(assetsResult);
@@ -2038,7 +2052,7 @@
       return "Downloaded privacy.html.";
     }
     if (scope === "contact") {
-      return "Downloaded contact.html and index.html.";
+      return "Downloaded contact.html.";
     }
     if (scope === "home") {
       return "Downloaded index.html.";
@@ -2914,12 +2928,13 @@
     var submitLabel = String(contact.submitLabel || "Submit");
     var subjectPrefix = String(contact.emailSubject || "Website Contact Request");
     var formEndpoint = String(contact.formEndpoint || "").trim();
+    var navClass = contact.topTabsTransparent ? "contact-nav transparent-tabs" : "contact-nav";
     var fields = normalizeContactFields(contact.fields);
     var navAttrs = previewMode ? " target=\"_blank\" rel=\"noreferrer\"" : "";
 
     return [
       "<div class=\"contact-root\" style=\"" + buildContactRootStyle(config) + "\">",
-      "<header class=\"contact-header\"><div class=\"contact-header-inner\"><div class=\"brand\">" + escapeHtml(brandName) + " Limited</div><button class=\"hamburger\" id=\"contactMenuToggle\" type=\"button\" aria-label=\"Toggle navigation\" aria-expanded=\"false\" aria-controls=\"contactNav\"><span class=\"bar\"></span></button><nav class=\"contact-nav\" id=\"contactNav\"><a href=\"index.html\"" + navAttrs + ">HOME</a><a href=\"news.html\"" + navAttrs + ">NEWS</a><a href=\"contact.html\" class=\"current\"" + navAttrs + ">CONTACT</a><a href=\"privacy.html\"" + navAttrs + ">PRIVACY POLICY</a></nav></div></header>",
+      "<header class=\"contact-header\"><div class=\"contact-header-inner\"><div class=\"brand\">" + escapeHtml(brandName) + " Limited</div><button class=\"hamburger\" id=\"contactMenuToggle\" type=\"button\" aria-label=\"Toggle navigation\" aria-expanded=\"false\" aria-controls=\"contactNav\"><span class=\"bar\"></span></button><nav class=\"" + navClass + "\" id=\"contactNav\"><a href=\"index.html\"" + navAttrs + ">HOME</a><a href=\"news.html\"" + navAttrs + ">NEWS</a><a href=\"contact.html\" class=\"current\"" + navAttrs + ">CONTACT</a><a href=\"privacy.html\"" + navAttrs + ">PRIVACY POLICY</a></nav></div></header>",
       "<main class=\"contact-main\"><section class=\"contact-hero\"><p class=\"eyebrow\">Get In Touch</p><h1>" + escapeHtml(title) + "</h1><p>" + escapeHtml(intro) + "</p></section>",
       "<section class=\"contact-card\"><form id=\"contactForm\" action=\"" + escapeAttr(formEndpoint) + "\" method=\"POST\" data-subject-prefix=\"" + escapeAttr(subjectPrefix) + "\"><input type=\"hidden\" name=\"_subject\" value=\"" + escapeAttr(subjectPrefix + " - Website") + "\"><input type=\"text\" name=\"_gotcha\" style=\"display:none\" tabindex=\"-1\" autocomplete=\"off\">" + contactFieldsMarkup(fields) + "<button type=\"submit\">" + escapeHtml(submitLabel) + "</button></form><p class=\"contact-note\">" + escapeHtml(formEndpoint ? "Submitting sends your message securely via Formspree." : "Add a Formspree endpoint to enable submit.") + "</p></section></main>",
       "<footer class=\"contact-footer\">&copy; " + escapeHtml(brandName.toUpperCase()) + " 2026. All rights reserved.</footer>",
@@ -3474,6 +3489,7 @@
     state.contact.intro = String(state.contact.intro || "Tell us about your project needs and our team will respond promptly.");
     state.contact.submitLabel = String(state.contact.submitLabel || "Submit");
     state.contact.emailSubject = String(state.contact.emailSubject || "Website Contact Request");
+    state.contact.topTabsTransparent = !!state.contact.topTabsTransparent;
     state.contact.formEndpoint = String(state.contact.formEndpoint || "https://formspree.io/f/mrevdeyn").trim();
     state.contact.fields = normalizeContactFields(state.contact.fields);
 
@@ -3747,6 +3763,8 @@
   }
 
   function buildContactPreviewHref(fileHref, config) {
+    var theme = (config && config.theme) || {};
+    var privacy = (config && config.privacy) || {};
     var contact = (config && config.contact) || {};
     var previewDevice = normalizePreviewDevice(config && config.display && config.display.previewDevice);
     var href = addQueryParam(fileHref, "configuratorPreview", "1");
@@ -3756,6 +3774,13 @@
     href = addQueryParam(href, "csubmit", String(contact.submitLabel || "Submit"));
     href = addQueryParam(href, "csubject", String(contact.emailSubject || "Website Contact Request"));
     href = addQueryParam(href, "cform", String(contact.formEndpoint || "https://formspree.io/f/mrevdeyn"));
+    href = addQueryParam(href, "cbg", normalizeHex(privacy.bgColor, normalizeHex(theme.bgColor, "#f8fbfa")));
+    href = addQueryParam(href, "ctxt", normalizeHex(privacy.textColor, "#18322b"));
+    href = addQueryParam(href, "cmut", normalizeHex(privacy.mutedColor, "#5a736c"));
+    href = addQueryParam(href, "cacc", normalizeHex(privacy.accentColor, "#0f786b"));
+    href = addQueryParam(href, "csurface", normalizeHex(privacy.cardColor, "#ffffff"));
+    href = addQueryParam(href, "cline", normalizeHex(privacy.lineColor, "#dce6e1"));
+    href = addQueryParam(href, "ctabtransparent", contact.topTabsTransparent ? "1" : "0");
     return href;
   }
 
