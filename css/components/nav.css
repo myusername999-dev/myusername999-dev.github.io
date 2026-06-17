@@ -1,0 +1,117 @@
+/* Stage 1 slice: privacy top nav structure and menu states. */
+
+.top-nav {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.top-nav a {
+	text-decoration: none;
+	color: #18322b;
+	border: 0;
+	border-radius: 0;
+	padding: 7px 8px;
+	background: transparent;
+	font-size: 0.9rem;
+	font-weight: 600;
+	box-shadow: none;
+}
+
+.top-nav a.current {
+	text-decoration: underline;
+	color: #18322b;
+	background: transparent;
+	border: 0;
+}
+
+.top-nav.transparent-tabs a,
+.top-nav.transparent-tabs a.current {
+	background: transparent !important;
+	border: 0 !important;
+	box-shadow: none !important;
+	color: #18322b;
+}
+
+body.preview-force-desktop .top-nav {
+	position: static !important;
+	right: auto !important;
+	top: auto !important;
+	min-width: 0 !important;
+	flex-direction: row !important;
+	display: flex !important;
+	gap: 8px !important;
+	background: transparent !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	padding: 0 !important;
+	box-shadow: none !important;
+}
+
+body.preview-force-mobile .top-nav {
+	position: absolute;
+	right: 0;
+	top: calc(100% - 8px);
+	min-width: 190px;
+	flex-direction: column;
+	gap: 6px;
+	display: none;
+	background: rgba(8, 24, 20, 0.88);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 12px;
+	padding: 10px;
+	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+	z-index: 40;
+}
+
+body.preview-force-mobile .top-band.nav-open .top-nav {
+	display: flex;
+}
+
+body.preview-force-mobile .top-nav a,
+body.preview-force-mobile .top-nav a.current {
+	color: #ffffff;
+	border-color: rgba(255, 255, 255, 0.24);
+	background: transparent;
+}
+
+body.preview-force-mobile .top-nav.transparent-tabs a,
+body.preview-force-mobile .top-nav.transparent-tabs a.current {
+	border: 0 !important;
+	color: #ffffff !important;
+}
+
+@media (max-width: 760px) {
+	.top-nav {
+		position: absolute;
+		right: 0;
+		top: calc(100% - 8px);
+		min-width: 190px;
+		flex-direction: column;
+		gap: 6px;
+		display: none;
+		background: rgba(8, 24, 20, 0.88);
+		border: 1px solid rgba(255, 255, 255, 0.18);
+		border-radius: 12px;
+		padding: 10px;
+		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+		z-index: 40;
+	}
+
+	.top-band.nav-open .top-nav {
+		display: flex;
+	}
+
+	.top-nav a,
+	.top-nav a.current {
+		color: #ffffff;
+		border-color: rgba(255, 255, 255, 0.24);
+		background: transparent;
+	}
+
+	.top-nav.transparent-tabs a,
+	.top-nav.transparent-tabs a.current {
+		border: 0 !important;
+		color: #ffffff !important;
+	}
+}

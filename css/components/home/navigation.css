@@ -1,0 +1,73 @@
+.home-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.home-root.nav-open .home-nav {
+	display: flex;
+}
+
+.home-nav a {
+	text-decoration: none;
+	color: inherit;
+	border: 1px solid color-mix(in srgb, var(--preview-text) 18%, #fff 82%);
+	padding: 8px 12px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--preview-surface) 72%, #fff 28%);
+	font-size: var(--preview-button-size);
+}
+
+.hamburger {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border: 1px solid color-mix(in srgb, var(--preview-text) 20%, #fff 80%);
+	border-radius: 10px;
+	background: color-mix(in srgb, #fff 92%, var(--preview-surface) 8%);
+	color: var(--preview-text);
+}
+
+.hamburger .bar,
+.hamburger .bar::before,
+.hamburger .bar::after {
+	display: block;
+	width: 18px;
+	height: 2px;
+	border-radius: 2px;
+	background: currentColor;
+	transition: transform .18s ease, opacity .18s ease;
+}
+
+.hamburger .bar {
+	position: relative;
+}
+
+.hamburger .bar::before,
+.hamburger .bar::after {
+	content: "";
+	position: absolute;
+	left: 0;
+}
+
+.hamburger .bar::before {
+	top: -6px;
+}
+
+.hamburger .bar::after {
+	top: 6px;
+}
+
+.hamburger[aria-expanded="true"] .bar {
+	transform: rotate(45deg);
+}
+
+.hamburger[aria-expanded="true"] .bar::before {
+	transform: rotate(90deg) translateX(6px);
+}
+
+.hamburger[aria-expanded="true"] .bar::after {
+	opacity: 0;
+}

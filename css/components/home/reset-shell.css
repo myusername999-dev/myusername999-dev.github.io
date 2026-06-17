@@ -1,0 +1,85 @@
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background: #011301;
+	color: #dbe6e6;
+	padding-bottom: 44px;
+}
+
+.home-root {
+	min-height: 100vh;
+	position: relative;
+	overflow: hidden;
+	isolation: isolate;
+	background: var(--preview-bg);
+	color: var(--preview-text);
+}
+
+.home-bg {
+	position: absolute;
+	inset: 0;
+	background-size: cover;
+	background-repeat: no-repeat;
+	opacity: var(--preview-bg-opacity, .68);
+	z-index: -2;
+}
+
+.home-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+}
+
+.home-header {
+	max-width: 1240px;
+	margin: 0 auto;
+	padding: 24px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.brand-logos {
+	position: relative;
+	min-width: 280px;
+	min-height: 96px;
+	flex: 1 1 280px;
+}
+
+.logo-slot {
+	position: absolute;
+	left: 0;
+	top: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transform-origin: center;
+	touch-action: none;
+}
+
+.logo-slot img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	display: block;
+}
+
+.logo-fallback {
+	font-size: .78rem;
+	font-weight: 700;
+	padding: 8px 10px;
+	border-radius: 10px;
+	border: 1px dashed color-mix(in srgb, var(--preview-text) 28%, #fff 72%);
+	background: color-mix(in srgb, var(--preview-surface) 86%, #fff 14%);
+	text-align: center;
+}
