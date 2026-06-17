@@ -15,7 +15,15 @@ body {
 }
 
 .contact-root {
+	--contact-bg-color: #f8fbfa;
+	--contact-text-color: #18322b;
+	--contact-muted-color: #5a736c;
+	--contact-accent-color: #0f786b;
+	--contact-surface-color: #ffffff;
+	--contact-line-color: #dce6e1;
 	min-height: 100vh;
+	background: var(--contact-bg-color);
+	color: var(--contact-text-color);
 	display: flex;
 	flex-direction: column;
 }
@@ -23,9 +31,9 @@ body {
 .contact-header {
 	background: linear-gradient(
 		90deg,
-		#0f786b 0%,
-		color-mix(in srgb, #0f786b 86%, #ffffff 14%) 54%,
-		color-mix(in srgb, #0f786b 52%, #ffffff 48%) 100%
+		var(--contact-accent-color) 0%,
+		color-mix(in srgb, var(--contact-accent-color) 86%, #ffffff 14%) 54%,
+		color-mix(in srgb, var(--contact-accent-color) 52%, #ffffff 48%) 100%
 	);
 }
 
@@ -131,13 +139,13 @@ body {
 	letter-spacing: .12em;
 	font-size: .75rem;
 	font-weight: 700;
-	color: #5a736c;
+	color: var(--contact-muted-color);
 }
 
 .contact-card {
 	margin-top: 18px;
-	background: #ffffff;
-	border: 1px solid #dce6e1;
+	background: var(--contact-surface-color);
+	border: 1px solid var(--contact-line-color);
 	border-radius: 16px;
 	padding: 20px;
 	box-shadow: 0 2px 10px rgba(14, 41, 34, .04);
@@ -168,10 +176,10 @@ input,
 textarea {
 	width: 100%;
 	padding: 10px 12px;
-	border: 1px solid #dce6e1;
+	border: 1px solid var(--contact-line-color);
 	border-radius: 10px;
 	background: #ffffff;
-	color: #18322b;
+	color: var(--contact-text-color);
 	font: inherit;
 }
 
@@ -195,7 +203,7 @@ textarea {
 }
 
 .consent a {
-	color: #0f786b;
+	color: var(--contact-accent-color);
 }
 
 button[type="submit"] {
@@ -203,7 +211,7 @@ button[type="submit"] {
 	justify-self: start;
 	border: 0;
 	border-radius: 999px;
-	background: #0f786b;
+	background: var(--contact-accent-color);
 	color: #ffffff;
 	padding: 11px 20px;
 	font-weight: 700;
@@ -222,9 +230,9 @@ button[type="submit"] {
 	color: #ffffff;
 	background: linear-gradient(
 		90deg,
-		#0f786b 0%,
-		color-mix(in srgb, #0f786b 86%, #ffffff 14%) 54%,
-		color-mix(in srgb, #0f786b 52%, #ffffff 48%) 100%
+		var(--contact-accent-color) 0%,
+		color-mix(in srgb, var(--contact-accent-color) 86%, #ffffff 14%) 54%,
+		color-mix(in srgb, var(--contact-accent-color) 52%, #ffffff 48%) 100%
 	);
 }
 

@@ -16,13 +16,33 @@ body {
 	color: #18322b;
 }
 
+.privacy-root {
+	--privacy-bg-color: #f8fbfa;
+	--privacy-text-color: #18322b;
+	--privacy-muted-color: #5a736c;
+	--privacy-line-color: #dce6e1;
+	--privacy-accent-color: #0f786b;
+	--privacy-card-color: #ffffff;
+	--privacy-tab-text-color: #18322b;
+	--privacy-tab-bg-color: #ffffff;
+	--privacy-top-band-height: 76px;
+	--privacy-mobile-top-band-height: 64px;
+	--privacy-hero-top-padding: 50px;
+	--privacy-card-padding: 26px;
+	--privacy-mobile-card-padding: 22px;
+	--privacy-layout-gap: 26px;
+	min-height: 100vh;
+	background: var(--privacy-bg-color);
+	color: var(--privacy-text-color);
+}
+
 .top-band {
-	min-height: 76px;
+	min-height: var(--privacy-top-band-height);
 	background: linear-gradient(
 		90deg,
-		#0f786b 0%,
-		color-mix(in srgb, #0f786b 86%, #ffffff 14%) 54%,
-		color-mix(in srgb, #0f786b 52%, #ffffff 48%) 100%
+		var(--privacy-accent-color) 0%,
+		color-mix(in srgb, var(--privacy-accent-color) 86%, #ffffff 14%) 54%,
+		color-mix(in srgb, var(--privacy-accent-color) 52%, #ffffff 48%) 100%
 	);
 	display: flex;
 	align-items: center;
@@ -45,7 +65,7 @@ body {
 }
 
 body.preview-force-mobile .top-band {
-	min-height: 64px;
+	min-height: var(--privacy-mobile-top-band-height);
 	position: relative;
 	z-index: 30;
 }
@@ -66,7 +86,34 @@ body.preview-force-mobile .policy-grid {
 }
 
 body.preview-force-mobile .policy-card {
-	padding: 22px;
+	padding: var(--privacy-mobile-card-padding);
+}
+
+.privacy-root .top-nav a {
+	color: var(--privacy-tab-text-color);
+}
+
+.privacy-root .top-nav a.current {
+	color: var(--privacy-tab-text-color);
+}
+
+.privacy-root .top-nav:not(.transparent-tabs) a {
+	background: var(--privacy-tab-bg-color);
+	border: 1px solid color-mix(in srgb, var(--privacy-line-color) 75%, transparent);
+	border-radius: 999px;
+	padding: 7px 12px;
+}
+
+.privacy-root .top-nav:not(.transparent-tabs) a.current {
+	background: color-mix(in srgb, var(--privacy-tab-bg-color) 84%, var(--privacy-accent-color) 16%);
+}
+
+.privacy-root .top-nav.transparent-tabs a,
+.privacy-root .top-nav.transparent-tabs a.current {
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	padding: 7px 8px;
 }
 
 .main-wrap {
@@ -76,7 +123,7 @@ body.preview-force-mobile .policy-card {
 }
 
 .hero {
-	padding: 50px 0 20px;
+	padding: var(--privacy-hero-top-padding) 0 20px;
 }
 
 .eyebrow {
@@ -84,7 +131,7 @@ body.preview-force-mobile .policy-card {
 	text-transform: uppercase;
 	letter-spacing: 0.12em;
 	font-size: 0.75rem;
-	color: #5a736c;
+	color: var(--privacy-muted-color);
 	font-weight: 700;
 }
 
@@ -95,7 +142,7 @@ h1 {
 
 .hero p {
 	margin: 0;
-	color: #5a736c;
+	color: var(--privacy-muted-color);
 	max-width: 72ch;
 	line-height: 1.58;
 }
@@ -103,14 +150,14 @@ h1 {
 .policy-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 26px;
+	gap: var(--privacy-layout-gap);
 }
 
 .policy-card {
-	background: #ffffff;
-	border: 1px solid #dce6e1;
+	background: var(--privacy-card-color);
+	border: 1px solid var(--privacy-line-color);
 	border-radius: 14px;
-	padding: 26px;
+	padding: var(--privacy-card-padding);
 	box-shadow: 0 2px 10px rgba(14, 41, 34, 0.04);
 }
 
@@ -144,12 +191,12 @@ h1 {
 }
 
 .policy-note {
-	border-left: 4px solid #0f786b;
-	background: color-mix(in srgb, #0f786b 10%, #ffffff 90%);
+	border-left: 4px solid var(--privacy-accent-color);
+	background: color-mix(in srgb, var(--privacy-accent-color) 10%, #ffffff 90%);
 	padding: 12px 14px;
 	border-radius: 8px;
 	margin-top: 14px;
-	color: color-mix(in srgb, #18322b 80%, #000 20%);
+	color: color-mix(in srgb, var(--privacy-text-color) 80%, #000 20%);
 	font-size: 0.95rem;
 }
 
@@ -161,9 +208,9 @@ h1 {
 	min-height: 52px;
 	background: linear-gradient(
 		90deg,
-		#0f786b 0%,
-		color-mix(in srgb, #0f786b 86%, #ffffff 14%) 54%,
-		color-mix(in srgb, #0f786b 52%, #ffffff 48%) 100%
+		var(--privacy-accent-color) 0%,
+		color-mix(in srgb, var(--privacy-accent-color) 86%, #ffffff 14%) 54%,
+		color-mix(in srgb, var(--privacy-accent-color) 52%, #ffffff 48%) 100%
 	);
 	display: flex;
 	align-items: center;
@@ -179,7 +226,7 @@ h1 {
 
 @media (max-width: 760px) {
 	.top-band {
-		min-height: 64px;
+		min-height: var(--privacy-mobile-top-band-height);
 		position: relative;
 		z-index: 30;
 	}
@@ -200,6 +247,6 @@ h1 {
 	}
 
 	.policy-card {
-		padding: 22px;
+		padding: var(--privacy-mobile-card-padding);
 	}
 }
