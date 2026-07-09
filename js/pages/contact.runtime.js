@@ -24,6 +24,8 @@
     var cacc = params.get('cacc');
     var csurface = params.get('csurface');
     var cline = params.get('cline');
+    var ctabtxt = params.get('ctabtxt');
+    var ctabbg = params.get('ctabbg');
     var ctabtransparent = params.get('ctabtransparent');
 
     if (cbg) { root.style.setProperty('--contact-bg-color', cbg); }
@@ -32,6 +34,8 @@
     if (cacc) { root.style.setProperty('--contact-accent-color', cacc); }
     if (csurface) { root.style.setProperty('--contact-surface-color', csurface); }
     if (cline) { root.style.setProperty('--contact-line-color', cline); }
+    if (ctabtxt) { root.style.setProperty('--contact-tab-text-color', ctabtxt); }
+    if (ctabbg) { root.style.setProperty('--contact-tab-bg-color', ctabbg); }
 
     if (nav && ctabtransparent === '1') {
       nav.classList.add('transparent-tabs');
