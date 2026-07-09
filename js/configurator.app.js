@@ -203,16 +203,13 @@
   var previewRenderFrame = 0;
   var previewRenderTimeout = 0;
   var rememberedProjectDirectory = null;
+  var hasUserEditsSinceLoad = false;
 
   document.addEventListener("DOMContentLoaded", init);
 
   async function init() {
     collectDom();
     rememberedProjectDirectory = await loadRememberedProjectDirectory();
-    var startupRepoDraft = getRepoDraft();
-    if (startupRepoDraft) {
-      state = mergeConfig(defaultConfig, startupRepoDraft);
-    }
     sanitizeState();
     bindCoreInputs();
     bindActions();
@@ -1001,6 +998,7 @@
   }
 
   function refresh(message) {
+    hasUserEditsSinceLoad = true;
     sanitizeState();
     saveState();
     syncInputsFromState();
@@ -1014,6 +1012,7 @@
   }
 
   function saveAndPreview() {
+    hasUserEditsSinceLoad = true;
     saveState();
     schedulePreviewRender();
   }
@@ -1929,6 +1928,10 @@
           var privacyHtml = buildPrivacyPolicyPageHtml(publishPayload.config);
           var contactHtml = buildContactPageHtml(publishPayload.config);
 
+          if (publishHomePage && shouldPreserveExistingHomeOnPublish(fallbackHomeHtml)) {
+            html = fallbackHomeHtml;
+          }
+
           var savedAssetsResult = { mode: "none", count: 0 };
           if (publishAssets) {
             publishStage = "write-assets";
@@ -2019,6 +2022,17 @@
     } catch (_error) {
       return "";
     }
+  }
+
+  function shouldPreserveExistingHomeOnPublish(fallbackHomeHtml) {
+    if (hasUserEditsSinceLoad) {
+      return false;
+    }
+    var html = String(fallbackHomeHtml || "");
+    if (!html) {
+      return false;
+    }
+    return html.indexOf("class=\"home-root\"") >= 0;
   }
 
   async function publishByDownloadFallback(publishPayload, html, includeAssociatedPages, cause, scope) {
@@ -3676,20 +3690,66 @@
 
   function loadState() {
     try {
+      var raw = localStorage.getItem(STORAGE_KEY);
       var repoDraft = getRepoDraft();
+
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (repoDraft && shouldPreferRepoDraft(parsed, repoDraft)) {
+          return mergeConfig(defaultConfig, repoDraft);
+        }
+        return mergeConfig(defaultConfig, parsed);
+      }
+
       if (repoDraft) {
         return mergeConfig(defaultConfig, repoDraft);
       }
 
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        return deepClone(defaultConfig);
-      }
-      var parsed = JSON.parse(raw);
-      return mergeConfig(defaultConfig, parsed);
+      return deepClone(defaultConfig);
     } catch (_error) {
       return deepClone(defaultConfig);
     }
+  }
+
+  function shouldPreferRepoDraft(localCandidate, repoCandidate) {
+    var localBrand = (localCandidate && localCandidate.brand) || {};
+    var repoBrand = (repoCandidate && repoCandidate.brand) || {};
+
+    var localLogos = ensureTwoLogos(localBrand);
+    var repoLogos = ensureTwoLogos(repoBrand);
+
+    var localLogoCount = localLogos.filter(function (logo) {
+      return !!normalizeImageSrc(logo.src);
+    }).length;
+    var repoLogoCount = repoLogos.filter(function (logo) {
+      return !!normalizeImageSrc(logo.src);
+    }).length;
+
+    if (repoLogoCount > localLogoCount) {
+      return true;
+    }
+
+    var localTabs = Array.isArray(localCandidate && localCandidate.tabs) ? localCandidate.tabs : [];
+    var repoTabs = Array.isArray(repoCandidate && repoCandidate.tabs) ? repoCandidate.tabs : [];
+    if (repoTabs.length > localTabs.length) {
+      return true;
+    }
+
+    var localLabels = localTabs.map(function (tab) {
+      return String((tab && tab.label) || "").trim().toLowerCase();
+    });
+    var repoLabels = repoTabs.map(function (tab) {
+      return String((tab && tab.label) || "").trim().toLowerCase();
+    });
+    var expectedNav = ["home", "news", "privacy policy", "contact"];
+    var localNavScore = expectedNav.filter(function (label) {
+      return localLabels.indexOf(label) >= 0;
+    }).length;
+    var repoNavScore = expectedNav.filter(function (label) {
+      return repoLabels.indexOf(label) >= 0;
+    }).length;
+
+    return repoNavScore > localNavScore;
   }
 
   function mergeConfig(base, incoming) {

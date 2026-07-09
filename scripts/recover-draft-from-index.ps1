@@ -10,23 +10,33 @@ function Get-MatchValue([string]$text, [string]$pattern, [int]$group = 1) {
 }
 
 function Get-StyleValue([string]$style, [string]$name) {
-  $pattern = [regex]::Escape($name) + ":\s*([^;\"]+)"
+  $pattern = [regex]::Escape($name) + ':\s*([^;\"]+)'
   $m = [regex]::Match($style, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
   if ($m.Success) { return $m.Groups[1].Value.Trim() }
   return ""
 }
 
 function Get-Translate([string]$style) {
-  $m = [regex]::Match($style, "translate\(([-\d]+)px\s*,\s*([-\d]+)px\)", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+  $m = [regex]::Match($style, "translate\(([-\d]+)px\s*,?\s*([-\d]+)px\)", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
   if ($m.Success) {
     return @{ x = [int]$m.Groups[1].Value; y = [int]$m.Groups[2].Value }
   }
   return @{ x = 0; y = 0 }
 }
 
+function Get-FileNameFromPath([string]$value) {
+  if (-not $value) { return "" }
+  $clean = ($value -split '\?')[0]
+  $clean = ($clean -split '#')[0]
+  $parts = $clean -split '/'
+  if ($parts.Count -eq 0) { return "" }
+  return $parts[$parts.Count - 1]
+}
+
 $rootStyle = Get-MatchValue $html '<div class="home-root" style="([^"]+)"'
 $bgStyle = Get-MatchValue $html '<div class="home-bg" style="([^"]+)"'
-$navStyle = Get-MatchValue $html '<nav class="home-nav nav-slot" style="([^"]+)"'
+$navStyle = Get-MatchValue $html '<nav[^>]*class="home-nav nav-slot"[^>]*style="([^"]+)"'
+$navBlock = Get-MatchValue $html '<nav[^>]*class="home-nav nav-slot"[^>]*>(.*?)</nav>'
 $heroTitleSlotStyle = Get-MatchValue $html '<div class="hero-title-slot" style="([^"]+)"'
 if (-not $heroTitleSlotStyle) { $heroTitleSlotStyle = Get-MatchValue $html '<section class="hero-title-slot"[^>]*style="([^"]+)"' }
 $heroSubtitleSlotStyle = Get-MatchValue $html '<div class="hero-subtitle-slot" style="([^"]+)"'
@@ -38,19 +48,34 @@ $heroSubtitleText = [System.Net.WebUtility]::HtmlDecode((Get-MatchValue $html '<
 $heroTitleInlineStyle = Get-MatchValue $html '<h1 style="([^"]+)"'
 $heroSubtitleInlineStyle = Get-MatchValue $html '<p style="([^"]+)"'
 
-$logoMatches = [regex]::Matches($html, '<div class="logo-slot" style="([^"]+)"', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+$logoMatches = [regex]::Matches($html, '<div class="logo-slot" style="([^"]+)">\s*(?:<img[^>]*src="([^"]+)"[^>]*>)?', [System.Text.RegularExpressions.RegexOptions]::Singleline -bor [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 $logos = @()
 for ($i = 0; $i -lt [Math]::Min(2, $logoMatches.Count); $i++) {
-  $style = $logoMatches[$i].Groups[1].Value
+  $matchItem = $logoMatches[$i]
+  $style = $matchItem.Groups[1].Value
+  $logoSrc = $matchItem.Groups[2].Value
   $tr = Get-Translate $style
   $sizeStr = Get-StyleValue $style 'width'
   $size = 72
   if ($sizeStr -match '([-\d]+)px') { $size = [int]$Matches[1] }
+
+  $rotation = 0
+  $rotationMatch = [regex]::Match($style, 'rotate\(([-\d]+)deg\)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+  if ($rotationMatch.Success) { $rotation = [int]$rotationMatch.Groups[1].Value }
+
   $opacity = 1.0
   $opacityStr = Get-StyleValue $style 'opacity'
   if ($opacityStr) { [double]::TryParse($opacityStr, [ref]$opacity) | Out-Null }
   $transparency = [int][Math]::Round((1 - $opacity) * 100)
-  $logos += [ordered]@{ src=""; fileName=""; x=$tr.x; y=$tr.y; size=$size; rotation=0; transparency=[Math]::Min(95,[Math]::Max(0,$transparency)) }
+  $logos += [ordered]@{
+    src=$logoSrc
+    fileName=(Get-FileNameFromPath $logoSrc)
+    x=$tr.x
+    y=$tr.y
+    size=$size
+    rotation=$rotation
+    transparency=[Math]::Min(95,[Math]::Max(0,$transparency))
+  }
 }
 while ($logos.Count -lt 2) {
   $logos += [ordered]@{ src=""; fileName=""; x=0; y=0; size=72; rotation=0; transparency=0 }
@@ -70,16 +95,53 @@ if ($buttons.Count -eq 0) {
   $buttons += [ordered]@{ label = 'Explore Products'; href = 'products.html' }
 }
 
-$tabs = @(
-  [ordered]@{ label='About'; sectionId='about'; sectionTitle='About'; sectionText='Add section content here.'; sectionFontFamily=''; sectionTitleColor='#102822'; sectionTextColor='#4f6962'; sectionBackgroundColor='#e5f0ea'; navFontFamily=''; navTextColor='#102822'; navBackgroundColor='#e5f0ea'; sectionBackgroundSrc=''; sectionBackgroundFileName=''; sectionBackgroundTransparency=36; galleryLayout='horizontal'; galleryImageTransparency=0; galleryImages=@([ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''}) },
-  [ordered]@{ label='Products'; sectionId='products'; sectionTitle='Products'; sectionText='Add section content here.'; sectionFontFamily=''; sectionTitleColor='#102822'; sectionTextColor='#4f6962'; sectionBackgroundColor='#e5f0ea'; navFontFamily=''; navTextColor='#102822'; navBackgroundColor='#e5f0ea'; sectionBackgroundSrc=''; sectionBackgroundFileName=''; sectionBackgroundTransparency=36; galleryLayout='horizontal'; galleryImageTransparency=0; galleryImages=@([ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''}) },
-  [ordered]@{ label='Privacy'; sectionId='privacy'; sectionTitle='Privacy'; sectionText='Add section content here.'; sectionFontFamily=''; sectionTitleColor='#102822'; sectionTextColor='#4f6962'; sectionBackgroundColor='#e5f0ea'; navFontFamily=''; navTextColor='#102822'; navBackgroundColor='#e5f0ea'; sectionBackgroundSrc=''; sectionBackgroundFileName=''; sectionBackgroundTransparency=36; galleryLayout='horizontal'; galleryImageTransparency=0; galleryImages=@([ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''}) }
-)
+$tabs = @()
+if ($navBlock) {
+  $navMatches = [regex]::Matches($navBlock, '<a href="([^"]*)"[^>]*?(?:style="([^"]*)")?[^>]*>(.*?)</a>', [System.Text.RegularExpressions.RegexOptions]::Singleline -bor [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+  foreach ($nm in $navMatches) {
+    $href = $nm.Groups[1].Value
+    $style = $nm.Groups[2].Value
+    $label = [System.Net.WebUtility]::HtmlDecode(($nm.Groups[3].Value -replace '<[^>]+>', '').Trim())
+    if (-not $label) { continue }
 
-$titleAlign = Get-StyleValue $heroTitleInlineStyle 'text-align'; if (-not $titleAlign) { $titleAlign = 'left' }
-$subtitleAlign = Get-StyleValue $heroSubtitleInlineStyle 'text-align'; if (-not $subtitleAlign) { $subtitleAlign = 'left' }
-$titleFont = ''; $titleFontRaw = Get-StyleValue $heroTitleInlineStyle 'font-family'; if ($titleFontRaw -match "'([^']+)'") { $titleFont = $Matches[1] }
-$subtitleFont = ''; $subtitleFontRaw = Get-StyleValue $heroSubtitleInlineStyle 'font-family'; if ($subtitleFontRaw -match "'([^']+)'") { $subtitleFont = $Matches[1] }
+    $sid = ($label.ToLower() -replace '[^a-z0-9]+','-').Trim('-')
+    if (-not $sid) { $sid = 'section' }
+
+    $tabs += [ordered]@{
+      label = $label
+      sectionId = $sid
+      pageHref = $href
+      sectionTitle = $label
+      sectionText = 'Add section content here.'
+      sectionFontFamily = ''
+      sectionTitleColor = '#102822'
+      sectionTextColor = '#4f6962'
+      sectionBackgroundColor = '#e5f0ea'
+      navFontFamily = ''
+      navTextColor = $(if (Get-StyleValue $style 'color') { Get-StyleValue $style 'color' } else { '#102822' })
+      navBackgroundColor = $(if (Get-StyleValue $style 'background-color') { Get-StyleValue $style 'background-color' } else { '#e5f0ea' })
+      sectionBackgroundSrc = ''
+      sectionBackgroundFileName = ''
+      sectionBackgroundTransparency = 36
+      galleryLayout = 'horizontal'
+      galleryImageTransparency = 0
+      galleryImages = @([ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''})
+    }
+  }
+}
+if ($tabs.Count -eq 0) {
+  $tabs = @(
+    [ordered]@{ label='HOME'; sectionId='home'; pageHref='index.html'; sectionTitle='HOME'; sectionText='Add section content here.'; sectionFontFamily=''; sectionTitleColor='#102822'; sectionTextColor='#4f6962'; sectionBackgroundColor='#e5f0ea'; navFontFamily=''; navTextColor='#102822'; navBackgroundColor='#e5f0ea'; sectionBackgroundSrc=''; sectionBackgroundFileName=''; sectionBackgroundTransparency=36; galleryLayout='horizontal'; galleryImageTransparency=0; galleryImages=@([ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''}) },
+    [ordered]@{ label='NEWS'; sectionId='news'; pageHref='news.html'; sectionTitle='NEWS'; sectionText='Add section content here.'; sectionFontFamily=''; sectionTitleColor='#102822'; sectionTextColor='#4f6962'; sectionBackgroundColor='#e5f0ea'; navFontFamily=''; navTextColor='#102822'; navBackgroundColor='#e5f0ea'; sectionBackgroundSrc=''; sectionBackgroundFileName=''; sectionBackgroundTransparency=36; galleryLayout='horizontal'; galleryImageTransparency=0; galleryImages=@([ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''}) },
+    [ordered]@{ label='PRIVACY POLICY'; sectionId='privacy'; pageHref='privacy.html'; sectionTitle='PRIVACY POLICY'; sectionText='Add section content here.'; sectionFontFamily=''; sectionTitleColor='#102822'; sectionTextColor='#4f6962'; sectionBackgroundColor='#e5f0ea'; navFontFamily=''; navTextColor='#102822'; navBackgroundColor='#e5f0ea'; sectionBackgroundSrc=''; sectionBackgroundFileName=''; sectionBackgroundTransparency=36; galleryLayout='horizontal'; galleryImageTransparency=0; galleryImages=@([ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''}) },
+    [ordered]@{ label='CONTACT'; sectionId='contact'; pageHref='contact.html'; sectionTitle='CONTACT'; sectionText='Add section content here.'; sectionFontFamily=''; sectionTitleColor='#102822'; sectionTextColor='#4f6962'; sectionBackgroundColor='#e5f0ea'; navFontFamily=''; navTextColor='#102822'; navBackgroundColor='#e5f0ea'; sectionBackgroundSrc=''; sectionBackgroundFileName=''; sectionBackgroundTransparency=36; galleryLayout='horizontal'; galleryImageTransparency=0; galleryImages=@([ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''},[ordered]@{src='';fileName=''}) }
+  )
+}
+
+$titleAlign = Get-StyleValue $heroTitleSlotStyle 'text-align'; if (-not $titleAlign) { $titleAlign = 'left' }
+$subtitleAlign = Get-StyleValue $heroSubtitleSlotStyle 'text-align'; if (-not $subtitleAlign) { $subtitleAlign = 'left' }
+$titleFont = ''; $titleFontRaw = Get-StyleValue $heroTitleSlotStyle 'font-family'; if ($titleFontRaw -match "'([^']+)'") { $titleFont = $Matches[1] }
+$subtitleFont = ''; $subtitleFontRaw = Get-StyleValue $heroSubtitleSlotStyle 'font-family'; if ($subtitleFontRaw -match "'([^']+)'") { $subtitleFont = $Matches[1] }
 
 $bgOpacity = 0.68
 $bgOpacityRaw = Get-StyleValue $rootStyle '--preview-bg-opacity'
@@ -96,7 +158,12 @@ $themeFont = (((Get-StyleValue $rootStyle 'font-family') -split ',')[0] -replace
 if (-not $themeFont) { $themeFont = 'Sora' }
 
 $recover = [ordered]@{
-  brand = [ordered]@{ name=((Get-MatchValue $html '<title>(.*?)</title>') -replace '<[^>]+>','').Trim(); logoSrc=''; logoFileName=''; logos=$logos }
+  brand = [ordered]@{
+    name=((Get-MatchValue $html '<title>(.*?)</title>') -replace '<[^>]+>','').Trim()
+    logoSrc=$(if ($logos.Count -gt 0) { $logos[0].src } else { '' })
+    logoFileName=$(if ($logos.Count -gt 0) { $logos[0].fileName } else { '' })
+    logos=$logos
+  }
   hero = [ordered]@{
     title = $(if ($heroTitleText) { $heroTitleText } else { 'We Build Financial Software With Human Clarity' })
     subtitle = $(if ($heroSubtitleText) { $heroSubtitleText } else { 'Experiment with colors, typography, and layout to shape your homepage before publishing.' })
