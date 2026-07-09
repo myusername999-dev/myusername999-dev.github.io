@@ -21,6 +21,8 @@ body {
 	--contact-accent-color: #0f786b;
 	--contact-surface-color: #ffffff;
 	--contact-line-color: #dce6e1;
+	--contact-tab-text-color: #ffffff;
+	--contact-tab-bg-color: rgba(255, 255, 255, .14);
 	min-height: 100vh;
 	background: var(--contact-bg-color);
 	color: var(--contact-text-color);
@@ -62,8 +64,9 @@ body {
 
 .contact-nav a {
 	text-decoration: none;
-	color: #ffffff;
-	border: 1px solid rgba(255, 255, 255, .35);
+	color: var(--contact-tab-text-color);
+	background: var(--contact-tab-bg-color);
+	border: 1px solid color-mix(in srgb, var(--contact-tab-bg-color) 78%, transparent);
 	padding: 8px 11px;
 	border-radius: 999px;
 	font-size: .88rem;

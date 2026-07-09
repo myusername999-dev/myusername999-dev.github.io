@@ -41,8 +41,20 @@
       subtitleColor: "#4f6962",
       buttons: [
         {
-          label: "Explore Products",
+          label: "Button 1",
           href: "products.html"
+        },
+        {
+          label: "Button 2",
+          href: "news.html"
+        },
+        {
+          label: "Button 3",
+          href: "privacy.html"
+        },
+        {
+          label: "Button 4",
+          href: "contact.html"
         }
       ]
     },
@@ -81,6 +93,8 @@
       pageMode: "home",
       tabMode: "top-and-home",
       topTabsTransparent: false,
+      tabTextColor: "#102822",
+      tabBgColor: "#e5f0ea",
       ctaTextOnly: false,
       previewPage: "home",
       previewDevice: "desktop",
@@ -303,6 +317,8 @@
     dom.addTab = document.getElementById("addTab");
     dom.tabDisplayMode = document.getElementById("tabDisplayMode");
     dom.topTabsTransparent = document.getElementById("topTabsTransparent");
+    dom.globalTabTextColor = document.getElementById("globalTabTextColor");
+    dom.globalTabBgColor = document.getElementById("globalTabBgColor");
 
     dom.previewHome = document.getElementById("previewHome");
     dom.publishHomeOnly = document.getElementById("publishHomeOnly");
@@ -533,10 +549,10 @@
       });
     }
     bindText(dom.privacyTabTextColor, function (value) {
-      state.privacy.tabTextColor = normalizeHex(value, "#18322b");
+      state.display.tabTextColor = normalizeHex(value, state.theme.textColor);
     }, "input");
     bindText(dom.privacyTabBgColor, function (value) {
-      state.privacy.tabBgColor = normalizeHex(value, "#ffffff");
+      state.display.tabBgColor = normalizeHex(value, state.theme.surfaceColor);
     }, "input");
     bindText(dom.privacyTextColor, function (value) {
       state.privacy.textColor = normalizeHex(value, "#18322b");
@@ -685,6 +701,14 @@
       state.display.tabMode = normalizeTabMode(value);
     }, "change");
 
+    bindText(dom.globalTabTextColor, function (value) {
+      state.display.tabTextColor = normalizeHex(value, state.theme.textColor);
+    }, "input");
+
+    bindText(dom.globalTabBgColor, function (value) {
+      state.display.tabBgColor = normalizeHex(value, state.theme.surfaceColor);
+    }, "input");
+
     dom.topTabsTransparent.addEventListener("change", function () {
       state.display.topTabsTransparent = !!dom.topTabsTransparent.checked;
       refresh();
@@ -765,8 +789,8 @@
         sectionTextColor: state.theme.mutedColor,
         sectionBackgroundColor: state.theme.surfaceColor,
         navFontFamily: "",
-        navTextColor: state.theme.textColor,
-        navBackgroundColor: state.theme.surfaceColor,
+        navTextColor: state.display.tabTextColor,
+        navBackgroundColor: state.display.tabBgColor,
         sectionBackgroundSrc: "",
         sectionBackgroundFileName: "",
         sectionBackgroundTransparency: 36,
@@ -931,8 +955,8 @@
         if (tab.sectionTitleColor === previousValue) {
           tab.sectionTitleColor = nextValue;
         }
-        if (tab.navTextColor === previousValue) {
-          tab.navTextColor = nextValue;
+        if (state.display.tabTextColor === previousValue) {
+          state.display.tabTextColor = nextValue;
         }
       }
 
@@ -944,8 +968,8 @@
         if (tab.sectionBackgroundColor === previousValue) {
           tab.sectionBackgroundColor = nextValue;
         }
-        if (tab.navBackgroundColor === previousValue) {
-          tab.navBackgroundColor = nextValue;
+        if (state.display.tabBgColor === previousValue) {
+          state.display.tabBgColor = nextValue;
         }
       }
     });
@@ -1240,6 +1264,12 @@
     if (dom.topTabsTransparent) {
       dom.topTabsTransparent.checked = !!state.display.topTabsTransparent;
     }
+    if (dom.globalTabTextColor) {
+      dom.globalTabTextColor.value = normalizeHex(state.display.tabTextColor, state.theme.textColor);
+    }
+    if (dom.globalTabBgColor) {
+      dom.globalTabBgColor.value = normalizeHex(state.display.tabBgColor, state.theme.surfaceColor);
+    }
     if (dom.ctaTextOnly) {
       dom.ctaTextOnly.checked = !!state.display.ctaTextOnly;
     }
@@ -1275,10 +1305,10 @@
       dom.privacyTopTabsTransparent.checked = !!state.privacy.topTabsTransparent;
     }
     if (dom.privacyTabTextColor) {
-      dom.privacyTabTextColor.value = state.privacy.tabTextColor;
+      dom.privacyTabTextColor.value = normalizeHex(state.display.tabTextColor, state.theme.textColor);
     }
     if (dom.privacyTabBgColor) {
-      dom.privacyTabBgColor.value = state.privacy.tabBgColor;
+      dom.privacyTabBgColor.value = normalizeHex(state.display.tabBgColor, state.theme.surfaceColor);
     }
     if (dom.privacyTextColor) {
       dom.privacyTextColor.value = state.privacy.textColor;
@@ -1459,8 +1489,6 @@
           "<p class=\"hint\">Image 4: " + escapeHtml(getGalleryFileName(tab, 3)) + "</p>",
           "<button type=\"button\" data-action=\"clear-gallery\" data-gallery-index=\"3\">Clear Image 4</button>",
           "<label>Tab Pill Font Family<select data-field=\"navFontFamily\">" + fontOptionsMarkup(tab.navFontFamily, true) + "</select></label>",
-          "<label>Tab Pill Text Color<input type=\"color\" data-field=\"navTextColor\" value=\"" + escapeAttr(tab.navTextColor) + "\"></label>",
-          "<label>Tab Pill Background<input type=\"color\" data-field=\"navBackgroundColor\" value=\"" + escapeAttr(tab.navBackgroundColor) + "\"></label>",
           "</div>"
         ].join("");
       })
@@ -1561,8 +1589,8 @@
                 sectionTextColor: state.theme.mutedColor,
                 sectionBackgroundColor: state.theme.surfaceColor,
                 navFontFamily: "",
-                navTextColor: state.theme.textColor,
-                navBackgroundColor: state.theme.surfaceColor,
+                navTextColor: state.display.tabTextColor,
+                navBackgroundColor: state.display.tabBgColor,
                 sectionBackgroundSrc: "",
                 sectionBackgroundFileName: "",
                 sectionBackgroundTransparency: 36,
@@ -2113,12 +2141,6 @@
     var errors = [];
     if (!state.brand.name.trim()) {
       errors.push("Brand name is required.");
-    }
-    if (!state.hero.title.trim()) {
-      errors.push("Hero title is required.");
-    }
-    if (!state.hero.subtitle.trim()) {
-      errors.push("Hero subtitle is required.");
     }
     if (!Array.isArray(state.hero.buttons) || !state.hero.buttons.length) {
       errors.push("At least one action button is required.");
@@ -2827,6 +2849,7 @@
   }
 
   function buildPrivacyRootStyle(config) {
+    var display = (config && config.display) || {};
     var privacy = (config && config.privacy) || {};
     var bgColor = normalizeHex(privacy.bgColor, "#f8fbfa");
     var textColor = normalizeHex(privacy.textColor, "#18322b");
@@ -2834,8 +2857,8 @@
     var lineColor = normalizeHex(privacy.lineColor, "#dce6e1");
     var accentColor = normalizeHex(privacy.accentColor, "#0f786b");
     var cardColor = normalizeHex(privacy.cardColor, "#ffffff");
-    var tabTextColor = normalizeHex(privacy.tabTextColor, textColor);
-    var tabBgColor = normalizeHex(privacy.tabBgColor, "#ffffff");
+    var tabTextColor = normalizeHex(display.tabTextColor, textColor);
+    var tabBgColor = normalizeHex(display.tabBgColor, "#ffffff");
     var topBandHeight = clamp(parseInt(privacy.topBandHeight, 10) || 76, 48, 120);
     var heroTopPadding = clamp(parseInt(privacy.heroTopPadding, 10) || 50, 24, 96);
     var cardPadding = clamp(parseInt(privacy.cardPadding, 10) || 26, 16, 40);
@@ -2861,6 +2884,7 @@
 
   function buildContactRootStyle(config) {
     var theme = (config && config.theme) || {};
+    var display = (config && config.display) || {};
     var privacy = (config && config.privacy) || {};
     var bg = normalizeHex(privacy.bgColor, normalizeHex(theme.bgColor, "#f8fbfa"));
     var text = normalizeHex(privacy.textColor, "#18322b");
@@ -2868,6 +2892,8 @@
     var accent = normalizeHex(privacy.accentColor, "#0f786b");
     var surface = normalizeHex(privacy.cardColor, "#ffffff");
     var line = normalizeHex(privacy.lineColor, "#dce6e1");
+    var tabText = normalizeHex(display.tabTextColor, normalizeHex(theme.textColor, "#18322b"));
+    var tabBg = normalizeHex(display.tabBgColor, normalizeHex(theme.surfaceColor, "#ffffff"));
 
     return [
       "--contact-bg-color:" + escapeAttr(bg),
@@ -2875,7 +2901,9 @@
       "--contact-muted-color:" + escapeAttr(muted),
       "--contact-accent-color:" + escapeAttr(accent),
       "--contact-surface-color:" + escapeAttr(surface),
-      "--contact-line-color:" + escapeAttr(line)
+      "--contact-line-color:" + escapeAttr(line),
+      "--contact-tab-text-color:" + escapeAttr(tabText),
+      "--contact-tab-bg-color:" + escapeAttr(tabBg)
     ].join(";");
   }
 
@@ -3500,11 +3528,20 @@
     state.hero.subtitleColor = normalizeHex(state.hero.subtitleColor, state.theme.mutedColor);
 
     if (!Array.isArray(state.hero.buttons) || !state.hero.buttons.length) {
-      var legacyLabel = String(state.hero.ctaLabel || "Explore Products");
+      var legacyLabel = String(state.hero.ctaLabel || "Button 1");
       var legacyHref = String(state.hero.ctaHref || "products.html");
       state.hero.buttons = [{
         label: legacyLabel,
         href: legacyHref
+      }, {
+        label: "Button 2",
+        href: "news.html"
+      }, {
+        label: "Button 3",
+        href: "privacy.html"
+      }, {
+        label: "Button 4",
+        href: "contact.html"
       }];
     }
 
@@ -3519,10 +3556,36 @@
         return button.label.length > 0;
       });
 
+    var defaultButtonSeeds = [
+      { label: "Button 1", href: "products.html" },
+      { label: "Button 2", href: "news.html" },
+      { label: "Button 3", href: "privacy.html" },
+      { label: "Button 4", href: "contact.html" }
+    ];
+    while (state.hero.buttons.length < 4) {
+      var seed = defaultButtonSeeds[state.hero.buttons.length] || {
+        label: "Button " + (state.hero.buttons.length + 1),
+        href: "#"
+      };
+      state.hero.buttons.push({
+        label: seed.label,
+        href: seed.href
+      });
+    }
+
     if (!state.hero.buttons.length) {
       state.hero.buttons = [{
-        label: "Explore Products",
+        label: "Button 1",
         href: "products.html"
+      }, {
+        label: "Button 2",
+        href: "news.html"
+      }, {
+        label: "Button 3",
+        href: "privacy.html"
+      }, {
+        label: "Button 4",
+        href: "contact.html"
       }];
     }
 
@@ -3567,6 +3630,8 @@
     state.display.pageMode = normalizePageMode(state.display.pageMode);
     state.display.tabMode = normalizeTabMode(state.display.tabMode);
     state.display.topTabsTransparent = !!state.display.topTabsTransparent;
+    state.display.tabTextColor = normalizeHex(state.display.tabTextColor, state.theme.textColor);
+    state.display.tabBgColor = normalizeHex(state.display.tabBgColor, state.theme.surfaceColor);
     state.display.ctaTextOnly = !!state.display.ctaTextOnly;
     // Mobile display flags
     state.display.mobileOverrides = !!state.display.mobileOverrides;
@@ -3590,8 +3655,8 @@
     state.privacy.bgColor = normalizeHex(state.privacy.bgColor, "#f8fbfa");
     state.privacy.textColor = normalizeHex(state.privacy.textColor, "#18322b");
     state.privacy.topTabsTransparent = !!state.privacy.topTabsTransparent;
-    state.privacy.tabTextColor = normalizeHex(state.privacy.tabTextColor, state.privacy.textColor);
-    state.privacy.tabBgColor = normalizeHex(state.privacy.tabBgColor, "#ffffff");
+    state.privacy.tabTextColor = normalizeHex(state.display.tabTextColor, state.theme.textColor);
+    state.privacy.tabBgColor = normalizeHex(state.display.tabBgColor, state.theme.surfaceColor);
     state.privacy.mutedColor = normalizeHex(state.privacy.mutedColor, "#5a736c");
     state.privacy.lineColor = normalizeHex(state.privacy.lineColor, "#dce6e1");
     state.privacy.accentColor = normalizeHex(state.privacy.accentColor, "#0f786b");
@@ -3652,8 +3717,8 @@
           sectionTextColor: normalizeHex(tab.sectionTextColor, state.theme.mutedColor),
           sectionBackgroundColor: normalizeHex(tab.sectionBackgroundColor, state.theme.surfaceColor),
           navFontFamily: normalizeFontFamily(tab.navFontFamily),
-          navTextColor: normalizeHex(tab.navTextColor, state.theme.textColor),
-          navBackgroundColor: normalizeHex(tab.navBackgroundColor, state.theme.surfaceColor),
+          navTextColor: normalizeHex(state.display.tabTextColor, state.theme.textColor),
+          navBackgroundColor: normalizeHex(state.display.tabBgColor, state.theme.surfaceColor),
           sectionBackgroundSrc: normalizeImageSrc(tab.sectionBackgroundSrc),
           sectionBackgroundFileName: sanitizeFileName(tab.sectionBackgroundFileName),
           sectionBackgroundTransparency: normalizeTabImageTransparency(tab.sectionBackgroundTransparency, 36),
@@ -3905,6 +3970,7 @@
   }
 
   function buildPrivacyPreviewHref(fileHref, config) {
+    var display = (config && config.display) || {};
     var privacy = (config && config.privacy) || {};
     var previewDevice = normalizePreviewDevice(config && config.display && config.display.previewDevice);
     var href = addQueryParam(fileHref, "configuratorPreview", "1");
@@ -3915,8 +3981,8 @@
     href = addQueryParam(href, "pline", normalizeHex(privacy.lineColor, "#dce6e1"));
     href = addQueryParam(href, "pacc", normalizeHex(privacy.accentColor, "#0f786b"));
     href = addQueryParam(href, "pcard", normalizeHex(privacy.cardColor, "#ffffff"));
-    href = addQueryParam(href, "ptabtxt", normalizeHex(privacy.tabTextColor, normalizeHex(privacy.textColor, "#18322b")));
-    href = addQueryParam(href, "ptabbg", normalizeHex(privacy.tabBgColor, "#ffffff"));
+    href = addQueryParam(href, "ptabtxt", normalizeHex(display.tabTextColor, normalizeHex(privacy.textColor, "#18322b")));
+    href = addQueryParam(href, "ptabbg", normalizeHex(display.tabBgColor, "#ffffff"));
     href = addQueryParam(href, "ptabtransparent", privacy.topTabsTransparent ? "1" : "0");
     href = addQueryParam(href, "ptop", String(clamp(parseInt(privacy.topBandHeight, 10) || 76, 48, 120)));
     href = addQueryParam(href, "phero", String(clamp(parseInt(privacy.heroTopPadding, 10) || 50, 24, 96)));
@@ -3927,6 +3993,7 @@
 
   function buildContactPreviewHref(fileHref, config) {
     var theme = (config && config.theme) || {};
+    var display = (config && config.display) || {};
     var privacy = (config && config.privacy) || {};
     var contact = (config && config.contact) || {};
     var previewDevice = normalizePreviewDevice(config && config.display && config.display.previewDevice);
@@ -3943,15 +4010,19 @@
     href = addQueryParam(href, "cacc", normalizeHex(privacy.accentColor, "#0f786b"));
     href = addQueryParam(href, "csurface", normalizeHex(privacy.cardColor, "#ffffff"));
     href = addQueryParam(href, "cline", normalizeHex(privacy.lineColor, "#dce6e1"));
+    href = addQueryParam(href, "ctabtxt", normalizeHex(display.tabTextColor, normalizeHex(theme.textColor, "#18322b")));
+    href = addQueryParam(href, "ctabbg", normalizeHex(display.tabBgColor, normalizeHex(theme.surfaceColor, "#ffffff")));
     href = addQueryParam(href, "ctabtransparent", contact.topTabsTransparent ? "1" : "0");
     return href;
   }
 
   function buildTabPillStyle(tab, config, transparentMode) {
-    var style = "color:" + escapeAttr(tab.navTextColor || config.theme.textColor) + ";" +
-      "background-color:" + escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
+    var globalTabText = normalizeHex(config.display && config.display.tabTextColor, config.theme.textColor);
+    var globalTabBg = normalizeHex(config.display && config.display.tabBgColor, config.theme.surfaceColor);
+    var style = "color:" + escapeAttr(globalTabText) + ";" +
+      "background-color:" + escapeAttr(globalTabBg) + ";" +
       "background-image:none;" +
-      "border-color:" + escapeAttr(tab.navBackgroundColor || config.theme.surfaceColor) + ";" +
+      "border-color:" + escapeAttr(globalTabBg) + ";" +
       (tab.navFontFamily ? "font-family:'" + escapeAttr(tab.navFontFamily) + "','Segoe UI',sans-serif;" : "") +
       "font-size:var(--preview-button-size);";
 

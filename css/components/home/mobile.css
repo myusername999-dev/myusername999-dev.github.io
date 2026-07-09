@@ -9,7 +9,7 @@
 	}
 
 	.cta-slot {
-		display: none !important;
+		display: flex !important;
 	}
 
 	.home-header,

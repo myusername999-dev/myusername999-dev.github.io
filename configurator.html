@@ -108,6 +108,7 @@
             <option value="Playfair Display">Playfair Display</option>
             <option value="Cormorant Garamond">Cormorant Garamond</option>
             <option value="Bricolage Grotesque">Bricolage Grotesque</option>
+            <option value="Times New Roman">Times New Roman</option>
           </select>
         </label>
         <label>Heading Size (px)
@@ -138,6 +139,7 @@
               <option value="Playfair Display">Playfair Display</option>
               <option value="Cormorant Garamond">Cormorant Garamond</option>
               <option value="Bricolage Grotesque">Bricolage Grotesque</option>
+              <option value="Times New Roman">Times New Roman</option>
             </select>
           </label>
           <label>Hero Title Align
@@ -163,6 +165,7 @@
               <option value="Playfair Display">Playfair Display</option>
               <option value="Cormorant Garamond">Cormorant Garamond</option>
               <option value="Bricolage Grotesque">Bricolage Grotesque</option>
+              <option value="Times New Roman">Times New Roman</option>
             </select>
           </label>
           <label>Hero Subtitle Align
@@ -248,7 +251,11 @@
           <label style="display:block;margin-top:8px"><input id="mobileHeroCenter" type="checkbox"> Center hero on mobile</label>
         </fieldset>
         <label class="approval"><input id="topTabsTransparent" type="checkbox"> Top tabs fully transparent (text only)</label>
-        <p class="hint">Each tab can use custom font and colors for its card and nav pill.</p>
+        <div class="color-grid">
+          <label>Global Tab Text<input id="globalTabTextColor" type="color"></label>
+          <label>Global Tab Background<input id="globalTabBgColor" type="color"></label>
+        </div>
+        <p class="hint">These two colors apply to all top tabs (HOME, NEWS, PRIVACY, CONTACT) on all pages.</p>
         <div id="tabsEditor" class="tabs-editor"></div>
       </section>
       </div>
@@ -269,9 +276,8 @@
         <section class="panel">
           <h2>Privacy Colors</h2>
           <label class="check-row"><input id="privacyTopTabsTransparent" type="checkbox"> Top tabs fully transparent (text only)</label>
+          <p class="hint">Top tab colors are controlled globally in the Tabs panel.</p>
           <div class="color-grid">
-            <label>Top Tab Text<input id="privacyTabTextColor" type="color"></label>
-            <label>Top Tab Background<input id="privacyTabBgColor" type="color"></label>
             <label>Page Background<input id="privacyBgColor" type="color"></label>
             <label>Text<input id="privacyTextColor" type="color"></label>
             <label>Muted Text<input id="privacyMutedColor" type="color"></label>
