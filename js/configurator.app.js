@@ -1896,10 +1896,6 @@
       }
     }
 
-    var publishPayload = preparePublishPayload(state);
-    var html = buildPublishedHtml(publishPayload.config);
-    var privacyHtml = buildPrivacyPolicyPageHtml(publishPayload.config);
-    var contactHtml = buildContactPageHtml(publishPayload.config);
     var publishStage = "start";
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     var includeAssociatedPages = previewDevice !== "mobile" && publishScope === "all";
@@ -1913,11 +1909,26 @@
         publishStage = "resolve-folder";
         var projectDirectory = await resolveProjectDirectoryHandle();
         if (!projectDirectory) {
-          await publishByDownloadFallback(publishPayload, html, includeAssociatedPages, "Folder picker blocked/canceled", publishScope);
+          var canceledPublishPayload = preparePublishPayload(state);
+          var canceledHtml = buildPublishedHtml(canceledPublishPayload.config);
+          await publishByDownloadFallback(canceledPublishPayload, canceledHtml, includeAssociatedPages, "Folder picker blocked/canceled", publishScope);
           return;
         }
 
         try {
+          var fallbackHomeHtml = "";
+          if (publishHomePage) {
+            publishStage = "read-existing-index";
+            fallbackHomeHtml = await readExistingIndexHtml(projectDirectory);
+          }
+
+          var publishPayload = preparePublishPayload(state, {
+            fallbackHomeHtml: fallbackHomeHtml
+          });
+          var html = buildPublishedHtml(publishPayload.config);
+          var privacyHtml = buildPrivacyPolicyPageHtml(publishPayload.config);
+          var contactHtml = buildContactPageHtml(publishPayload.config);
+
           var savedAssetsResult = { mode: "none", count: 0 };
           if (publishAssets) {
             publishStage = "write-assets";
@@ -1960,6 +1971,11 @@
         }
       }
 
+      var publishPayload = preparePublishPayload(state);
+      var html = buildPublishedHtml(publishPayload.config);
+      var privacyHtml = buildPrivacyPolicyPageHtml(publishPayload.config);
+      var contactHtml = buildContactPageHtml(publishPayload.config);
+
       if (publishHomePage) {
         downloadFile("index.html", html, "text/html");
       }
@@ -1982,7 +1998,9 @@
     } catch (error) {
       if (error && error.name === "AbortError") {
         var abortReason = error && error.message ? String(error.message) : "AbortError";
-        await publishByDownloadFallback(publishPayload, html, includeAssociatedPages, "Abort at " + publishStage + " (" + abortReason + ")", publishScope);
+        var abortedPublishPayload = preparePublishPayload(state);
+        var abortedHtml = buildPublishedHtml(abortedPublishPayload.config);
+        await publishByDownloadFallback(abortedPublishPayload, abortedHtml, includeAssociatedPages, "Abort at " + publishStage + " (" + abortReason + ")", publishScope);
         return;
       }
 
@@ -1990,6 +2008,16 @@
       await clearRememberedProjectDirectory();
       var reason = error && error.message ? String(error.message) : "Unknown write error";
       setStatus("Direct folder publish failed at step: " + publishStage + ". " + reason + ". Re-select your project root folder and try again.", true);
+    }
+  }
+
+  async function readExistingIndexHtml(projectDirectory) {
+    try {
+      var indexHandle = await projectDirectory.getFileHandle("index.html");
+      var file = await indexHandle.getFile();
+      return await file.text();
+    } catch (_error) {
+      return "";
     }
   }
 
@@ -2441,10 +2469,11 @@
     return "margin-top:12px;display:grid;grid-template-columns:repeat(" + Math.min(imageCount, 4) + ",minmax(0,1fr));gap:8px;";
   }
 
-  function preparePublishPayload(sourceConfig) {
+  function preparePublishPayload(sourceConfig, options) {
     var publishConfig = deepClone(sourceConfig);
     var assets = [];
     var usedNames = {};
+    var publishOptions = options || {};
 
     function stageAsset(src, fileName, fallbackPrefix) {
       var cleanSrc = normalizeImageSrc(src);
@@ -2470,7 +2499,10 @@
       };
     }
 
-    publishConfig.brand.logos = ensureTwoLogos(publishConfig.brand).map(function (logo, logoIndex) {
+    var publishLogos = ensureTwoLogos(publishConfig.brand);
+    publishLogos = backfillMissingLogosFromPublishFallbacks(publishLogos, publishOptions.fallbackHomeHtml);
+
+    publishConfig.brand.logos = publishLogos.map(function (logo, logoIndex) {
       var logoAsset = stageAsset(logo.src, logo.fileName, "logo-" + (logoIndex + 1));
       return Object.assign({}, logo, {
         src: logoAsset.src,
@@ -3238,6 +3270,77 @@
     }
     usedNames[candidate] = true;
     return candidate;
+  }
+
+  function backfillMissingLogosFromPublishFallbacks(logos, fallbackHomeHtml) {
+    var normalized = normalizeBrandLogos(logos);
+    if (normalized[0].src && normalized[1].src) {
+      return normalized;
+    }
+
+    var fallbackLogos = extractLogosFromHomeHtml(fallbackHomeHtml);
+    if (fallbackLogos.length < 2) {
+      var lastPublishedLogos = extractLogosFromLastPublishedHtml();
+      fallbackLogos = fallbackLogos.concat(lastPublishedLogos.slice(fallbackLogos.length));
+    }
+
+    if (!fallbackLogos.length) {
+      return normalized;
+    }
+
+    return normalized.map(function (logo, index) {
+      if (logo.src || !fallbackLogos[index]) {
+        return logo;
+      }
+      return Object.assign({}, logo, {
+        src: fallbackLogos[index].src,
+        fileName: logo.fileName || fallbackLogos[index].fileName
+      });
+    });
+  }
+
+  function extractLogosFromLastPublishedHtml() {
+    try {
+      var html = String(localStorage.getItem(LAST_PUBLISHED_KEY) || "");
+      if (!html) {
+        return [];
+      }
+      return extractLogosFromHomeHtml(html);
+    } catch (_error) {
+      return [];
+    }
+  }
+
+  function extractLogosFromHomeHtml(html) {
+    var source = String(html || "");
+    if (!source) {
+      return [];
+    }
+
+    var logoRegex = /<div class=\"logo-slot\"[^>]*>\s*<img[^>]*src=\"([^\"]+)\"[^>]*>/gi;
+    var matches = [];
+    var match;
+    while ((match = logoRegex.exec(source)) && matches.length < 2) {
+      var src = normalizeImageSrc(match[1]);
+      if (!src) {
+        continue;
+      }
+      matches.push({
+        src: src,
+        fileName: inferFileNameFromPath(src)
+      });
+    }
+    return matches;
+  }
+
+  function inferFileNameFromPath(pathValue) {
+    var value = String(pathValue || "").trim();
+    if (!value) {
+      return "";
+    }
+    var clean = value.split("?")[0].split("#")[0];
+    var segments = clean.split("/");
+    return sanitizeFileName(segments[segments.length - 1] || "");
   }
 
   function dragAttr(key, draggable) {
