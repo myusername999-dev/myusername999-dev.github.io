@@ -3,26 +3,26 @@
 window.__CONFIGURATOR_DRAFT__ = {
   "brand": {
     "name": "VinATech",
-    "logoSrc": "",
-    "logoFileName": "",
+    "logoSrc": "images/air2-logo-transparent-2.png",
+    "logoFileName": "air2-logo-transparent-2.png",
     "logos": [
       {
-        "src": "",
-        "fileName": "",
-        "x": 4,
-        "y": 17,
-        "size": 72,
-        "rotation": 0,
-        "transparency": 0
+        "src": "images/air2-logo-transparent-2.png",
+        "fileName": "air2-logo-transparent-2.png",
+        "x": 773,
+        "y": 83,
+        "size": 130,
+        "rotation": 1,
+        "transparency": 30
       },
       {
-        "src": "",
-        "fileName": "",
-        "x": 92,
-        "y": 12,
-        "size": 72,
+        "src": "images/vinatech-logo3-cut.png",
+        "fileName": "vinatech-logo3-cut.png",
+        "x": 198,
+        "y": -86,
+        "size": 500,
         "rotation": 0,
-        "transparency": 0
+        "transparency": 40
       }
     ]
   },
@@ -59,14 +59,14 @@ window.__CONFIGURATOR_DRAFT__ = {
     "headingSize": 59,
     "bodySize": 20,
     "buttonTextSize": 16,
-    "bgColor": "#011301",
+    "bgColor": "#52ad52",
     "textColor": "#dbe6e6",
-    "accentColor": "#011313",
+    "accentColor": "#011919",
     "mutedColor": "#87a69e",
-    "surfaceColor": "#9e5757",
+    "surfaceColor": "#987f67",
     "buttonTextColor": "#e0d1d1",
-    "mobileHeadingSize": 73,
-    "mobileBodySize": 23
+    "mobileHeadingSize": 59,
+    "mobileBodySize": 20
   },
   "background": {
     "src": "images/nv-photo.png",
@@ -81,24 +81,24 @@ window.__CONFIGURATOR_DRAFT__ = {
       "y": 0
     },
     "nav": {
-      "x": 4,
-      "y": -40
+      "x": 1,
+      "y": -42
     },
     "hero": {
       "x": 0,
       "y": 0
     },
     "heroTitle": {
-      "x": 229,
-      "y": 27
+      "x": 206,
+      "y": 112
     },
     "heroSubtitle": {
-      "x": 234,
-      "y": 19
+      "x": 219,
+      "y": 113
     },
     "cta": {
-      "x": 572,
-      "y": -289
+      "x": -91,
+      "y": -362
     },
     "mobileNav": {
       "x": 0,
@@ -118,27 +118,105 @@ window.__CONFIGURATOR_DRAFT__ = {
     }
   },
   "display": {
+    "pageMode": "home",
     "tabMode": "top-only",
     "topTabsTransparent": true,
     "ctaTextOnly": true,
-    "previewDevice": "mobile",
+    "previewPage": "home",
+    "previewDevice": "desktop",
     "mobileHeroCenter": true,
-    "mobileOverrides": false
+    "mobileOverrides": true
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "intro": "VINATECH Limited is committed to lawful, fair, and transparent handling of personal information. This policy explains what data we process, why we process it, and how we protect it.",
+    "scopeText": "This policy applies to VINATECH Limited websites, digital services, and business communication channels. We process personal data only where it is relevant to providing our services, supporting customers, protecting security, or complying with legal obligations.",
+    "dataText": "Depending on your interaction with us, we may process identity and contact details you submit, service-related communications and support records, and technical event logs required for security, fault analysis, and service continuity.",
+    "noCookiesText": "VINATECH Limited does not use analytics cookies, marketing cookies, or social media tracking cookies on this website. We do not deploy cookie banners for profiling because no such cookies are collected.",
+    "noMarketingText": "We do not build advertising profiles and we do not sell personal data to third parties. Where informational emails are required for active service relationships, they are limited to operational communications.",
+    "howUseText": "To respond to enquiries and deliver requested services.\nTo provide support and maintain platform reliability.\nTo secure systems and investigate misuse or abuse.\nTo comply with regulatory, contractual, and legal duties.",
+    "enforcementText": "VINATECH Limited applies a structured compliance model informed by public policy approaches from Google Play Developer Content Policy (privacy, deception prevention, responsible data handling, and clear user disclosures) and by data protection governance themes described by the Scottish Judiciary guidance on privacy and data protection.",
+    "bgColor": "#f8fbfa",
+    "textColor": "#18322b",
+    "topTabsTransparent": false,
+    "tabTextColor": "#18322b",
+    "tabBgColor": "#ffffff",
+    "mutedColor": "#5a736c",
+    "lineColor": "#dce6e1",
+    "accentColor": "#0f786b",
+    "cardColor": "#ffffff",
+    "topBandHeight": 76,
+    "heroTopPadding": 50,
+    "cardPadding": 26,
+    "layoutGap": 26
+  },
+  "contact": {
+    "title": "Contact VINATECH Limited",
+    "intro": "Tell us about your project needs and our team will respond promptly.",
+    "submitLabel": "Submit",
+    "emailSubject": "Website Contact Request",
+    "topTabsTransparent": false,
+    "formEndpoint": "https://formspree.io/f/mrevdeyn",
+    "recipientEmail": "support@vinatech.it.com",
+    "fields": [
+      {
+        "id": "first-name",
+        "label": "First Name",
+        "type": "text",
+        "required": true,
+        "placeholder": "Your first name"
+      },
+      {
+        "id": "last-name",
+        "label": "Last Name",
+        "type": "text",
+        "required": true,
+        "placeholder": "Your last name"
+      },
+      {
+        "id": "business-email",
+        "label": "Business Email",
+        "type": "email",
+        "required": true,
+        "placeholder": "name@company.com"
+      },
+      {
+        "id": "company",
+        "label": "Company",
+        "type": "text",
+        "required": true,
+        "placeholder": "Company name"
+      },
+      {
+        "id": "message",
+        "label": "Message",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "How can we help?"
+      },
+      {
+        "id": "consent",
+        "label": "I agree to the Privacy Policy",
+        "type": "checkbox",
+        "required": true,
+        "placeholder": ""
+      }
+    ]
   },
   "tabs": [
     {
       "label": "HOME",
       "sectionId": "home",
       "pageHref": "index.html",
-      "sectionTitle": "home",
-      "sectionText": "Add content for this section before publishing.",
+      "sectionTitle": "HOME",
+      "sectionText": "Add section content here.",
       "sectionFontFamily": "",
-      "sectionTitleColor": "#4c5757",
-      "sectionTextColor": "#0b322a",
-      "sectionBackgroundColor": "#605252",
-      "navFontFamily": "Sora",
-      "navTextColor": "#0d2b2b",
-      "navBackgroundColor": "#9e5757",
+      "sectionTitleColor": "#102822",
+      "sectionTextColor": "#4f6962",
+      "sectionBackgroundColor": "#e5f0ea",
+      "navFontFamily": "",
+      "navTextColor": "#102822",
+      "navBackgroundColor": "#e5f0ea",
       "sectionBackgroundSrc": "",
       "sectionBackgroundFileName": "",
       "sectionBackgroundTransparency": 36,
@@ -167,7 +245,7 @@ window.__CONFIGURATOR_DRAFT__ = {
       "label": "NEWS",
       "sectionId": "news",
       "pageHref": "news.html",
-      "sectionTitle": "news",
+      "sectionTitle": "NEWS",
       "sectionText": "Add section content here.",
       "sectionFontFamily": "",
       "sectionTitleColor": "#102822",
@@ -175,7 +253,7 @@ window.__CONFIGURATOR_DRAFT__ = {
       "sectionBackgroundColor": "#e5f0ea",
       "navFontFamily": "",
       "navTextColor": "#102822",
-      "navBackgroundColor": "#9e5757",
+      "navBackgroundColor": "#e5f0ea",
       "sectionBackgroundSrc": "",
       "sectionBackgroundFileName": "",
       "sectionBackgroundTransparency": 36,
@@ -202,9 +280,9 @@ window.__CONFIGURATOR_DRAFT__ = {
     },
     {
       "label": "PRIVACY POLICY",
-      "sectionId": "privacy",
+      "sectionId": "privacy-policy",
       "pageHref": "privacy.html",
-      "sectionTitle": "Privacy",
+      "sectionTitle": "PRIVACY POLICY",
       "sectionText": "Add section content here.",
       "sectionFontFamily": "",
       "sectionTitleColor": "#102822",
@@ -212,7 +290,7 @@ window.__CONFIGURATOR_DRAFT__ = {
       "sectionBackgroundColor": "#e5f0ea",
       "navFontFamily": "",
       "navTextColor": "#102822",
-      "navBackgroundColor": "#39845b",
+      "navBackgroundColor": "#e5f0ea",
       "sectionBackgroundSrc": "",
       "sectionBackgroundFileName": "",
       "sectionBackgroundTransparency": 36,
@@ -241,7 +319,7 @@ window.__CONFIGURATOR_DRAFT__ = {
       "label": "CONTACT",
       "sectionId": "contact",
       "pageHref": "contact.html",
-      "sectionTitle": "contact",
+      "sectionTitle": "CONTACT",
       "sectionText": "Add section content here.",
       "sectionFontFamily": "",
       "sectionTitleColor": "#102822",
@@ -249,7 +327,7 @@ window.__CONFIGURATOR_DRAFT__ = {
       "sectionBackgroundColor": "#e5f0ea",
       "navFontFamily": "",
       "navTextColor": "#102822",
-      "navBackgroundColor": "#9e5757",
+      "navBackgroundColor": "#e5f0ea",
       "sectionBackgroundSrc": "",
       "sectionBackgroundFileName": "",
       "sectionBackgroundTransparency": 36,
