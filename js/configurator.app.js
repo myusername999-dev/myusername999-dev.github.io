@@ -4115,11 +4115,17 @@
   }
 
   function normalizeImageSrc(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeImageSrc === "function") {
+      return window.ConfiguratorStateBridge.normalizeImageSrc(value);
+    }
     var src = String(value || "").trim();
     return src;
   }
 
   function sanitizeFileName(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.sanitizeFileName === "function") {
+      return window.ConfiguratorStateBridge.sanitizeFileName(value);
+    }
     var name = String(value || "").trim();
     if (!name) {
       return "";
@@ -4128,6 +4134,9 @@
   }
 
   function createDefaultLogo(index) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.createDefaultLogo === "function") {
+      return window.ConfiguratorStateBridge.createDefaultLogo(index);
+    }
     return {
       src: "",
       fileName: "",
@@ -4140,10 +4149,16 @@
   }
 
   function createDefaultLogos() {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.createDefaultLogos === "function") {
+      return window.ConfiguratorStateBridge.createDefaultLogos();
+    }
     return [createDefaultLogo(0), createDefaultLogo(1)];
   }
 
   function normalizeRotation(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeRotation === "function") {
+      return window.ConfiguratorStateBridge.normalizeRotation(value);
+    }
     var parsed = parseInt(value, 10);
     if (Number.isNaN(parsed)) {
       parsed = 0;
@@ -4152,6 +4167,9 @@
   }
 
   function normalizeBrandLogos(value, legacyPrimary) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeBrandLogos === "function") {
+      return window.ConfiguratorStateBridge.normalizeBrandLogos(value, legacyPrimary);
+    }
     var defaults = createDefaultLogos();
     var legacy = legacyPrimary || {};
     var source = Array.isArray(value) ? value.slice(0, 2) : [];
@@ -4184,6 +4202,9 @@
   }
 
   function ensureTwoLogos(brand) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.ensureTwoLogos === "function") {
+      return window.ConfiguratorStateBridge.ensureTwoLogos(brand);
+    }
     var legacy = {
       src: brand.logoSrc,
       fileName: brand.logoFileName,
@@ -4277,6 +4298,9 @@
   }
 
   function normalizeGalleryImages(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeGalleryImages === "function") {
+      return window.ConfiguratorStateBridge.normalizeGalleryImages(value);
+    }
     var items = Array.isArray(value) ? value.slice(0, 4) : [];
     while (items.length < 4) {
       items.push({ src: "", fileName: "" });

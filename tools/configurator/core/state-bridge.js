@@ -107,6 +107,99 @@
     return fields;
   }
 
+  function normalizeImageSrc(value) {
+    var src = String(value || "").trim();
+    return src;
+  }
+
+  function sanitizeFileName(value) {
+    var name = String(value || "").trim();
+    if (!name) {
+      return "";
+    }
+    return name.replace(/[\\/:*?"<>|]/g, "-");
+  }
+
+  function normalizeRotation(value) {
+    var parsed = parseInt(value, 10);
+    if (Number.isNaN(parsed)) {
+      parsed = 0;
+    }
+    return clamp(parsed, -180, 180);
+  }
+
+  function createDefaultLogo(index) {
+    return {
+      src: "",
+      fileName: "",
+      x: index === 0 ? 0 : 76,
+      y: 0,
+      size: 72,
+      rotation: 0,
+      transparency: 0
+    };
+  }
+
+  function createDefaultLogos() {
+    return [createDefaultLogo(0), createDefaultLogo(1)];
+  }
+
+  function normalizeBrandLogos(value, legacyPrimary) {
+    var defaults = createDefaultLogos();
+    var legacy = legacyPrimary || {};
+    var source = Array.isArray(value) ? value.slice(0, 2) : [];
+
+    if (!source.length && (legacy.src || legacy.fileName)) {
+      source.push({
+        src: legacy.src,
+        fileName: legacy.fileName,
+        x: legacy.x,
+        y: legacy.y
+      });
+    }
+
+    while (source.length < 2) {
+      source.push(defaults[source.length]);
+    }
+
+    return [0, 1].map(function (index) {
+      var item = source[index] || defaults[index];
+      return {
+        src: normalizeImageSrc(item.src),
+        fileName: sanitizeFileName(item.fileName),
+        x: parseInt(item.x, 10) || 0,
+        y: parseInt(item.y, 10) || 0,
+        size: clamp(parseInt(item.size, 10) || defaults[index].size, 1, 1200),
+        rotation: normalizeRotation(item.rotation),
+        transparency: clamp(parseInt(item.transparency, 10) || 0, 0, 95)
+      };
+    });
+  }
+
+  function ensureTwoLogos(brand) {
+    var source = brand || {};
+    var legacy = {
+      src: source.logoSrc,
+      fileName: source.logoFileName,
+      x: 0,
+      y: 0
+    };
+    return normalizeBrandLogos(source.logos, legacy);
+  }
+
+  function normalizeGalleryImages(value) {
+    var items = Array.isArray(value) ? value.slice(0, 4) : [];
+    while (items.length < 4) {
+      items.push({ src: "", fileName: "" });
+    }
+    return items.map(function (item) {
+      return {
+        src: normalizeImageSrc(item && item.src),
+        fileName: sanitizeFileName(item && item.fileName)
+      };
+    });
+  }
+
   function normalizePreviewPageValue(value, options) {
     var candidate = String(value || "home").trim();
     if (!candidate || candidate === "home") {
@@ -137,6 +230,14 @@
     normalizePreviewPageValue: normalizePreviewPageValue,
     normalizeTextAlign: normalizeTextAlign,
     normalizeContactFieldType: normalizeContactFieldType,
-    normalizeContactFields: normalizeContactFields
+    normalizeContactFields: normalizeContactFields,
+    normalizeImageSrc: normalizeImageSrc,
+    sanitizeFileName: sanitizeFileName,
+    normalizeRotation: normalizeRotation,
+    createDefaultLogo: createDefaultLogo,
+    createDefaultLogos: createDefaultLogos,
+    normalizeBrandLogos: normalizeBrandLogos,
+    ensureTwoLogos: ensureTwoLogos,
+    normalizeGalleryImages: normalizeGalleryImages
   };
 })();

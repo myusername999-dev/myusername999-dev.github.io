@@ -70,4 +70,24 @@ describe("state bridge", () => {
     expect(fields.some((item) => item.id === "consent")).toBe(true);
     expect(fields[0].id).toBe("team");
   });
+
+  it("sanitizes file names and image sources", () => {
+    const bridge = loadBridge();
+    expect(bridge.normalizeImageSrc("  images/logo.png  ")).toBe("images/logo.png");
+    expect(bridge.sanitizeFileName("a:b*c?.png")).toBe("a-b-c-.png");
+  });
+
+  it("normalizes logo rotation and fills two logos", () => {
+    const bridge = loadBridge();
+    expect(bridge.normalizeRotation(999)).toBe(180);
+    const logos = bridge.ensureTwoLogos({ logos: [{ src: "x", fileName: "x.png" }] });
+    expect(logos.length).toBe(2);
+  });
+
+  it("normalizes gallery images to four slots", () => {
+    const bridge = loadBridge();
+    const gallery = bridge.normalizeGalleryImages([{ src: "a", fileName: "a.png" }]);
+    expect(gallery.length).toBe(4);
+    expect(gallery[0].src).toBe("a");
+  });
 });
