@@ -34,4 +34,43 @@ describe("preview bridge", () => {
     expect(bridge.selectPreviewPage(options, "page:privacy.html")).toEqual(options[1]);
     expect(bridge.selectPreviewPage(options, "page:missing.html")).toEqual(options[0]);
   });
+
+  it("normalizes local page href values", () => {
+    const bridge = loadBridge();
+    expect(bridge.normalizePageHref("products")).toBe("products.html");
+    expect(bridge.normalizePageHref("news.html")).toBe("news.html");
+    expect(bridge.normalizePageHref("mailto:team@vinatech.example")).toBe("mailto:team@vinatech.example");
+  });
+
+  it("builds associated page descriptors from tabs and hero buttons", () => {
+    const bridge = loadBridge();
+    const descriptors = bridge.getAssociatedPageDescriptors({
+      tabs: [
+        { pageHref: "products", sectionTitle: "Products", sectionText: "Our catalog" },
+        { pageHref: "index.html", sectionTitle: "Home" },
+        { pageHref: "https://example.com", sectionTitle: "External" }
+      ],
+      hero: {
+        buttons: [
+          { label: "Contact", href: "contact" },
+          { label: "External", href: "mailto:hello@example.com" }
+        ]
+      }
+    });
+
+    expect(descriptors).toEqual([
+      {
+        fileName: "products.html",
+        sectionTitle: "Products",
+        sectionText: "Our catalog",
+        label: "Products"
+      },
+      {
+        fileName: "contact.html",
+        sectionTitle: "Contact",
+        sectionText: "This page is under construction.",
+        label: "Contact"
+      }
+    ]);
+  });
 });

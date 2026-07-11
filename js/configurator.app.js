@@ -2691,6 +2691,9 @@
   }
 
   function getAssociatedPageDescriptors(config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.getAssociatedPageDescriptors === "function") {
+      return window.ConfiguratorPreviewBridge.getAssociatedPageDescriptors(config);
+    }
     var pagesByFile = {};
 
     function addPageFromHref(href, titleFallback, subtitleFallback) {
@@ -4021,6 +4024,9 @@
   }
 
   function normalizePageHref(value) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.normalizePageHref === "function") {
+      return window.ConfiguratorPreviewBridge.normalizePageHref(value);
+    }
     var href = String(value || "").trim();
     if (!href) {
       return "";

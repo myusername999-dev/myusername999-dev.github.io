@@ -74,6 +74,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - includes page/tab/preview normalization, text-align/contact-field normalization, and logo/gallery helper normalization
 5. Preview descriptor/selection extraction is active through:
    - `tools/configurator/core/preview-bridge.js`
+   - includes privacy/contact descriptor detection, fixed-page filename detection, selected preview option resolution, page href normalization, and associated page descriptor derivation
 6. Publish decision extraction now includes:
    - scoped target derivation (`getPublishTargets`)
    - validation gating (`shouldValidateState`)
