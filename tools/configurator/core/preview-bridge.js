@@ -225,6 +225,93 @@
     return buildAssociatedTabPageHtml(tab, config, dependencies);
   }
 
+  function getPreviewPageOptions(config, dependencies) {
+    var deps = dependencies || {};
+    var getDescriptors = typeof deps.getAssociatedPageDescriptors === "function"
+      ? deps.getAssociatedPageDescriptors
+      : getAssociatedPageDescriptors;
+    var isFixedFile = typeof deps.isFixedPageFileName === "function"
+      ? deps.isFixedPageFileName
+      : isFixedPageFileName;
+
+    var sourceConfig = config || {};
+    var options = [{
+      value: "home",
+      label: "HOME (index.html)",
+      page: null
+    }];
+
+    options.push({
+      value: "page:privacy.html",
+      label: "Privacy Policy (privacy.html)",
+      page: {
+        fileName: "privacy.html",
+        sectionTitle: (sourceConfig.privacy && sourceConfig.privacy.title) || "Privacy Policy",
+        label: "Privacy"
+      }
+    });
+
+    options.push({
+      value: "page:contact.html",
+      label: "Contact (contact.html)",
+      page: {
+        fileName: "contact.html",
+        sectionTitle: (sourceConfig.contact && sourceConfig.contact.title) || "Contact",
+        label: "Contact"
+      }
+    });
+
+    getDescriptors(sourceConfig).forEach(function (descriptor) {
+      if (isFixedFile(descriptor && descriptor.fileName)) {
+        return;
+      }
+      var descriptorFile = String((descriptor && descriptor.fileName) || "").toLowerCase();
+      var descriptorLabel = String((descriptor && (descriptor.sectionTitle || descriptor.label)) || "").trim().toLowerCase();
+      if (descriptorLabel === "contact" && descriptorFile !== "contact.html") {
+        return;
+      }
+      options.push({
+        value: "page:" + descriptor.fileName,
+        label: String((descriptor.sectionTitle || descriptor.label || "Page")) + " (" + descriptor.fileName + ")",
+        page: descriptor
+      });
+    });
+
+    return options;
+  }
+
+  function normalizePreviewPageValue(value, options) {
+    var list = Array.isArray(options) ? options : [];
+    var candidate = String(value || "home").trim();
+    if (!candidate || candidate === "home") {
+      return "home";
+    }
+
+    if (!/^page:/i.test(candidate)) {
+      return "home";
+    }
+
+    for (var index = 0; index < list.length; index += 1) {
+      if (list[index] && list[index].value === candidate) {
+        return candidate;
+      }
+    }
+
+    return "home";
+  }
+
+  function normalizePreviewPage(value, options, dependencies) {
+    var deps = dependencies || {};
+    var normalizeValue = typeof deps.normalizePreviewPageValue === "function"
+      ? deps.normalizePreviewPageValue
+      : normalizePreviewPageValue;
+    var selectPage = typeof deps.selectPreviewPage === "function"
+      ? deps.selectPreviewPage
+      : selectPreviewPage;
+    var selectedValue = normalizeValue(value, options);
+    return selectPage(options, selectedValue);
+  }
+
   window.ConfiguratorPreviewBridge = {
     normalizePageHref: normalizePageHref,
     getAssociatedPageDescriptors: getAssociatedPageDescriptors,
@@ -235,6 +322,9 @@
     getAssociatedTabPages: getAssociatedTabPages,
     buildAssociatedTabPageHtml: buildAssociatedTabPageHtml,
     buildAssociatedPageMarkup: buildAssociatedPageMarkup,
-    buildAssociatedPublishedHtml: buildAssociatedPublishedHtml
+    buildAssociatedPublishedHtml: buildAssociatedPublishedHtml,
+    getPreviewPageOptions: getPreviewPageOptions,
+    normalizePreviewPageValue: normalizePreviewPageValue,
+    normalizePreviewPage: normalizePreviewPage
   };
 })();

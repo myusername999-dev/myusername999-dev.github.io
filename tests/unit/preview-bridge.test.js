@@ -223,4 +223,55 @@ describe("preview bridge", () => {
     expect(privacyHtml).toBe("<html>privacy</html>");
     expect(contactHtml).toBe("<html>contact</html>");
   });
+
+  it("builds preview page options with fixed pages and descriptors", () => {
+    const bridge = loadBridge();
+    const options = bridge.getPreviewPageOptions(
+      {
+        privacy: { title: "Privacy Policy" },
+        contact: { title: "Contact Us" }
+      },
+      {
+        getAssociatedPageDescriptors: () => [
+          { fileName: "products.html", sectionTitle: "Products", label: "Products" },
+          { fileName: "contact-us.html", sectionTitle: "Contact", label: "Contact" },
+          { fileName: "privacy.html", sectionTitle: "Privacy", label: "Privacy" }
+        ]
+      }
+    );
+
+    expect(options.map((option) => option.value)).toEqual([
+      "home",
+      "page:privacy.html",
+      "page:contact.html",
+      "page:products.html"
+    ]);
+    expect(options[2].label).toBe("Contact (contact.html)");
+  });
+
+  it("normalizes preview page value against available options", () => {
+    const bridge = loadBridge();
+    const options = [
+      { value: "home", label: "HOME" },
+      { value: "page:products.html", label: "Products" }
+    ];
+
+    expect(bridge.normalizePreviewPageValue("page:products.html", options)).toBe("page:products.html");
+    expect(bridge.normalizePreviewPageValue("page:missing.html", options)).toBe("home");
+    expect(bridge.normalizePreviewPageValue("products.html", options)).toBe("home");
+  });
+
+  it("normalizes preview page option selection", () => {
+    const bridge = loadBridge();
+    const options = [
+      { value: "home", label: "HOME" },
+      { value: "page:products.html", label: "Products" }
+    ];
+
+    const selected = bridge.normalizePreviewPage("page:products.html", options);
+    const fallback = bridge.normalizePreviewPage("page:missing.html", options);
+
+    expect(selected).toEqual(options[1]);
+    expect(fallback).toEqual(options[0]);
+  });
 });

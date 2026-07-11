@@ -2884,6 +2884,12 @@
   }
 
   function getPreviewPageOptions(config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.getPreviewPageOptions === "function") {
+      return window.ConfiguratorPreviewBridge.getPreviewPageOptions(config, {
+        getAssociatedPageDescriptors: getAssociatedPageDescriptors,
+        isFixedPageFileName: isFixedPageFileName
+      });
+    }
     var options = [{
       value: "home",
       label: "HOME (index.html)",
@@ -2931,10 +2937,15 @@
 
   function normalizePreviewPage(value, config) {
     var options = getPreviewPageOptions(config);
-    var selectedValue = normalizePreviewPageValue(value, config);
-    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.selectPreviewPage === "function") {
-      return window.ConfiguratorPreviewBridge.selectPreviewPage(options, selectedValue);
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.normalizePreviewPage === "function") {
+      return window.ConfiguratorPreviewBridge.normalizePreviewPage(value, options, {
+        normalizePreviewPageValue: function (candidateValue) {
+          return normalizePreviewPageValue(candidateValue, config);
+        },
+        selectPreviewPage: selectPreviewPage
+      });
     }
+    var selectedValue = normalizePreviewPageValue(value, config);
     for (var index = 0; index < options.length; index += 1) {
       if (options[index].value === selectedValue) {
         return options[index];
@@ -4420,6 +4431,9 @@
 
   function normalizePreviewPageValue(value, config) {
     var options = getPreviewPageOptions(config || state);
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.normalizePreviewPageValue === "function") {
+      return window.ConfiguratorPreviewBridge.normalizePreviewPageValue(value, options);
+    }
     if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizePreviewPageValue === "function") {
       return window.ConfiguratorStateBridge.normalizePreviewPageValue(value, options);
     }
