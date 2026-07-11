@@ -19,6 +19,63 @@
     };
   }
 
+  function slugify(value) {
+    return String(value || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+  }
+
+  function validateStateFromConfig(config) {
+    var errors = [];
+    var state = config || {};
+    var brand = state.brand || {};
+    var hero = state.hero || {};
+    var tabs = Array.isArray(state.tabs) ? state.tabs : [];
+
+    if (!String(brand.name || "").trim()) {
+      errors.push("Brand name is required.");
+    }
+    if (!Array.isArray(hero.buttons) || !hero.buttons.length) {
+      errors.push("At least one action button is required.");
+    }
+    if (Array.isArray(hero.buttons) && hero.buttons.some(function (button) {
+      return !String((button && button.label) || "").trim();
+    })) {
+      errors.push("Each action button needs a label.");
+    }
+    if (!tabs.length) {
+      errors.push("At least one tab is required.");
+    }
+
+    var seen = {};
+    tabs.forEach(function (tab, index) {
+      var id = slugify(tab && tab.sectionId);
+      if (!id) {
+        errors.push("Tab " + (index + 1) + " needs a valid section id.");
+      }
+      if (seen[id]) {
+        errors.push("Duplicate section id found: " + id);
+      }
+      seen[id] = true;
+    });
+
+    return errors;
+  }
+
+  function shouldPreserveExistingHomeOnPublish(hasUserEditsSinceLoad, fallbackHomeHtml) {
+    if (hasUserEditsSinceLoad) {
+      return false;
+    }
+    var html = String(fallbackHomeHtml || "");
+    if (!html) {
+      return false;
+    }
+    return html.indexOf('class="home-root"') >= 0;
+  }
+
   function shouldValidateState(scope) {
     var publishScope = normalizePublishScope(scope);
     return publishScope === "home" || publishScope === "all";
@@ -73,6 +130,8 @@
   window.ConfiguratorPublishBridge = {
     normalizePublishScope: normalizePublishScope,
     getPublishTargets: getPublishTargets,
+    validateStateFromConfig: validateStateFromConfig,
+    shouldPreserveExistingHomeOnPublish: shouldPreserveExistingHomeOnPublish,
     shouldValidateState: shouldValidateState,
     shouldIncludeAssociatedPages: shouldIncludeAssociatedPages,
     buildScopedPublishSuccessMessage: buildScopedPublishSuccessMessage,

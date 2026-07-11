@@ -2057,6 +2057,9 @@
   }
 
   function shouldPreserveExistingHomeOnPublish(fallbackHomeHtml) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.shouldPreserveExistingHomeOnPublish === "function") {
+      return window.ConfiguratorPublishBridge.shouldPreserveExistingHomeOnPublish(hasUserEditsSinceLoad, fallbackHomeHtml);
+    }
     if (hasUserEditsSinceLoad) {
       return false;
     }
@@ -2196,6 +2199,9 @@
   }
 
   function validateState() {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.validateStateFromConfig === "function") {
+      return window.ConfiguratorPublishBridge.validateStateFromConfig(state);
+    }
     var errors = [];
     if (!state.brand.name.trim()) {
       errors.push("Brand name is required.");

@@ -44,4 +44,28 @@ describe("publish bridge", () => {
     expect(bridge.shouldIncludeAssociatedPages("mobile", "all")).toBe(false);
     expect(bridge.shouldIncludeAssociatedPages("desktop", "home")).toBe(false);
   });
+
+  it("validates state configuration", () => {
+    const bridge = loadBridge();
+    const valid = {
+      brand: { name: "VinATech" },
+      hero: { buttons: [{ label: "Home" }] },
+      tabs: [{ sectionId: "home" }]
+    };
+    const invalid = {
+      brand: { name: "" },
+      hero: { buttons: [{ label: "" }] },
+      tabs: [{ sectionId: "" }, { sectionId: "" }]
+    };
+
+    expect(bridge.validateStateFromConfig(valid)).toEqual([]);
+    expect(bridge.validateStateFromConfig(invalid).length).toBeGreaterThan(0);
+  });
+
+  it("preserves existing home only when there are no edits and fallback has home root", () => {
+    const bridge = loadBridge();
+    expect(bridge.shouldPreserveExistingHomeOnPublish(false, '<div class="home-root"></div>')).toBe(true);
+    expect(bridge.shouldPreserveExistingHomeOnPublish(true, '<div class="home-root"></div>')).toBe(false);
+    expect(bridge.shouldPreserveExistingHomeOnPublish(false, '<div></div>')).toBe(false);
+  });
 });
