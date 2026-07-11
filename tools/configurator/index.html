@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Homepage Configurator - VinATech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Sora:wght@400;600;700;800&family=Manrope:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Outfit:wght@400;500;700;800&family=DM+Sans:wght@400;500;700;900&family=Archivo:wght@400;500;700;800&family=Karla:wght@400;500;700;800&family=Merriweather:wght@400;700;900&family=Playfair+Display:wght@400;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/configurator.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="control-rail">
+      <header class="rail-header">
+        <p class="eyebrow">Design Lab</p>
+        <h1>Homepage Configurator</h1>
+        <p class="subtitle">Experiment with style, layout, and content before publishing.</p>
+      </header>
+
+      <section class="panel page-mode-panel">
+        <h2>Page Mode</h2>
+        <label>Editor Mode
+          <select id="pageMode">
+            <option value="home">Home</option>
+            <option value="privacy">Privacy</option>
+            <option value="contact">Contact</option>
+          </select>
+        </label>
+        <p class="hint">Switch between homepage, privacy, and contact page controls.</p>
+      </section>
+
+      <div id="homeControls">
+
+      <section class="panel">
+        <h2>Branding</h2>
+        <p class="hint">Publish writes uploaded images into images/ in your selected project folder.</p>
+        <label>Brand Name<input id="brandName" type="text"></label>
+        <label>Hero Title<textarea id="heroTitle" rows="2"></textarea></label>
+        <label>Hero Subtitle<textarea id="heroSubtitle" rows="3"></textarea></label>
+        <div class="upload-group">
+          <label>Background File<input id="backgroundInput" type="file" accept="image/*"></label>
+          <button id="clearBackground" type="button" class="ghost">Clear Background</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Colors</h2>
+        <p class="hint">Text changes main heading text color. Muted changes softer text like hero subtitle and card description text.</p>
+        <div class="color-grid">
+          <label>Background<input id="bgColor" type="color"></label>
+          <label>Text<input id="textColor" type="color"></label>
+          <label>Accent<input id="accentColor" type="color"></label>
+          <label>Muted<input id="mutedColor" type="color"></label>
+          <label>Surface<input id="surfaceColor" type="color"></label>
+          <label>Button Text<input id="buttonTextColor" type="color"></label>
+        </div>
+      </section>
+
+      <section class="panel logos-panel">
+        <h2>Logos Studio</h2>
+        <p class="hint">Use drag on preview or fine tune with X/Y, size, rotation (1 deg), and transparency.</p>
+        <div class="logo-editor-grid">
+          <div class="logo-editor-card">
+            <h3>Logo 1</h3>
+            <div class="upload-group">
+              <label>Logo 1 File<input id="logo1Input" type="file" accept="image/*"></label>
+              <button id="clearLogo1" type="button" class="ghost">Clear Logo 1</button>
+            </div>
+            <div class="layout-grid">
+              <label>Logo 1 X<input id="logo1X" type="number" step="1"></label>
+              <label>Logo 1 Y<input id="logo1Y" type="number" step="1"></label>
+              <label>Logo 1 Size (px)<input id="logo1Size" type="number" min="1" max="1200" step="1"></label>
+              <label>Logo 1 Rotation (deg)<input id="logo1Rotation" type="number" min="-180" max="180" step="1"></label>
+              <label>Logo 1 Transparency (%)<input id="logo1Transparency" type="number" min="0" max="95" step="1"></label>
+            </div>
+          </div>
+          <div class="logo-editor-card">
+            <h3>Logo 2</h3>
+            <div class="upload-group">
+              <label>Logo 2 File<input id="logo2Input" type="file" accept="image/*"></label>
+              <button id="clearLogo2" type="button" class="ghost">Clear Logo 2</button>
+            </div>
+            <div class="layout-grid">
+              <label>Logo 2 X<input id="logo2X" type="number" step="1"></label>
+              <label>Logo 2 Y<input id="logo2Y" type="number" step="1"></label>
+              <label>Logo 2 Size (px)<input id="logo2Size" type="number" min="1" max="1200" step="1"></label>
+              <label>Logo 2 Rotation (deg)<input id="logo2Rotation" type="number" min="-180" max="180" step="1"></label>
+              <label>Logo 2 Transparency (%)<input id="logo2Transparency" type="number" min="0" max="95" step="1"></label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Typography</h2>
+        <label>Font Family
+          <select id="fontFamily">
+            <option value="Sora">Sora</option>
+            <option value="Space Grotesk">Space Grotesk</option>
+            <option value="Manrope">Manrope</option>
+            <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+            <option value="Outfit">Outfit</option>
+            <option value="DM Sans">DM Sans</option>
+            <option value="Archivo">Archivo</option>
+            <option value="Karla">Karla</option>
+            <option value="Merriweather">Merriweather</option>
+            <option value="Playfair Display">Playfair Display</option>
+            <option value="Cormorant Garamond">Cormorant Garamond</option>
+            <option value="Bricolage Grotesque">Bricolage Grotesque</option>
+            <option value="Times New Roman">Times New Roman</option>
+          </select>
+        </label>
+        <label>Heading Size (px)
+          <input id="headingSize" type="range" min="40" max="92" step="1">
+          <span id="headingSizeValue" class="value-pill"></span>
+        </label>
+        <label>Body Size (px)
+          <input id="bodySize" type="range" min="14" max="28" step="1">
+          <span id="bodySizeValue" class="value-pill"></span>
+        </label>
+        <label>Button Text Size (px)
+          <input id="buttonTextSize" type="range" min="12" max="32" step="1">
+          <span id="buttonTextSizeValue" class="value-pill"></span>
+        </label>
+        <div class="layout-grid">
+          <label>Hero Title Font
+            <select id="heroTitleFontFamily">
+              <option value="">Use Site Font</option>
+              <option value="Sora">Sora</option>
+              <option value="Space Grotesk">Space Grotesk</option>
+              <option value="Manrope">Manrope</option>
+              <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+              <option value="Outfit">Outfit</option>
+              <option value="DM Sans">DM Sans</option>
+              <option value="Archivo">Archivo</option>
+              <option value="Karla">Karla</option>
+              <option value="Merriweather">Merriweather</option>
+              <option value="Playfair Display">Playfair Display</option>
+              <option value="Cormorant Garamond">Cormorant Garamond</option>
+              <option value="Bricolage Grotesque">Bricolage Grotesque</option>
+              <option value="Times New Roman">Times New Roman</option>
+            </select>
+          </label>
+          <label>Hero Title Align
+            <select id="heroTitleAlign">
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </label>
+          <label>Hero Title Color<input id="heroTitleColor" type="color"></label>
+          <label>Hero Subtitle Font
+            <select id="heroSubtitleFontFamily">
+              <option value="">Use Site Font</option>
+              <option value="Sora">Sora</option>
+              <option value="Space Grotesk">Space Grotesk</option>
+              <option value="Manrope">Manrope</option>
+              <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+              <option value="Outfit">Outfit</option>
+              <option value="DM Sans">DM Sans</option>
+              <option value="Archivo">Archivo</option>
+              <option value="Karla">Karla</option>
+              <option value="Merriweather">Merriweather</option>
+              <option value="Playfair Display">Playfair Display</option>
+              <option value="Cormorant Garamond">Cormorant Garamond</option>
+              <option value="Bricolage Grotesque">Bricolage Grotesque</option>
+              <option value="Times New Roman">Times New Roman</option>
+            </select>
+          </label>
+          <label>Hero Subtitle Align
+            <select id="heroSubtitleAlign">
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </label>
+          <label>Hero Subtitle Color<input id="heroSubtitleColor" type="color"></label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="tabs-head">
+          <h2>Action Buttons</h2>
+          <button id="addButton" type="button">Add Button</button>
+        </div>
+        <label class="approval"><input id="ctaTextOnly" type="checkbox"> Buttons text only (transparent)</label>
+        <div id="buttonsEditor" class="tabs-editor"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Layout</h2>
+        <p class="hint">Drag in preview or fine-tune numerically.</p>
+        <p class="hint">Background Focus X/Y chooses which point of the background image stays centered in view. It applies only when a background image is uploaded.</p>
+        <div class="layout-grid">
+          <label>Nav X<input id="navX" type="number" step="1"></label>
+          <label>Nav Y<input id="navY" type="number" step="1"></label>
+          <label>Hero Title X<input id="heroTitleX" type="number" step="1"></label>
+          <label>Hero Title Y<input id="heroTitleY" type="number" step="1"></label>
+          <label>Hero Subtitle X<input id="heroSubtitleX" type="number" step="1"></label>
+          <label>Hero Subtitle Y<input id="heroSubtitleY" type="number" step="1"></label>
+          <label>CTA Button Horizontal Offset (px)<input id="ctaX" type="number" step="1"></label>
+          <label>CTA Button Vertical Offset (px)<input id="ctaY" type="number" step="1"></label>
+          <label>Background Focus X (%)<input id="bgX" type="number" min="0" max="100" step="1"></label>
+          <label>Background Focus Y (%)<input id="bgY" type="number" min="0" max="100" step="1"></label>
+          <label>Background Transparency (%)
+            <input id="bgTransparency" type="range" min="0" max="95" step="1">
+            <span id="bgTransparencyValue" class="value-pill"></span>
+          </label>
+        </div>
+        <fieldset class="panel-group" style="margin-top:12px;border-top:1px dashed rgba(0,0,0,.06);padding-top:12px">
+          <legend style="font-weight:700">Mobile Layout Overrides</legend>
+          <p class="hint">Used only when mobile overrides are enabled. Desktop stays unchanged.</p>
+          <div class="layout-grid">
+            <label>Mobile Nav X<input id="mobileNavX" type="number" step="1"></label>
+            <label>Mobile Nav Y<input id="mobileNavY" type="number" step="1"></label>
+            <label>Mobile Hero Title X<input id="mobileHeroTitleX" type="number" step="1"></label>
+            <label>Mobile Hero Title Y<input id="mobileHeroTitleY" type="number" step="1"></label>
+            <label>Mobile Hero Subtitle X<input id="mobileHeroSubtitleX" type="number" step="1"></label>
+            <label>Mobile Hero Subtitle Y<input id="mobileHeroSubtitleY" type="number" step="1"></label>
+            <label>Mobile CTA X<input id="mobileCtaX" type="number" step="1"></label>
+            <label>Mobile CTA Y<input id="mobileCtaY" type="number" step="1"></label>
+          </div>
+        </fieldset>
+      </section>
+
+      <section class="panel">
+        <div class="tabs-head">
+          <h2>Tabs</h2>
+          <button id="addTab" type="button">New Tab</button>
+        </div>
+        <label>Tab Display Mode
+          <select id="tabDisplayMode">
+            <option value="top-only">Top only (no tabs/content on main screen)</option>
+            <option value="top-and-home">Top and home (tab selection in both places)</option>
+          </select>
+        </label>
+        <fieldset class="panel-group" style="margin-top:12px;border-top:1px dashed rgba(0,0,0,.06);padding-top:12px">
+          <legend style="font-weight:700">Mobile Overrides</legend>
+          <label style="display:block;margin-top:8px"><input id="mobileOverridesEnabled" type="checkbox"> Enable mobile overrides for published site</label>
+          <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
+            <label style="flex:1">Mobile Heading Size (px)
+              <input id="mobileHeadingSize" type="range" min="28" max="92" step="1">
+              <span id="mobileHeadingSizeValue" class="value-pill"></span>
+            </label>
+            <label style="flex:1">Mobile Body Size (px)
+              <input id="mobileBodySize" type="range" min="12" max="28" step="1">
+              <span id="mobileBodySizeValue" class="value-pill"></span>
+            </label>
+          </div>
+          <label style="display:block;margin-top:8px"><input id="mobileHeroCenter" type="checkbox"> Center hero on mobile</label>
+        </fieldset>
+        <label class="approval"><input id="topTabsTransparent" type="checkbox"> Top tabs fully transparent (text only)</label>
+        <div class="color-grid">
+          <label>Global Tab Text<input id="globalTabTextColor" type="color"></label>
+          <label>Global Tab Background<input id="globalTabBgColor" type="color"></label>
+        </div>
+        <p class="hint">These two colors apply to all top tabs (HOME, NEWS, PRIVACY, CONTACT) on all pages.</p>
+        <div id="tabsEditor" class="tabs-editor"></div>
+      </section>
+      </div>
+
+      <div id="privacyControls" class="page-mode-hidden">
+        <section class="panel">
+          <h2>Privacy Content</h2>
+          <label>Page Title<input id="privacyTitle" type="text"></label>
+          <label>Intro Text<textarea id="privacyIntro" rows="3"></textarea></label>
+          <label>Scope And Principles Text<textarea id="privacyScopeText" rows="4"></textarea></label>
+          <label>Data We Process Text<textarea id="privacyDataText" rows="4"></textarea></label>
+          <label>No Cookies Text<textarea id="privacyNoCookiesText" rows="3"></textarea></label>
+          <label>No Marketing Text<textarea id="privacyNoMarketingText" rows="3"></textarea></label>
+          <label>How We Use Information (one bullet per line)<textarea id="privacyHowUseText" rows="4"></textarea></label>
+          <label>Enforcement Text<textarea id="privacyEnforcementText" rows="4"></textarea></label>
+        </section>
+
+        <section class="panel">
+          <h2>Privacy Colors</h2>
+          <label class="check-row"><input id="privacyTopTabsTransparent" type="checkbox"> Top tabs fully transparent (text only)</label>
+          <p class="hint">Top tab colors are controlled globally in the Tabs panel.</p>
+          <div class="color-grid">
+            <label>Page Background<input id="privacyBgColor" type="color"></label>
+            <label>Text<input id="privacyTextColor" type="color"></label>
+            <label>Muted Text<input id="privacyMutedColor" type="color"></label>
+            <label>Divider<input id="privacyLineColor" type="color"></label>
+            <label>Accent<input id="privacyAccentColor" type="color"></label>
+            <label>Card Background<input id="privacyCardColor" type="color"></label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Privacy Spacing</h2>
+          <label>Top Band Height (px)
+            <input id="privacyTopBandHeight" type="range" min="48" max="120" step="1">
+            <span id="privacyTopBandHeightValue" class="value-pill"></span>
+          </label>
+          <label>Hero Top Padding (px)
+            <input id="privacyHeroTopPadding" type="range" min="24" max="96" step="1">
+            <span id="privacyHeroTopPaddingValue" class="value-pill"></span>
+          </label>
+          <label>Card Padding (px)
+            <input id="privacyCardPadding" type="range" min="16" max="40" step="1">
+            <span id="privacyCardPaddingValue" class="value-pill"></span>
+          </label>
+          <label>Layout Gap (px)
+            <input id="privacyLayoutGap" type="range" min="12" max="40" step="1">
+            <span id="privacyLayoutGapValue" class="value-pill"></span>
+          </label>
+        </section>
+      </div>
+
+      <div id="contactControls" class="page-mode-hidden">
+        <section class="panel">
+          <h2>Contact Content</h2>
+          <label class="check-row"><input id="contactTopTabsTransparent" type="checkbox"> Top tabs fully transparent (text only)</label>
+          <label>Page Title<input id="contactTitle" type="text"></label>
+          <label>Intro Text<textarea id="contactIntro" rows="3"></textarea></label>
+          <label>Submit Button Label<input id="contactSubmitLabel" type="text"></label>
+          <label>Email Subject Prefix<input id="contactEmailSubject" type="text"></label>
+          <label>Formspree Endpoint URL<input id="contactFormEndpoint" type="url" placeholder="https://formspree.io/f/xxxxabcd"></label>
+          <p class="hint">Submit posts directly to Formspree from GitHub Pages. Update endpoint any time without code changes.</p>
+        </section>
+
+        <section class="panel">
+          <div class="tabs-head">
+            <h2>Contact Fields</h2>
+            <button id="addContactField" type="button">Add Field</button>
+          </div>
+          <p class="hint">Add, remove, and reorder form fields. Consent field should remain enabled for privacy acknowledgement.</p>
+          <div id="contactFieldsEditor" class="tabs-editor"></div>
+        </section>
+      </div>
+
+      <section class="panel actions">
+        <label class="approval"><input id="approval" type="checkbox"> I approve this preview for publish</label>
+        <div class="action-row">
+          <button id="previewHome" type="button">Preview HOME</button>
+          <button id="publishHomeOnly" type="button">Publish HOME only</button>
+          <button id="publishPrivacyOnly" type="button">Publish PRIVACY only</button>
+          <button id="publishContactOnly" type="button">Publish CONTACT only</button>
+          <button id="publishHome" type="button" class="primary">Publish ALL pages</button>
+        </div>
+        <div class="action-row">
+          <button id="exportDraft" type="button" class="ghost">Export Draft JSON</button>
+          <label class="import-btn ghost">Import Draft JSON<input id="importDraft" type="file" accept="application/json"></label>
+        </div>
+        <div class="action-row">
+          <button id="saveRepoDraft" type="button" class="ghost">Save Draft to Repo File</button>
+          <button id="loadRepoDraft" type="button" class="ghost">Load Draft from Repo File</button>
+        </div>
+        <button id="resetDraft" type="button" class="danger">Reset Draft</button>
+        <p id="statusMessage" class="status" aria-live="polite"></p>
+      </section>
+    </aside>
+
+    <main class="preview-shell">
+      <header class="preview-top">
+        <div>
+          <p class="eyebrow">Live Stage</p>
+          <h2>Interactive Homepage Preview</h2>
+        </div>
+        <div class="preview-actions">
+          <label>Preview Page
+            <select id="previewPage">
+              <option value="home">HOME (index.html)</option>
+            </select>
+          </label>
+          <label class="preview-mobile-toggle"><input id="previewMobileToggle" type="checkbox"> Mobile Preview</label>
+          <label>Preview Device
+            <select id="previewDevice">
+              <option value="desktop">Desktop</option>
+              <option value="mobile">Mobile</option>
+            </select>
+          </label>
+          <a href="../../index.html" class="inline-link" target="_blank" rel="noreferrer">Open current published home</a>
+        </div>
+      </header>
+      <div id="previewViewport" class="preview-viewport"></div>
+      <p class="hint foot-hint">Tip: drag logo 1, logo 2, nav, hero title, hero subtitle, and CTA directly on stage.</p>
+    </main>
+  </div>
+
+  <footer class="site-footer-fixed">&copy;VINATECH 2026. All rights reserved.</footer>
+
+  <script src="../../js/configurator.draft.js?v=20260709a"></script>
+  <script src="../../js/configurator.app.js?v=20260709a"></script>
+</body>
+</html>
+
