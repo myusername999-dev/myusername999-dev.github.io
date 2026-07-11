@@ -312,6 +312,37 @@
     return selectPage(options, selectedValue);
   }
 
+  function refreshPreviewPageOptions(currentPreviewPage, config, dependencies) {
+    var deps = dependencies || {};
+    var getOptions = typeof deps.getPreviewPageOptions === "function"
+      ? deps.getPreviewPageOptions
+      : getPreviewPageOptions;
+    var normalizeValue = typeof deps.normalizePreviewPageValue === "function"
+      ? deps.normalizePreviewPageValue
+      : normalizePreviewPageValue;
+    var escapeAttr = typeof deps.escapeAttr === "function"
+      ? deps.escapeAttr
+      : function (value) { return String(value || ""); };
+    var escapeHtml = typeof deps.escapeHtml === "function"
+      ? deps.escapeHtml
+      : function (value) { return String(value || ""); };
+
+    var options = getOptions(config || {});
+    var optionsHtml = options
+      .map(function (option) {
+        return "<option value=\"" + escapeAttr(option.value) + "\">" + escapeHtml(option.label) + "</option>";
+      })
+      .join("");
+    var selectedValue = normalizeValue(currentPreviewPage, options);
+
+    return {
+      options: options,
+      optionsHtml: optionsHtml,
+      selectedValue: selectedValue,
+      changed: selectedValue !== String(currentPreviewPage || "")
+    };
+  }
+
   window.ConfiguratorPreviewBridge = {
     normalizePageHref: normalizePageHref,
     getAssociatedPageDescriptors: getAssociatedPageDescriptors,
@@ -325,6 +356,7 @@
     buildAssociatedPublishedHtml: buildAssociatedPublishedHtml,
     getPreviewPageOptions: getPreviewPageOptions,
     normalizePreviewPageValue: normalizePreviewPageValue,
-    normalizePreviewPage: normalizePreviewPage
+    normalizePreviewPage: normalizePreviewPage,
+    refreshPreviewPageOptions: refreshPreviewPageOptions
   };
 })();

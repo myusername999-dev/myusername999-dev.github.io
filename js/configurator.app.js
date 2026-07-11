@@ -2869,6 +2869,27 @@
     }
 
     var previousPreviewPage = state.display && state.display.previewPage;
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.refreshPreviewPageOptions === "function") {
+      var refreshed = window.ConfiguratorPreviewBridge.refreshPreviewPageOptions(previousPreviewPage, state, {
+        getPreviewPageOptions: getPreviewPageOptions,
+        normalizePreviewPageValue: function (value, options) {
+          if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizePreviewPageValue === "function") {
+            return window.ConfiguratorStateBridge.normalizePreviewPageValue(value, options);
+          }
+          return window.ConfiguratorPreviewBridge.normalizePreviewPageValue(value, options);
+        },
+        escapeAttr: escapeAttr,
+        escapeHtml: escapeHtml
+      });
+      dom.previewPage.innerHTML = refreshed.optionsHtml;
+      state.display.previewPage = refreshed.selectedValue;
+      dom.previewPage.value = state.display.previewPage;
+      if (refreshed.changed) {
+        saveState();
+      }
+      return;
+    }
+
     var options = getPreviewPageOptions(state);
     dom.previewPage.innerHTML = options
       .map(function (option) {

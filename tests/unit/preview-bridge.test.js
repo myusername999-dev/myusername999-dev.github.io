@@ -274,4 +274,39 @@ describe("preview bridge", () => {
     expect(selected).toEqual(options[1]);
     expect(fallback).toEqual(options[0]);
   });
+
+  it("refreshes preview page options and preserves selected value when valid", () => {
+    const bridge = loadBridge();
+    const result = bridge.refreshPreviewPageOptions(
+      "page:products.html",
+      {},
+      {
+        getPreviewPageOptions: () => [
+          { value: "home", label: "HOME" },
+          { value: "page:products.html", label: "Products" }
+        ]
+      }
+    );
+
+    expect(result.selectedValue).toBe("page:products.html");
+    expect(result.changed).toBe(false);
+    expect(result.optionsHtml).toContain("<option value=\"home\">HOME</option>");
+  });
+
+  it("refreshes preview page options and falls back to home when invalid", () => {
+    const bridge = loadBridge();
+    const result = bridge.refreshPreviewPageOptions(
+      "page:missing.html",
+      {},
+      {
+        getPreviewPageOptions: () => [
+          { value: "home", label: "HOME" },
+          { value: "page:products.html", label: "Products" }
+        ]
+      }
+    );
+
+    expect(result.selectedValue).toBe("home");
+    expect(result.changed).toBe(true);
+  });
 });
