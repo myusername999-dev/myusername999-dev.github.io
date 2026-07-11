@@ -51,3 +51,8 @@ Publish behavior:
 
 - Run all tests: `npm test`
 - Watch mode: `npm run test:watch`
+
+## Migration Notes
+
+- Legacy runtime `js/configurator.app.js` now incrementally delegates selected publish and mobile helpers to bridge modules under `tools/configurator/`.
+- Full extraction remains phased to preserve behavior stability.

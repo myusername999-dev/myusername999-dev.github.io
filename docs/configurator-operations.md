@@ -66,7 +66,10 @@ These pages route into the same configurator runtime with panel focus, so behavi
 ### 9. Current migration status
 1. Folder structure and module entry pages are in place.
 2. Desktop and mobile baseline tests are passing.
-3. Publish/save/restore deep logic extraction from legacy runtime is incremental and continues in next phases.
+3. Publish and mobile helper extraction is active through runtime bridge modules:
+   - `tools/configurator/publish/publish-bridge.js`
+   - `tools/configurator/mobile/mobile-bridge.js`
+4. Publish/save/restore deep logic extraction from legacy runtime remains incremental and continues in next phases.
 
 ### 8. Troubleshooting
 1. Folder picker does not open:

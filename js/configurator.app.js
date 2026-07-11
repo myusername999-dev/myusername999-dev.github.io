@@ -1734,6 +1734,9 @@
 
     // In mobile preview, render draggable slots from mobile layout coordinates.
     var previewConfig = deepClone(state);
+    if (window.ConfiguratorMobileBridge && typeof window.ConfiguratorMobileBridge.applyMobilePreviewLayout === "function") {
+      return window.ConfiguratorMobileBridge.applyMobilePreviewLayout(previewConfig);
+    }
     previewConfig.layout.nav = Object.assign({}, previewConfig.layout.mobileNav || { x: 0, y: 0 });
     previewConfig.layout.heroTitle = Object.assign({}, previewConfig.layout.mobileHeroTitle || { x: 0, y: 0 });
     previewConfig.layout.heroSubtitle = Object.assign({}, previewConfig.layout.mobileHeroSubtitle || { x: 0, y: 0 });
@@ -2092,6 +2095,9 @@
   }
 
   function normalizePublishScope(scope) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.normalizePublishScope === "function") {
+      return window.ConfiguratorPublishBridge.normalizePublishScope(scope);
+    }
     var candidate = String(scope || "all").toLowerCase();
     if (candidate === "home" || candidate === "privacy" || candidate === "contact" || candidate === "all") {
       return candidate;
@@ -2100,6 +2106,15 @@
   }
 
   function buildScopedPublishSuccessMessage(projectDirectory, scope, includeAssociatedPages, associatedCount, assetsResult) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.buildScopedPublishSuccessMessage === "function") {
+      return window.ConfiguratorPublishBridge.buildScopedPublishSuccessMessage(
+        String(projectDirectory.name || "selected folder"),
+        scope,
+        includeAssociatedPages,
+        associatedCount,
+        assetStatusSuffix(assetsResult)
+      );
+    }
     var location = String(projectDirectory.name || "selected folder");
     var base = "Publish complete in " + location + ". ";
     if (scope === "privacy") {
@@ -2118,6 +2133,9 @@
   }
 
   function buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.buildScopedDownloadSummary === "function") {
+      return window.ConfiguratorPublishBridge.buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount);
+    }
     if (scope === "privacy") {
       return "Downloaded privacy.html.";
     }
@@ -2134,6 +2152,14 @@
   }
 
   function buildScopedDownloadMessage(scope, includeAssociatedPages, associatedCount, assetsResult) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.buildScopedDownloadMessage === "function") {
+      return window.ConfiguratorPublishBridge.buildScopedDownloadMessage(
+        scope,
+        includeAssociatedPages,
+        associatedCount,
+        assetStatusSuffix(assetsResult)
+      );
+    }
     return "Browser folder-write API unavailable. " + buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount) + assetStatusSuffix(assetsResult);
   }
 
@@ -4247,6 +4273,9 @@
   }
 
   function normalizePreviewDevice(value) {
+    if (window.ConfiguratorMobileBridge && typeof window.ConfiguratorMobileBridge.normalizePreviewDevice === "function") {
+      return window.ConfiguratorMobileBridge.normalizePreviewDevice(value);
+    }
     return String(value || "desktop").trim().toLowerCase() === "mobile" ? "mobile" : "desktop";
   }
 
