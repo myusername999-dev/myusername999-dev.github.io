@@ -21,4 +21,14 @@ describe("publish bridge", () => {
     const bridge = loadBridge();
     expect(bridge.buildScopedDownloadSummary("all", true, 3)).toContain("3 associated page");
   });
+
+  it("builds publish targets for scoped publish", () => {
+    const bridge = loadBridge();
+    expect(bridge.getPublishTargets("contact")).toEqual({
+      home: false,
+      privacy: false,
+      contact: true,
+      assets: false
+    });
+  });
 });

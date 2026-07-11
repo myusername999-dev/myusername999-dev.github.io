@@ -9,6 +9,16 @@
     return "all";
   }
 
+  function getPublishTargets(scope) {
+    var publishScope = normalizePublishScope(scope);
+    return {
+      home: publishScope === "all" || publishScope === "home",
+      privacy: publishScope === "all" || publishScope === "privacy",
+      contact: publishScope === "all" || publishScope === "contact",
+      assets: publishScope === "all" || publishScope === "home"
+    };
+  }
+
   function buildScopedPublishSuccessMessage(projectDirectoryName, scope, includeAssociatedPages, associatedCount, assetSuffix) {
     var location = String(projectDirectoryName || "selected folder");
     var suffix = String(assetSuffix || "");
@@ -51,6 +61,7 @@
 
   window.ConfiguratorPublishBridge = {
     normalizePublishScope: normalizePublishScope,
+    getPublishTargets: getPublishTargets,
     buildScopedPublishSuccessMessage: buildScopedPublishSuccessMessage,
     buildScopedDownloadSummary: buildScopedDownloadSummary,
     buildScopedDownloadMessage: buildScopedDownloadMessage

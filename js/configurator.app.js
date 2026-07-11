@@ -1929,10 +1929,11 @@
     var publishStage = "start";
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     var includeAssociatedPages = previewDevice !== "mobile" && publishScope === "all";
-    var publishHomePage = publishScope === "all" || publishScope === "home";
-    var publishPrivacyPage = publishScope === "all" || publishScope === "privacy";
-    var publishContactPage = publishScope === "all" || publishScope === "contact";
-    var publishAssets = publishScope === "all" || publishScope === "home";
+    var publishTargets = getPublishTargets(publishScope);
+    var publishHomePage = publishTargets.home;
+    var publishPrivacyPage = publishTargets.privacy;
+    var publishContactPage = publishTargets.contact;
+    var publishAssets = publishTargets.assets;
 
     try {
       if (typeof window.showDirectoryPicker === "function") {
@@ -2068,10 +2069,11 @@
 
   async function publishByDownloadFallback(publishPayload, html, includeAssociatedPages, cause, scope) {
     var publishScope = normalizePublishScope(scope);
-    var publishHomePage = publishScope === "all" || publishScope === "home";
-    var publishPrivacyPage = publishScope === "all" || publishScope === "privacy";
-    var publishContactPage = publishScope === "all" || publishScope === "contact";
-    var publishAssets = publishScope === "all" || publishScope === "home";
+    var publishTargets = getPublishTargets(publishScope);
+    var publishHomePage = publishTargets.home;
+    var publishPrivacyPage = publishTargets.privacy;
+    var publishContactPage = publishTargets.contact;
+    var publishAssets = publishTargets.assets;
 
     if (publishHomePage) {
       downloadFile("index.html", html, "text/html");
@@ -2103,6 +2105,19 @@
       return candidate;
     }
     return "all";
+  }
+
+  function getPublishTargets(scope) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.getPublishTargets === "function") {
+      return window.ConfiguratorPublishBridge.getPublishTargets(scope);
+    }
+    var publishScope = normalizePublishScope(scope);
+    return {
+      home: publishScope === "all" || publishScope === "home",
+      privacy: publishScope === "all" || publishScope === "privacy",
+      contact: publishScope === "all" || publishScope === "contact",
+      assets: publishScope === "all" || publishScope === "home"
+    };
   }
 
   function buildScopedPublishSuccessMessage(projectDirectory, scope, includeAssociatedPages, associatedCount, assetsResult) {
@@ -2845,6 +2860,9 @@
   function normalizePreviewPage(value, config) {
     var options = getPreviewPageOptions(config);
     var selectedValue = normalizePreviewPageValue(value, config);
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.selectPreviewPage === "function") {
+      return window.ConfiguratorPreviewBridge.selectPreviewPage(options, selectedValue);
+    }
     for (var index = 0; index < options.length; index += 1) {
       if (options[index].value === selectedValue) {
         return options[index];
@@ -2854,18 +2872,27 @@
   }
 
   function isPrivacyPolicyDescriptor(tab) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.isPrivacyPolicyDescriptor === "function") {
+      return window.ConfiguratorPreviewBridge.isPrivacyPolicyDescriptor(tab);
+    }
     var fileName = String((tab && tab.fileName) || (tab && tab.pageHref) || "").toLowerCase();
     var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "").toLowerCase();
     return fileName === "privacy.html" || title.indexOf("privacy") >= 0;
   }
 
   function isContactDescriptor(tab) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.isContactDescriptor === "function") {
+      return window.ConfiguratorPreviewBridge.isContactDescriptor(tab);
+    }
     var fileName = String((tab && tab.fileName) || (tab && tab.pageHref) || "").toLowerCase();
     var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "").toLowerCase();
     return fileName === "contact.html" || title === "contact" || title.indexOf("contact") === 0;
   }
 
   function isFixedPageFileName(fileName) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.isFixedPageFileName === "function") {
+      return window.ConfiguratorPreviewBridge.isFixedPageFileName(fileName);
+    }
     var normalized = String(fileName || "").toLowerCase();
     return normalized === "privacy.html" || normalized === "contact.html";
   }
