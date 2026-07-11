@@ -117,6 +117,64 @@
       });
   }
 
+  function buildAssociatedTabPageHtml(tab, config, dependencies) {
+    var deps = dependencies || {};
+    var isPrivacyDescriptor = typeof deps.isPrivacyPolicyDescriptor === "function"
+      ? deps.isPrivacyPolicyDescriptor
+      : isPrivacyPolicyDescriptor;
+    var isContactDescriptorFn = typeof deps.isContactDescriptor === "function"
+      ? deps.isContactDescriptor
+      : isContactDescriptor;
+    var buildPrivacyHtml = typeof deps.buildPrivacyPolicyPageHtml === "function"
+      ? deps.buildPrivacyPolicyPageHtml
+      : null;
+    var buildContactHtml = typeof deps.buildContactPageHtml === "function"
+      ? deps.buildContactPageHtml
+      : null;
+    var escapeHtml = typeof deps.escapeHtml === "function"
+      ? deps.escapeHtml
+      : function (value) { return String(value || ""); };
+    var getAllFontsHref = typeof deps.getAllFontsHref === "function"
+      ? deps.getAllFontsHref
+      : function () { return ""; };
+    var buildAssociatedPageMarkup = typeof deps.buildAssociatedPageMarkup === "function"
+      ? deps.buildAssociatedPageMarkup
+      : function () { return ""; };
+
+    if (isPrivacyDescriptor(tab) && buildPrivacyHtml) {
+      return buildPrivacyHtml(config);
+    }
+    if (isContactDescriptorFn(tab) && buildContactHtml) {
+      return buildContactHtml(config);
+    }
+
+    var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
+    var site = String((config && config.brand && config.brand.name) || "VinATech");
+
+    return [
+      "<!doctype html>",
+      "<html lang=\"en\">",
+      "<head>",
+      "  <meta charset=\"utf-8\">",
+      "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+      "  <title>" + escapeHtml(title) + " - " + escapeHtml(site) + "</title>",
+      "  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">",
+      "  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>",
+      "  <link href=\"" + getAllFontsHref() + "\" rel=\"stylesheet\">",
+      "  <link rel=\"stylesheet\" href=\"css/components/home/reset-shell.css\">",
+      "  <link rel=\"stylesheet\" href=\"css/components/home/navigation.css\">",
+      "  <link rel=\"stylesheet\" href=\"css/components/home/hero-cta.css\">",
+      "  <link rel=\"stylesheet\" href=\"css/components/home/cards-footer.css\">",
+      "  <link rel=\"stylesheet\" href=\"css/components/home/mobile.css\">",
+      "</head>",
+      "<body>",
+      buildAssociatedPageMarkup(tab, config, false),
+      "<script src=\"js/pages/home.runtime.js\"></script>",
+      "</body>",
+      "</html>"
+    ].join("\n");
+  }
+
   window.ConfiguratorPreviewBridge = {
     normalizePageHref: normalizePageHref,
     getAssociatedPageDescriptors: getAssociatedPageDescriptors,
@@ -124,6 +182,7 @@
     isContactDescriptor: isContactDescriptor,
     isFixedPageFileName: isFixedPageFileName,
     selectPreviewPage: selectPreviewPage,
-    getAssociatedTabPages: getAssociatedTabPages
+    getAssociatedTabPages: getAssociatedTabPages,
+    buildAssociatedTabPageHtml: buildAssociatedTabPageHtml
   };
 })();

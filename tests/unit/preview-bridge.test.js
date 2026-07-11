@@ -92,4 +92,46 @@ describe("preview bridge", () => {
       { fileName: "products.html", html: "html:products.html" }
     ]);
   });
+
+  it("builds associated tab html for standard pages", () => {
+    const bridge = loadBridge();
+    const html = bridge.buildAssociatedTabPageHtml(
+      { fileName: "products.html", sectionTitle: "Products", sectionText: "Catalog" },
+      { brand: { name: "VinATech" } },
+      {
+        getAllFontsHref: () => "https://fonts.example/all.css",
+        escapeHtml: (value) => String(value),
+        buildAssociatedPageMarkup: () => "<main>Products</main>"
+      }
+    );
+
+    expect(html).toContain("<title>Products - VinATech</title>");
+    expect(html).toContain("https://fonts.example/all.css");
+    expect(html).toContain("<main>Products</main>");
+  });
+
+  it("builds associated tab html for privacy and contact pages", () => {
+    const bridge = loadBridge();
+
+    const privacyHtml = bridge.buildAssociatedTabPageHtml(
+      { fileName: "privacy.html", sectionTitle: "Privacy" },
+      { brand: { name: "VinATech" } },
+      {
+        buildPrivacyPolicyPageHtml: () => "<html>privacy</html>",
+        buildContactPageHtml: () => "<html>contact</html>"
+      }
+    );
+
+    const contactHtml = bridge.buildAssociatedTabPageHtml(
+      { fileName: "contact.html", sectionTitle: "Contact" },
+      { brand: { name: "VinATech" } },
+      {
+        buildPrivacyPolicyPageHtml: () => "<html>privacy</html>",
+        buildContactPageHtml: () => "<html>contact</html>"
+      }
+    );
+
+    expect(privacyHtml).toBe("<html>privacy</html>");
+    expect(contactHtml).toBe("<html>contact</html>");
+  });
 });
