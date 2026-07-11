@@ -180,6 +180,31 @@
     return "Publish status unavailable.";
   }
 
+  function classifyPublishError(error) {
+    var name = String(error && error.name || "");
+    var reason = String(error && error.message || "");
+    if (name === "AbortError") {
+      return {
+        kind: "abort",
+        reason: reason || "AbortError"
+      };
+    }
+    return {
+      kind: "failure",
+      reason: reason || "Unknown write error"
+    };
+  }
+
+  function buildPublishAbortStatus(stage) {
+    return "Publish canceled at step: " + String(stage || "unknown") + ". Click Publish again and allow folder write access.";
+  }
+
+  function buildPublishFailureStatus(stage, reason) {
+    return "Direct folder publish failed at step: " + String(stage || "unknown")
+      + ". " + String(reason || "Unknown write error")
+      + ". Re-select your project root folder and try again.";
+  }
+
   window.ConfiguratorPublishBridge = {
     normalizePublishScope: normalizePublishScope,
     getPublishTargets: getPublishTargets,
@@ -191,6 +216,9 @@
     shouldUseDirectoryPublishing: shouldUseDirectoryPublishing,
     resolvePublishFlowContext: resolvePublishFlowContext,
     resolvePublishOutcomeStatus: resolvePublishOutcomeStatus,
+    classifyPublishError: classifyPublishError,
+    buildPublishAbortStatus: buildPublishAbortStatus,
+    buildPublishFailureStatus: buildPublishFailureStatus,
     buildScopedPublishSuccessMessage: buildScopedPublishSuccessMessage,
     buildScopedDownloadSummary: buildScopedDownloadSummary,
     buildScopedDownloadMessage: buildScopedDownloadMessage

@@ -143,4 +143,24 @@ describe("publish bridge", () => {
     expect(message).toContain("Downloaded index.html.");
     expect(message).toContain("No new assets copied.");
   });
+
+  it("classifies abort and failure publish errors", () => {
+    const bridge = loadBridge();
+
+    const abortError = bridge.classifyPublishError({ name: "AbortError", message: "user canceled" });
+    const writeError = bridge.classifyPublishError({ name: "TypeError", message: "disk unavailable" });
+
+    expect(abortError).toEqual({ kind: "abort", reason: "user canceled" });
+    expect(writeError).toEqual({ kind: "failure", reason: "disk unavailable" });
+  });
+
+  it("builds publish abort and failure status messages", () => {
+    const bridge = loadBridge();
+    const abortStatus = bridge.buildPublishAbortStatus("write-index");
+    const failureStatus = bridge.buildPublishFailureStatus("write-assets", "disk unavailable");
+
+    expect(abortStatus).toContain("Publish canceled at step: write-index.");
+    expect(failureStatus).toContain("Direct folder publish failed at step: write-assets.");
+    expect(failureStatus).toContain("disk unavailable");
+  });
 });

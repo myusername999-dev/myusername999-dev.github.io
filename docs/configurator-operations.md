@@ -82,6 +82,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - execution planning (`getPublishExecutionPlan`)
    - transport branching (`resolvePublishFlowContext`, `shouldUseDirectoryPublishing`)
    - outcome status resolution (`resolvePublishOutcomeStatus`)
+   - error classification/status composition (`classifyPublishError`, `buildPublishAbortStatus`, `buildPublishFailureStatus`)
    - state validation (`validateStateFromConfig`)
    - preserve-existing-home decision (`shouldPreserveExistingHomeOnPublish`)
 7. Draft preference/script extraction is active through:
