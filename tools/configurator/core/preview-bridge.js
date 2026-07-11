@@ -175,6 +175,52 @@
     ].join("\n");
   }
 
+  function buildAssociatedPageMarkup(tab, config, draggable, dependencies) {
+    var deps = dependencies || {};
+    var isPrivacyDescriptor = typeof deps.isPrivacyPolicyDescriptor === "function"
+      ? deps.isPrivacyPolicyDescriptor
+      : isPrivacyPolicyDescriptor;
+    var isContactDescriptorFn = typeof deps.isContactDescriptor === "function"
+      ? deps.isContactDescriptor
+      : isContactDescriptor;
+    var normalizeHref = typeof deps.normalizePageHref === "function"
+      ? deps.normalizePageHref
+      : normalizePageHref;
+    var buildExternalMarkup = typeof deps.buildExternalFilePreviewMarkup === "function"
+      ? deps.buildExternalFilePreviewMarkup
+      : function () { return ""; };
+    var buildPrivacyPreviewHref = typeof deps.buildPrivacyPreviewHref === "function"
+      ? deps.buildPrivacyPreviewHref
+      : function (href) { return href; };
+    var buildContactPreviewHref = typeof deps.buildContactPreviewHref === "function"
+      ? deps.buildContactPreviewHref
+      : function (href) { return href; };
+    var deepClone = typeof deps.deepClone === "function"
+      ? deps.deepClone
+      : function (value) { return value; };
+    var buildHomeMarkup = typeof deps.buildHomeMarkup === "function"
+      ? deps.buildHomeMarkup
+      : function () { return ""; };
+
+    if (isPrivacyDescriptor(tab)) {
+      var privacyHref = normalizeHref(tab && tab.fileName) || "privacy.html";
+      return buildExternalMarkup(buildPrivacyPreviewHref(privacyHref, config));
+    }
+    if (isContactDescriptorFn(tab)) {
+      var contactHref = normalizeHref(tab && tab.fileName) || "contact.html";
+      return buildExternalMarkup(buildContactPreviewHref(contactHref, config));
+    }
+
+    var pageConfig = deepClone(config);
+    if (!pageConfig || typeof pageConfig !== "object") {
+      pageConfig = {};
+    }
+    pageConfig.hero = pageConfig.hero || {};
+    pageConfig.hero.title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
+    pageConfig.hero.subtitle = String((tab && tab.sectionText) || "This page is under construction.");
+    return buildHomeMarkup(pageConfig, draggable);
+  }
+
   window.ConfiguratorPreviewBridge = {
     normalizePageHref: normalizePageHref,
     getAssociatedPageDescriptors: getAssociatedPageDescriptors,
@@ -183,6 +229,7 @@
     isFixedPageFileName: isFixedPageFileName,
     selectPreviewPage: selectPreviewPage,
     getAssociatedTabPages: getAssociatedTabPages,
-    buildAssociatedTabPageHtml: buildAssociatedTabPageHtml
+    buildAssociatedTabPageHtml: buildAssociatedTabPageHtml,
+    buildAssociatedPageMarkup: buildAssociatedPageMarkup
   };
 })();

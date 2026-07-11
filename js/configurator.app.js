@@ -2791,6 +2791,18 @@
   }
 
   function buildAssociatedPageMarkup(tab, config, draggable) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.buildAssociatedPageMarkup === "function") {
+      return window.ConfiguratorPreviewBridge.buildAssociatedPageMarkup(tab, config, draggable, {
+        isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
+        isContactDescriptor: isContactDescriptor,
+        normalizePageHref: normalizePageHref,
+        buildExternalFilePreviewMarkup: buildExternalFilePreviewMarkup,
+        buildPrivacyPreviewHref: buildPrivacyPreviewHref,
+        buildContactPreviewHref: buildContactPreviewHref,
+        deepClone: deepClone,
+        buildHomeMarkup: buildHomeMarkup
+      });
+    }
     if (isPrivacyPolicyDescriptor(tab)) {
       var privacyHref = normalizePageHref(tab && tab.fileName) || "privacy.html";
       return buildExternalFilePreviewMarkup(buildPrivacyPreviewHref(privacyHref, config));

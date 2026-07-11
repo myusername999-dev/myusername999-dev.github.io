@@ -134,4 +134,52 @@ describe("preview bridge", () => {
     expect(privacyHtml).toBe("<html>privacy</html>");
     expect(contactHtml).toBe("<html>contact</html>");
   });
+
+  it("builds associated page markup for privacy and contact previews", () => {
+    const bridge = loadBridge();
+
+    const privacyMarkup = bridge.buildAssociatedPageMarkup(
+      { fileName: "privacy.html" },
+      { privacy: { title: "Privacy" } },
+      false,
+      {
+        buildExternalFilePreviewMarkup: (href) => `external:${href}`,
+        buildPrivacyPreviewHref: (href) => `privacy-preview:${href}`,
+        buildContactPreviewHref: (href) => `contact-preview:${href}`
+      }
+    );
+
+    const contactMarkup = bridge.buildAssociatedPageMarkup(
+      { fileName: "contact.html" },
+      { contact: { title: "Contact" } },
+      false,
+      {
+        buildExternalFilePreviewMarkup: (href) => `external:${href}`,
+        buildPrivacyPreviewHref: (href) => `privacy-preview:${href}`,
+        buildContactPreviewHref: (href) => `contact-preview:${href}`
+      }
+    );
+
+    expect(privacyMarkup).toBe("external:privacy-preview:privacy.html");
+    expect(contactMarkup).toBe("external:contact-preview:contact.html");
+  });
+
+  it("builds associated page markup for non-fixed pages", () => {
+    const bridge = loadBridge();
+    const baseConfig = { hero: { title: "Home", subtitle: "Base" } };
+
+    const markup = bridge.buildAssociatedPageMarkup(
+      { sectionTitle: "Products", sectionText: "Catalog" },
+      baseConfig,
+      true,
+      {
+        deepClone: (value) => JSON.parse(JSON.stringify(value)),
+        buildHomeMarkup: (pageConfig, draggable) => `${pageConfig.hero.title}|${pageConfig.hero.subtitle}|${draggable}`
+      }
+    );
+
+    expect(markup).toBe("Products|Catalog|true");
+    expect(baseConfig.hero.title).toBe("Home");
+    expect(baseConfig.hero.subtitle).toBe("Base");
+  });
 });
