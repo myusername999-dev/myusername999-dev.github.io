@@ -78,7 +78,9 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - scoped target derivation (`getPublishTargets`)
    - validation gating (`shouldValidateState`)
    - associated-page inclusion gating (`shouldIncludeAssociatedPages`)
-7. Publish/save/restore deep logic extraction from legacy runtime remains incremental and continues in next phases.
+7. Draft preference/script extraction is active through:
+   - `tools/configurator/draft/draft-bridge.js`
+8. Publish/save/restore deep logic extraction from legacy runtime remains incremental and continues in next phases.
 
 ### 8. Troubleshooting
 1. Folder picker does not open:
