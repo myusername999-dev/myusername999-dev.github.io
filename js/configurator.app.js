@@ -2819,6 +2819,17 @@
   }
 
   function buildAssociatedPublishedHtml(tab, config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.buildAssociatedPublishedHtml === "function") {
+      return window.ConfiguratorPreviewBridge.buildAssociatedPublishedHtml(tab, config, {
+        isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
+        isContactDescriptor: isContactDescriptor,
+        buildPrivacyPolicyPageHtml: buildPrivacyPolicyPageHtml,
+        buildContactPageHtml: buildContactPageHtml,
+        buildAssociatedPageMarkup: buildAssociatedPageMarkup,
+        getAllFontsHref: getAllFontsHref,
+        escapeHtml: escapeHtml
+      });
+    }
     if (isPrivacyPolicyDescriptor(tab)) {
       return buildPrivacyPolicyPageHtml(config);
     }

@@ -221,6 +221,10 @@
     return buildHomeMarkup(pageConfig, draggable);
   }
 
+  function buildAssociatedPublishedHtml(tab, config, dependencies) {
+    return buildAssociatedTabPageHtml(tab, config, dependencies);
+  }
+
   window.ConfiguratorPreviewBridge = {
     normalizePageHref: normalizePageHref,
     getAssociatedPageDescriptors: getAssociatedPageDescriptors,
@@ -230,6 +234,7 @@
     selectPreviewPage: selectPreviewPage,
     getAssociatedTabPages: getAssociatedTabPages,
     buildAssociatedTabPageHtml: buildAssociatedTabPageHtml,
-    buildAssociatedPageMarkup: buildAssociatedPageMarkup
+    buildAssociatedPageMarkup: buildAssociatedPageMarkup,
+    buildAssociatedPublishedHtml: buildAssociatedPublishedHtml
   };
 })();

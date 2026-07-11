@@ -182,4 +182,45 @@ describe("preview bridge", () => {
     expect(baseConfig.hero.title).toBe("Home");
     expect(baseConfig.hero.subtitle).toBe("Base");
   });
+
+  it("builds published html using the shared associated page shell", () => {
+    const bridge = loadBridge();
+    const html = bridge.buildAssociatedPublishedHtml(
+      { fileName: "products.html", sectionTitle: "Products", sectionText: "Catalog" },
+      { brand: { name: "VinATech" } },
+      {
+        getAllFontsHref: () => "https://fonts.example/all.css",
+        escapeHtml: (value) => String(value),
+        buildAssociatedPageMarkup: () => "<main>Published</main>"
+      }
+    );
+
+    expect(html).toContain("<title>Products - VinATech</title>");
+    expect(html).toContain("<main>Published</main>");
+  });
+
+  it("builds published html privacy and contact branches", () => {
+    const bridge = loadBridge();
+
+    const privacyHtml = bridge.buildAssociatedPublishedHtml(
+      { fileName: "privacy.html", sectionTitle: "Privacy" },
+      { brand: { name: "VinATech" } },
+      {
+        buildPrivacyPolicyPageHtml: () => "<html>privacy</html>",
+        buildContactPageHtml: () => "<html>contact</html>"
+      }
+    );
+
+    const contactHtml = bridge.buildAssociatedPublishedHtml(
+      { fileName: "contact.html", sectionTitle: "Contact" },
+      { brand: { name: "VinATech" } },
+      {
+        buildPrivacyPolicyPageHtml: () => "<html>privacy</html>",
+        buildContactPageHtml: () => "<html>contact</html>"
+      }
+    );
+
+    expect(privacyHtml).toBe("<html>privacy</html>");
+    expect(contactHtml).toBe("<html>contact</html>");
+  });
 });
