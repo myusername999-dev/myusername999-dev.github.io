@@ -31,4 +31,17 @@ describe("publish bridge", () => {
       assets: false
     });
   });
+
+  it("determines validation requirement from scope", () => {
+    const bridge = loadBridge();
+    expect(bridge.shouldValidateState("home")).toBe(true);
+    expect(bridge.shouldValidateState("privacy")).toBe(false);
+  });
+
+  it("determines associated-page inclusion by device and scope", () => {
+    const bridge = loadBridge();
+    expect(bridge.shouldIncludeAssociatedPages("desktop", "all")).toBe(true);
+    expect(bridge.shouldIncludeAssociatedPages("mobile", "all")).toBe(false);
+    expect(bridge.shouldIncludeAssociatedPages("desktop", "home")).toBe(false);
+  });
 });

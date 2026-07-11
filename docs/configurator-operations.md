@@ -73,7 +73,11 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - `tools/configurator/core/state-bridge.js`
 5. Preview descriptor/selection extraction is active through:
    - `tools/configurator/core/preview-bridge.js`
-6. Publish/save/restore deep logic extraction from legacy runtime remains incremental and continues in next phases.
+6. Publish decision extraction now includes:
+   - scoped target derivation (`getPublishTargets`)
+   - validation gating (`shouldValidateState`)
+   - associated-page inclusion gating (`shouldIncludeAssociatedPages`)
+7. Publish/save/restore deep logic extraction from legacy runtime remains incremental and continues in next phases.
 
 ### 8. Troubleshooting
 1. Folder picker does not open:

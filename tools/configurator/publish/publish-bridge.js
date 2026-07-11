@@ -19,6 +19,17 @@
     };
   }
 
+  function shouldValidateState(scope) {
+    var publishScope = normalizePublishScope(scope);
+    return publishScope === "home" || publishScope === "all";
+  }
+
+  function shouldIncludeAssociatedPages(previewDevice, scope) {
+    var normalizedDevice = String(previewDevice || "desktop").trim().toLowerCase();
+    var publishScope = normalizePublishScope(scope);
+    return normalizedDevice !== "mobile" && publishScope === "all";
+  }
+
   function buildScopedPublishSuccessMessage(projectDirectoryName, scope, includeAssociatedPages, associatedCount, assetSuffix) {
     var location = String(projectDirectoryName || "selected folder");
     var suffix = String(assetSuffix || "");
@@ -62,6 +73,8 @@
   window.ConfiguratorPublishBridge = {
     normalizePublishScope: normalizePublishScope,
     getPublishTargets: getPublishTargets,
+    shouldValidateState: shouldValidateState,
+    shouldIncludeAssociatedPages: shouldIncludeAssociatedPages,
     buildScopedPublishSuccessMessage: buildScopedPublishSuccessMessage,
     buildScopedDownloadSummary: buildScopedDownloadSummary,
     buildScopedDownloadMessage: buildScopedDownloadMessage

@@ -1918,7 +1918,7 @@
       return;
     }
 
-    if (publishScope === "home" || publishScope === "all") {
+    if (shouldValidateStateForPublish(publishScope)) {
       var validationErrors = validateState();
       if (validationErrors.length) {
         setStatus(validationErrors[0], true);
@@ -1928,7 +1928,7 @@
 
     var publishStage = "start";
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
-    var includeAssociatedPages = previewDevice !== "mobile" && publishScope === "all";
+    var includeAssociatedPages = shouldIncludeAssociatedPagesForPublish(previewDevice, publishScope);
     var publishTargets = getPublishTargets(publishScope);
     var publishHomePage = publishTargets.home;
     var publishPrivacyPage = publishTargets.privacy;
@@ -2118,6 +2118,23 @@
       contact: publishScope === "all" || publishScope === "contact",
       assets: publishScope === "all" || publishScope === "home"
     };
+  }
+
+  function shouldValidateStateForPublish(scope) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.shouldValidateState === "function") {
+      return window.ConfiguratorPublishBridge.shouldValidateState(scope);
+    }
+    var publishScope = normalizePublishScope(scope);
+    return publishScope === "home" || publishScope === "all";
+  }
+
+  function shouldIncludeAssociatedPagesForPublish(previewDevice, scope) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.shouldIncludeAssociatedPages === "function") {
+      return window.ConfiguratorPublishBridge.shouldIncludeAssociatedPages(previewDevice, scope);
+    }
+    var normalizedDevice = normalizePreviewDevice(previewDevice);
+    var publishScope = normalizePublishScope(scope);
+    return normalizedDevice !== "mobile" && publishScope === "all";
   }
 
   function buildScopedPublishSuccessMessage(projectDirectory, scope, includeAssociatedPages, associatedCount, assetsResult) {
