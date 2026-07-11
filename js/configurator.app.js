@@ -332,6 +332,7 @@
     dom.importDraft = document.getElementById("importDraft");
     dom.saveRepoDraft = document.getElementById("saveRepoDraft");
     dom.loadRepoDraft = document.getElementById("loadRepoDraft");
+    dom.importLivePages = document.getElementById("importLivePages");
     dom.resetDraft = document.getElementById("resetDraft");
     dom.approval = document.getElementById("approval");
     dom.statusMessage = document.getElementById("statusMessage");
@@ -852,6 +853,12 @@
     dom.loadRepoDraft.addEventListener("click", function () {
       loadRepoDraft();
     });
+
+    if (dom.importLivePages) {
+      dom.importLivePages.addEventListener("click", function () {
+        importFromLivePages();
+      });
+    }
 
     dom.importDraft.addEventListener("change", function (event) {
       importDraft(event);
@@ -2506,6 +2513,35 @@
       dom.importDraft.value = "";
     };
     reader.readAsText(file);
+  }
+
+  async function importFromLivePages() {
+    if (!window.ConfiguratorLiveImporter || typeof window.ConfiguratorLiveImporter.importFromLivePages !== "function") {
+      setStatus("Live importer is unavailable.", true);
+      return;
+    }
+
+    setStatus("Importing from current live pages...", false);
+
+    try {
+      var result = await window.ConfiguratorLiveImporter.importFromLivePages();
+      var mergedState = mergeConfig(state, result && result.patch ? result.patch : {});
+      state = mergeConfig(defaultConfig, mergedState);
+      sanitizeState();
+
+      var report = result && result.report ? result.report : { importedFieldsCount: 0, warningsCount: 0 };
+      var importedCount = parseInt(report.importedFieldsCount, 10) || 0;
+      var warningsCount = parseInt(report.warningsCount, 10) || 0;
+      var statusMessage = String(result && result.message ? result.message : "Live import completed.")
+        + " Imported fields: " + importedCount + "."
+        + (warningsCount ? " Warnings: " + warningsCount + "." : "");
+
+      refresh(statusMessage);
+      dom.approval.checked = false;
+    } catch (error) {
+      var errorMessage = "Live import failed: " + String(error && error.message || "unknown error") + ".";
+      setStatus(errorMessage, true);
+    }
   }
 
   function buildPublishedHtml(config) {

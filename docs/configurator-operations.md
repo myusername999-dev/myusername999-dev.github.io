@@ -54,6 +54,16 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - Import Draft JSON
    - Save Draft to Repo File
    - Load Draft from Repo File
+   - Initialize Draft from Live Pages (HOME/CONTACT/PRIVACY)
+
+### 6.1 Initialize from live pages
+1. Use `Initialize Draft from Live Pages` before editing when you want to start from current published content.
+2. Import currently reads:
+   - `index.html`
+   - `contact.html`
+   - `privacy.html`
+3. The importer merges detected values into current draft state instead of replacing the full draft object.
+4. Desktop and mobile layout values are both imported when present in HOME page style variables.
 
 ### 7. Run automated tests
 1. Run all tests:
@@ -62,6 +72,14 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - `npm run test:watch`
 3. Test policy:
    - All test code lives under `tests/`.
+
+### 7.1 Unit testing focus
+1. Import parser/merge logic is covered by:
+   - `tests/unit/import-bridge.test.js`
+2. Live import orchestration and failure handling is covered by:
+   - `tests/unit/live-importer.test.js`
+3. End-to-end bridge/importer cooperation is covered by:
+   - `tests/integration/live-page-import.test.js`
 
 ### 8. Current migration status
 1. Folder structure and module entry pages are in place.
@@ -90,6 +108,9 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - `tools/configurator/draft/draft-bridge.js`
    - includes save-plan resolution (`resolveDraftSavePlan`), draft-save error classification (`classifyDraftSaveError`), draft save/load/import status composition (`buildDraftSaveStatus`, `buildDraftLoadStatus`, `buildDraftImportStatus`), plus repo draft script/candidate/preference helpers
 8. Publish/save/restore deep logic extraction from legacy runtime has been completed through bridge modules and compatibility wrappers.
+9. Live-page import extraction is active through:
+   - `tools/configurator/import/import-bridge.js`
+   - `tools/configurator/import/live-importer.js`
 
 ### 9. Completed 3-phase plan
 1. Phase 1 (completed): Extract preview-window open decision logic into preview bridge.
