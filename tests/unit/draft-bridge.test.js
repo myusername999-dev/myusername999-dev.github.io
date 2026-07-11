@@ -36,4 +36,35 @@ describe("draft bridge", () => {
     const repoCandidate = { tabs: [{ label: "Home" }, { label: "News" }, { label: "Privacy Policy" }, { label: "Contact" }] };
     expect(bridge.shouldPreferRepoDraft(localCandidate, repoCandidate)).toBe(true);
   });
+
+  it("resolves draft save plan for remembered directory, picker, and download fallback", () => {
+    const bridge = loadBridge();
+    expect(bridge.resolveDraftSavePlan(true, true)).toEqual({
+      transport: "filesystem",
+      shouldResolveDirectory: false
+    });
+    expect(bridge.resolveDraftSavePlan(false, true)).toEqual({
+      transport: "filesystem",
+      shouldResolveDirectory: true
+    });
+    expect(bridge.resolveDraftSavePlan(false, false)).toEqual({
+      transport: "download",
+      shouldResolveDirectory: false
+    });
+  });
+
+  it("classifies draft save errors", () => {
+    const bridge = loadBridge();
+    expect(bridge.classifyDraftSaveError({ name: "AbortError" })).toEqual({ kind: "abort" });
+    expect(bridge.classifyDraftSaveError({ name: "TypeError" })).toEqual({ kind: "failure" });
+  });
+
+  it("builds draft save/load/import statuses", () => {
+    const bridge = loadBridge();
+    expect(bridge.buildDraftSaveStatus("filesystem-success", "js/configurator.draft.js")).toContain("Draft saved to js/configurator.draft.js");
+    expect(bridge.buildDraftSaveStatus("download-abort", "js/configurator.draft.js")).toContain("Folder selection canceled");
+    expect(bridge.buildDraftLoadStatus("missing", "js/configurator.draft.js")).toContain("No repo draft found");
+    expect(bridge.buildDraftImportStatus(true)).toBe("Draft imported.");
+    expect(bridge.buildDraftImportStatus(false)).toBe("Import failed: invalid JSON.");
+  });
 });

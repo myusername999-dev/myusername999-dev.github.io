@@ -2378,16 +2378,22 @@
 
   async function saveRepoDraft() {
     var scriptContent = buildRepoDraftScript(state);
+    var savePlan = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.resolveDraftSavePlan === "function"
+      ? window.ConfiguratorDraftBridge.resolveDraftSavePlan(!!rememberedProjectDirectory, typeof window.showDirectoryPicker === "function")
+      : {
+        transport: rememberedProjectDirectory || typeof window.showDirectoryPicker === "function" ? "filesystem" : "download",
+        shouldResolveDirectory: !rememberedProjectDirectory && typeof window.showDirectoryPicker === "function"
+      };
 
     try {
-      if (!rememberedProjectDirectory && typeof window.showDirectoryPicker === "function") {
+      if (savePlan.shouldResolveDirectory) {
         var chosenDirectory = await resolveProjectDirectoryHandle();
         if (chosenDirectory) {
           rememberedProjectDirectory = chosenDirectory;
         }
       }
 
-      if (rememberedProjectDirectory && typeof rememberedProjectDirectory.getDirectoryHandle === "function") {
+      if (savePlan.transport === "filesystem" && rememberedProjectDirectory && typeof rememberedProjectDirectory.getDirectoryHandle === "function") {
         var projectDirectory = rememberedProjectDirectory;
         var jsDirectory = await projectDirectory.getDirectoryHandle("js", { create: true });
         var draftHandle = await jsDirectory.getFileHandle("configurator.draft.js", { create: true });
@@ -2396,36 +2402,57 @@
         await writable.close();
 
         window[REPO_DRAFT_GLOBAL_KEY] = deepClone(state);
-        setStatus("Draft saved to " + REPO_DRAFT_FILE_PATH + ". Commit and push this file to reuse the same draft on another PC.", false);
+        var filesystemSaveStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftSaveStatus === "function"
+          ? window.ConfiguratorDraftBridge.buildDraftSaveStatus("filesystem-success", REPO_DRAFT_FILE_PATH)
+          : "Draft saved to " + REPO_DRAFT_FILE_PATH + ". Commit and push this file to reuse the same draft on another PC.";
+        setStatus(filesystemSaveStatus, false);
         return;
       }
 
       downloadFile("configurator.draft.js", scriptContent, "application/javascript");
-      setStatus("Draft downloaded as configurator.draft.js. Put it in js/ (overwrite existing) and commit.", false);
+      var downloadSaveStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftSaveStatus === "function"
+        ? window.ConfiguratorDraftBridge.buildDraftSaveStatus("download-success", REPO_DRAFT_FILE_PATH)
+        : "Draft downloaded as configurator.draft.js. Put it in js/ (overwrite existing) and commit.";
+      setStatus(downloadSaveStatus, false);
     } catch (error) {
-      if (error && error.name === "AbortError") {
+      var draftSaveError = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.classifyDraftSaveError === "function"
+        ? window.ConfiguratorDraftBridge.classifyDraftSaveError(error)
+        : { kind: (error && error.name === "AbortError") ? "abort" : "failure" };
+      if (draftSaveError.kind === "abort") {
         downloadFile("configurator.draft.js", scriptContent, "application/javascript");
-        setStatus("Folder selection canceled. Draft downloaded as configurator.draft.js instead.", false);
+        var abortSaveStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftSaveStatus === "function"
+          ? window.ConfiguratorDraftBridge.buildDraftSaveStatus("download-abort", REPO_DRAFT_FILE_PATH)
+          : "Folder selection canceled. Draft downloaded as configurator.draft.js instead.";
+        setStatus(abortSaveStatus, false);
         return;
       }
 
       rememberedProjectDirectory = null;
       await clearRememberedProjectDirectory();
       downloadFile("configurator.draft.js", scriptContent, "application/javascript");
-      setStatus("Direct folder save was unavailable. Draft downloaded as configurator.draft.js. Put it in js/ and commit.", false);
+      var failureSaveStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftSaveStatus === "function"
+        ? window.ConfiguratorDraftBridge.buildDraftSaveStatus("download-failure", REPO_DRAFT_FILE_PATH)
+        : "Direct folder save was unavailable. Draft downloaded as configurator.draft.js. Put it in js/ and commit.";
+      setStatus(failureSaveStatus, false);
     }
   }
 
   function loadRepoDraft() {
     var repoDraft = getRepoDraft();
     if (!repoDraft) {
-      setStatus("No repo draft found in " + REPO_DRAFT_FILE_PATH + ". Save one first.", true);
+      var missingDraftStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftLoadStatus === "function"
+        ? window.ConfiguratorDraftBridge.buildDraftLoadStatus("missing", REPO_DRAFT_FILE_PATH)
+        : "No repo draft found in " + REPO_DRAFT_FILE_PATH + ". Save one first.";
+      setStatus(missingDraftStatus, true);
       return;
     }
 
     state = mergeConfig(defaultConfig, repoDraft);
     sanitizeState();
-    refresh("Loaded draft from " + REPO_DRAFT_FILE_PATH + ".");
+    var loadedDraftStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftLoadStatus === "function"
+      ? window.ConfiguratorDraftBridge.buildDraftLoadStatus("success", REPO_DRAFT_FILE_PATH)
+      : "Loaded draft from " + REPO_DRAFT_FILE_PATH + ".";
+    refresh(loadedDraftStatus);
     dom.approval.checked = false;
   }
 
@@ -2466,9 +2493,15 @@
         var incoming = JSON.parse(String(loadEvent.target.result || "{}"));
         state = mergeConfig(defaultConfig, incoming);
         sanitizeState();
-        refresh("Draft imported.");
+        var importSuccessStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftImportStatus === "function"
+          ? window.ConfiguratorDraftBridge.buildDraftImportStatus(true)
+          : "Draft imported.";
+        refresh(importSuccessStatus);
       } catch (_error) {
-        setStatus("Import failed: invalid JSON.", true);
+        var importFailureStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftImportStatus === "function"
+          ? window.ConfiguratorDraftBridge.buildDraftImportStatus(false)
+          : "Import failed: invalid JSON.";
+        setStatus(importFailureStatus, true);
       }
       dom.importDraft.value = "";
     };

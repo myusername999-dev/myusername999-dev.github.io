@@ -79,9 +79,78 @@
     return repoNavScore > localNavScore;
   }
 
+  function resolveDraftSavePlan(hasRememberedDirectory, hasDirectoryPicker) {
+    var remembered = !!hasRememberedDirectory;
+    var picker = !!hasDirectoryPicker;
+
+    if (remembered) {
+      return {
+        transport: "filesystem",
+        shouldResolveDirectory: false
+      };
+    }
+
+    if (picker) {
+      return {
+        transport: "filesystem",
+        shouldResolveDirectory: true
+      };
+    }
+
+    return {
+      transport: "download",
+      shouldResolveDirectory: false
+    };
+  }
+
+  function classifyDraftSaveError(error) {
+    var name = String(error && error.name || "");
+    if (name === "AbortError") {
+      return { kind: "abort" };
+    }
+    return { kind: "failure" };
+  }
+
+  function buildDraftSaveStatus(mode, repoDraftPath) {
+    var path = String(repoDraftPath || "js/configurator.draft.js");
+    if (mode === "filesystem-success") {
+      return "Draft saved to " + path + ". Commit and push this file to reuse the same draft on another PC.";
+    }
+    if (mode === "download-success") {
+      return "Draft downloaded as configurator.draft.js. Put it in js/ (overwrite existing) and commit.";
+    }
+    if (mode === "download-abort") {
+      return "Folder selection canceled. Draft downloaded as configurator.draft.js instead.";
+    }
+    if (mode === "download-failure") {
+      return "Direct folder save was unavailable. Draft downloaded as configurator.draft.js. Put it in js/ and commit.";
+    }
+    return "Draft operation completed.";
+  }
+
+  function buildDraftLoadStatus(mode, repoDraftPath) {
+    var path = String(repoDraftPath || "js/configurator.draft.js");
+    if (mode === "missing") {
+      return "No repo draft found in " + path + ". Save one first.";
+    }
+    if (mode === "success") {
+      return "Loaded draft from " + path + ".";
+    }
+    return "Draft load completed.";
+  }
+
+  function buildDraftImportStatus(success) {
+    return success ? "Draft imported." : "Import failed: invalid JSON.";
+  }
+
   window.ConfiguratorDraftBridge = {
     buildRepoDraftScript: buildRepoDraftScript,
     getRepoDraftCandidate: getRepoDraftCandidate,
-    shouldPreferRepoDraft: shouldPreferRepoDraft
+    shouldPreferRepoDraft: shouldPreferRepoDraft,
+    resolveDraftSavePlan: resolveDraftSavePlan,
+    classifyDraftSaveError: classifyDraftSaveError,
+    buildDraftSaveStatus: buildDraftSaveStatus,
+    buildDraftLoadStatus: buildDraftLoadStatus,
+    buildDraftImportStatus: buildDraftImportStatus
   };
 })();
