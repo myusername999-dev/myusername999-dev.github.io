@@ -63,7 +63,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
 3. Test policy:
    - All test code lives under `tests/`.
 
-### 9. Current migration status
+### 8. Current migration status
 1. Folder structure and module entry pages are in place.
 2. Desktop and mobile baseline tests are passing.
 3. Publish and mobile helper extraction is active through runtime bridge modules:
@@ -89,14 +89,14 @@ These pages route into the same configurator runtime with panel focus, so behavi
 7. Draft preference/script extraction is active through:
    - `tools/configurator/draft/draft-bridge.js`
    - includes save-plan resolution (`resolveDraftSavePlan`), draft-save error classification (`classifyDraftSaveError`), draft save/load/import status composition (`buildDraftSaveStatus`, `buildDraftLoadStatus`, `buildDraftImportStatus`), plus repo draft script/candidate/preference helpers
-8. Publish/save/restore deep logic extraction from legacy runtime remains incremental and continues in next phases.
+8. Publish/save/restore deep logic extraction from legacy runtime has been completed through bridge modules and compatibility wrappers.
 
-### 10. Remaining 3-phase plan
+### 9. Completed 3-phase plan
 1. Phase 1 (completed): Extract preview-window open decision logic into preview bridge.
 2. Phase 2 (completed): Extract publish orchestration core flow from legacy runtime into publish modules while keeping wrapper fallbacks.
 3. Phase 3 (completed/final): Extract draft save/load orchestration and finish fallback cleanup with stabilization tests.
 
-### 8. Troubleshooting
+### 10. Troubleshooting
 1. Folder picker does not open:
    - Verify configurator is opened from localhost URL.
 2. Publish falls back to downloads:
