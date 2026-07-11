@@ -4241,22 +4241,20 @@
   }
 
   function normalizeGalleryLayout(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeGalleryLayout === "function") {
+      return window.ConfiguratorStateBridge.normalizeGalleryLayout(value);
+    }
     var candidate = String(value || "").trim().toLowerCase();
     if (candidate === "vertical" || candidate === "split" || candidate === "horizontal") {
-      return candidate;
-    }
-
-    function normalizeTextAlign(value) {
-      var candidate = String(value || "left").toLowerCase();
-      if (candidate !== "left" && candidate !== "center" && candidate !== "right") {
-        return "left";
-      }
       return candidate;
     }
     return "horizontal";
   }
 
   function normalizeTabMode(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeTabMode === "function") {
+      return window.ConfiguratorStateBridge.normalizeTabMode(value);
+    }
     var mode = String(value || "").trim().toLowerCase();
     if (mode === "top-only" || mode === "top-and-home") {
       return mode;
@@ -4265,6 +4263,9 @@
   }
 
   function normalizePageMode(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizePageMode === "function") {
+      return window.ConfiguratorStateBridge.normalizePageMode(value);
+    }
     var mode = String(value || "home").trim().toLowerCase();
     if (mode === "privacy" || mode === "contact") {
       return mode;
@@ -4280,6 +4281,11 @@
   }
 
   function normalizePreviewPageValue(value, config) {
+    var options = getPreviewPageOptions(config || state);
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizePreviewPageValue === "function") {
+      return window.ConfiguratorStateBridge.normalizePreviewPageValue(value, options);
+    }
+
     var candidate = String(value || "home").trim();
     if (!candidate || candidate === "home") {
       return "home";
@@ -4289,7 +4295,6 @@
       return "home";
     }
 
-    var options = getPreviewPageOptions(config || state);
     for (var index = 0; index < options.length; index += 1) {
       if (options[index].value === candidate) {
         return candidate;
@@ -4300,6 +4305,9 @@
   }
 
   function normalizeTabImageTransparency(value, fallbackValue) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeTabImageTransparency === "function") {
+      return window.ConfiguratorStateBridge.normalizeTabImageTransparency(value, fallbackValue);
+    }
     var parsed = parseInt(value, 10);
     if (Number.isNaN(parsed)) {
       return clamp(fallbackValue, 0, 95);
@@ -4405,6 +4413,9 @@
   }
 
   function clamp(value, min, max) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.clamp === "function") {
+      return window.ConfiguratorStateBridge.clamp(value, min, max);
+    }
     return Math.max(min, Math.min(max, value));
   }
 
@@ -4418,6 +4429,9 @@
   }
 
   function normalizeHex(value, fallback) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeHex === "function") {
+      return window.ConfiguratorStateBridge.normalizeHex(value, fallback);
+    }
     var raw = String(value || "").trim();
     if (/^#[0-9a-fA-F]{6}$/.test(raw)) {
       return raw;
