@@ -94,7 +94,7 @@ describe("live importer", () => {
         patch: { hero: { title: "VinATech" } },
         importedFields: ["hero.title"],
         warnings: [
-          "HOME hero title was empty in source markup; used brand name as fallback.",
+          "HOME hero title is empty in source markup.",
           "HOME theme colors looked low-confidence and were preserved from the existing draft.",
           "HOME theme colors looked low-confidence and were preserved from the existing draft."
         ]
@@ -117,8 +117,8 @@ describe("live importer", () => {
     });
 
     expect(result.diagnostics.statusHints).toEqual([
-      "HOME title missing in source; using brand name.",
-      "HOME theme looked low-confidence; kept existing draft colors."
+      "HOME title is empty in source and kept empty.",
+      "HOME theme looked low-confidence."
     ]);
   });
 });

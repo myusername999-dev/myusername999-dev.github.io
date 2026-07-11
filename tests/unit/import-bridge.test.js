@@ -23,6 +23,7 @@ describe("import bridge", () => {
       "<div data-drag-key=\"cta\" style=\"transform: translate(77px, 88px);\"></div>",
       "<section class=\"hero-title-slot\"><h1>Build Faster</h1></section>",
       "<section class=\"hero-subtitle-slot\"><p>Ship with confidence</p></section>",
+      "<div class=\"cta-slot\"><a href=\"products.html\">Products</a><a href=\"contact.html\">Contact</a></div>",
       "</main></body></html>"
     ].join("");
 
@@ -36,6 +37,10 @@ describe("import bridge", () => {
     expect(result.patch.layout.nav).toEqual({ x: 11, y: 22 });
     expect(result.patch.layout.mobileHeroSubtitle).toEqual({ x: 8, y: 16 });
     expect(result.patch.layout.mobileCta).toEqual({ x: 14, y: 28 });
+    expect(result.patch.hero.buttons).toEqual([
+      { label: "Products", href: "products.html" },
+      { label: "Contact", href: "contact.html" }
+    ]);
     expect(result.importedFields.length).toBeGreaterThan(10);
     expect(result.warnings).toEqual([]);
   });
@@ -114,14 +119,15 @@ describe("import bridge", () => {
 
     const result = bridge.extractHomePatch(html);
 
-    expect(result.patch.theme.bgColor).toBeUndefined();
-    expect(result.patch.theme.textColor).toBeUndefined();
-    expect(result.patch.theme.accentColor).toBeUndefined();
+    expect(result.patch.theme.bgColor).toBe("#f2f7f3");
+    expect(result.patch.theme.textColor).toBe("#102822");
+    expect(result.patch.theme.accentColor).toBe("#0f7b6c");
     expect(result.patch.theme.headingSize).toBe(58);
     expect(result.warnings.some((warning) => warning.includes("low-confidence"))).toBe(true);
+    expect(result.warnings.some((warning) => warning.includes("defaults were applied"))).toBe(true);
   });
 
-  it("falls back hero title to brand name when source h1 is empty", () => {
+  it("keeps hero title empty when source h1 is empty", () => {
     const bridge = loadBridge();
     const html = [
       "<html><head><title>VinATech</title></head><body>",
@@ -134,8 +140,48 @@ describe("import bridge", () => {
     const result = bridge.extractHomePatch(html);
 
     expect(result.patch.brand.name).toBe("VinATech");
-    expect(result.patch.hero.title).toBe("VinATech");
-    expect(result.warnings.some((warning) => warning.includes("hero title was empty"))).toBe(true);
+    expect(result.patch.hero.title).toBe("");
+    expect(result.warnings.some((warning) => warning.includes("hero title is empty"))).toBe(true);
+  });
+
+  it("preserves existing mobile overrides when source mobile coordinates are all zero", () => {
+    const bridge = loadBridge();
+    const html = [
+      "<html><head><title>VinATech</title></head><body>",
+      "<main class=\"home-root\" style=\"--mobile-nav-x:0px;--mobile-nav-y:0px;--mobile-hero-title-x:0px;--mobile-hero-title-y:0px;--mobile-hero-subtitle-x:0px;--mobile-hero-subtitle-y:0px;--mobile-cta-x:0px;--mobile-cta-y:0px\">",
+      "<h1>Title</h1>",
+      "<p>Subtitle</p>",
+      "</main></body></html>"
+    ].join("");
+
+    const result = bridge.extractHomePatch(html);
+
+    expect(result.patch.layout.mobileNav).toBeUndefined();
+    expect(result.patch.layout.mobileHeroTitle).toBeUndefined();
+    expect(result.patch.layout.mobileHeroSubtitle).toBeUndefined();
+    expect(result.patch.layout.mobileCta).toBeUndefined();
+    expect(result.warnings.some((warning) => warning.includes("mobile coordinates were all zero"))).toBe(true);
+  });
+
+  it("infers mobile overrides from desktop layout when source mobile values are all zero", () => {
+    const bridge = loadBridge();
+    const html = [
+      "<html><head><title>VinATech</title></head><body>",
+      "<main class=\"home-root\" style=\"--mobile-nav-x:0px;--mobile-nav-y:0px;--mobile-hero-title-x:0px;--mobile-hero-title-y:0px;--mobile-hero-subtitle-x:0px;--mobile-hero-subtitle-y:0px;--mobile-cta-x:0px;--mobile-cta-y:0px\">",
+      "<nav class=\"home-nav\" style=\"transform:translate(-600px,-20px)\"></nav>",
+      "<section class=\"hero-title-slot\" style=\"transform:translate(20px,40px)\"><h1>Title</h1></section>",
+      "<section class=\"hero-subtitle-slot\" style=\"transform:translate(30px,70px)\"><p>Subtitle</p></section>",
+      "<div class=\"cta-slot\" style=\"transform:translate(50px,90px)\"><a href=\"#\">Go</a></div>",
+      "</main></body></html>"
+    ].join("");
+
+    const result = bridge.extractHomePatch(html);
+
+    expect(result.patch.layout.mobileNav).toEqual({ x: -210, y: -7 });
+    expect(result.patch.layout.mobileHeroTitle).toEqual({ x: 7, y: 14 });
+    expect(result.patch.layout.mobileHeroSubtitle).toEqual({ x: 11, y: 25 });
+    expect(result.patch.layout.mobileCta).toEqual({ x: 18, y: 31 });
+    expect(result.warnings.some((warning) => warning.includes("inferred mobile overrides"))).toBe(true);
   });
 
   it("merges nested patches and builds report summary", () => {

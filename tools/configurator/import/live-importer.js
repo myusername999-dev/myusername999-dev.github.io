@@ -166,12 +166,28 @@
         if (!warning) {
           return;
         }
-        if (warning.toLowerCase().indexOf("hero title was empty") >= 0) {
-          statusHints.push("HOME title missing in source; using brand name.");
+        if (warning.toLowerCase().indexOf("hero title is empty") >= 0) {
+          statusHints.push("HOME title is empty in source and kept empty.");
           return;
         }
         if (warning.toLowerCase().indexOf("low-confidence") >= 0) {
-          statusHints.push("HOME theme looked low-confidence; kept existing draft colors.");
+          statusHints.push("HOME theme looked low-confidence.");
+          return;
+        }
+        if (warning.toLowerCase().indexOf("theme defaults were applied") >= 0) {
+          statusHints.push("HOME theme defaults were applied for readability.");
+          return;
+        }
+        if (warning.toLowerCase().indexOf("inferred partial colors") >= 0) {
+          statusHints.push("HOME theme partially inferred from markup styles.");
+          return;
+        }
+        if (warning.toLowerCase().indexOf("inferred mobile overrides") >= 0) {
+          statusHints.push("HOME mobile overrides inferred from desktop layout.");
+          return;
+        }
+        if (warning.toLowerCase().indexOf("mobile coordinates were all zero") >= 0) {
+          statusHints.push("HOME mobile coordinates were zero in source; kept existing mobile overrides.");
         }
       });
     });

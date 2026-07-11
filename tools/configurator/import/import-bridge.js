@@ -117,6 +117,23 @@
     return String((styleMap && styleMap[key]) || "").trim();
   }
 
+  function readStyleProperty(styleText, propertyName) {
+    var map = parseStyleDeclarations(styleText);
+    return String((map && map[propertyName]) || "").trim();
+  }
+
+  function normalizeColorValue(value) {
+    var input = String(value || "").trim();
+    if (!input) {
+      return "";
+    }
+    var hex = input.match(/#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/);
+    if (hex && hex[0]) {
+      return String(hex[0]).toLowerCase();
+    }
+    return "";
+  }
+
   function normalizeColorToken(value) {
     var token = String(value || "").trim().toLowerCase();
     if (!token) {
@@ -204,6 +221,97 @@
     return positions;
   }
 
+  function extractHomeButtons(html) {
+    var source = String(html || "");
+    var blockMatch = source.match(/<div[^>]*class=(?:\"[^\"]*cta-slot[^\"]*\"|'[^']*cta-slot[^']*')[^>]*>([\s\S]*?)<\/div>/i);
+    if (!blockMatch || !blockMatch[1]) {
+      return [];
+    }
+    var block = String(blockMatch[1]);
+    var linkRe = /<a[^>]*href=(?:\"([^\"]*)\"|'([^']*)')[^>]*>([\s\S]*?)<\/a>/gi;
+    var match = linkRe.exec(block);
+    var buttons = [];
+    while (match) {
+      var href = String(match[1] || match[2] || "").trim() || "#";
+      var label = decodeHtml(stripTags(match[3] || "")).trim() || ("Button " + (buttons.length + 1));
+      buttons.push({ label: label, href: href });
+      match = linkRe.exec(block);
+    }
+    return buttons;
+  }
+
+  function deriveHomeThemeFromMarkup(html) {
+    var source = String(html || "");
+    var derived = {};
+
+    var titleStyleMatch = source.match(/hero-title-slot[\s\S]*?<h1[^>]*style=(?:\"([^\"]*)\"|'([^']*)')/i);
+    var subtitleStyleMatch = source.match(/hero-subtitle-slot[\s\S]*?<p[^>]*style=(?:\"([^\"]*)\"|'([^']*)')/i);
+    var ctaStyleMatch = source.match(/cta-slot[\s\S]*?<a[^>]*style=(?:\"([^\"]*)\"|'([^']*)')/i);
+    var navStyleMatch = source.match(/<nav[^>]*class=(?:\"[^\"]*home-nav[^\"]*\"|'[^']*home-nav[^']*')[\s\S]*?<a[^>]*style=(?:\"([^\"]*)\"|'([^']*)')/i);
+
+    var titleColor = normalizeColorValue(readStyleProperty(titleStyleMatch ? (titleStyleMatch[1] || titleStyleMatch[2] || "") : "", "color"));
+    var subtitleColor = normalizeColorValue(readStyleProperty(subtitleStyleMatch ? (subtitleStyleMatch[1] || subtitleStyleMatch[2] || "") : "", "color"));
+    var ctaBackground = normalizeColorValue(readStyleProperty(ctaStyleMatch ? (ctaStyleMatch[1] || ctaStyleMatch[2] || "") : "", "background"));
+    var ctaText = normalizeColorValue(readStyleProperty(ctaStyleMatch ? (ctaStyleMatch[1] || ctaStyleMatch[2] || "") : "", "color"));
+    var navBackground = normalizeColorValue(readStyleProperty(navStyleMatch ? (navStyleMatch[1] || navStyleMatch[2] || "") : "", "background-color"));
+
+    if (titleColor) {
+      derived.textColor = titleColor;
+    }
+    if (subtitleColor) {
+      derived.mutedColor = subtitleColor;
+    }
+    if (ctaBackground) {
+      derived.accentColor = ctaBackground;
+    }
+    if (ctaText) {
+      derived.buttonTextColor = ctaText;
+    }
+    if (navBackground) {
+      derived.surfaceColor = navBackground;
+    }
+
+    return derived;
+  }
+
+  function extractClassTranslate(html, className) {
+    var tag = findTagByClass(html, className);
+    if (!tag) {
+      return null;
+    }
+    var styleText = getTagAttributeValue(tag, "style");
+    return parseTranslate(styleText);
+  }
+
+  function inferMobileFromDesktop(layoutPatch) {
+    var layout = layoutPatch && typeof layoutPatch === "object" ? layoutPatch : {};
+    var result = {};
+    var mapping = {
+      mobileNav: "nav",
+      mobileHeroTitle: "heroTitle",
+      mobileHeroSubtitle: "heroSubtitle",
+      mobileCta: "cta"
+    };
+
+    Object.keys(mapping).forEach(function (mobileKey) {
+      var desktop = layout[mapping[mobileKey]];
+      if (!desktop) {
+        return;
+      }
+      var x = parseInt(desktop.x, 10);
+      var y = parseInt(desktop.y, 10);
+      if (isNaN(x) || isNaN(y)) {
+        return;
+      }
+      result[mobileKey] = {
+        x: Math.max(-320, Math.min(320, Math.round(x * 0.35))),
+        y: Math.max(-240, Math.min(300, Math.round(y * 0.35)))
+      };
+    });
+
+    return result;
+  }
+
   function extractHomePatch(html) {
     var rootStyle = extractRootStyle(html, "home-root");
     var styleMap = parseStyleDeclarations(rootStyle);
@@ -230,13 +338,14 @@
       /hero-title-slot[\s\S]*?<h1[^>]*>([\s\S]*?)<\/h1>/i,
       /<h1[^>]*>([\s\S]*?)<\/h1>/i
     ]);
+    var hasTitleTag = /<h1[^>]*>[\s\S]*?<\/h1>/i.test(String(html || ""));
     if (heroTitle) {
       patch.hero.title = heroTitle;
       importedFields.push("hero.title");
-    } else if (patch.brand && patch.brand.name) {
-      patch.hero.title = String(patch.brand.name);
+    } else if (hasTitleTag) {
+      patch.hero.title = "";
       importedFields.push("hero.title");
-      warnings.push("HOME hero title was empty in source markup; used brand name as fallback.");
+      warnings.push("HOME hero title is empty in source markup.");
     }
 
     var heroSubtitle = extractFirstText(html, [
@@ -247,6 +356,12 @@
     if (heroSubtitle) {
       patch.hero.subtitle = heroSubtitle;
       importedFields.push("hero.subtitle");
+    }
+
+    var homeButtons = extractHomeButtons(html);
+    if (homeButtons.length) {
+      patch.hero.buttons = homeButtons;
+      importedFields.push("hero.buttons");
     }
 
     var themeMap = {
@@ -316,6 +431,20 @@
       }
     });
 
+    var desktopFallbacks = {
+      nav: extractClassTranslate(html, "home-nav"),
+      heroTitle: extractClassTranslate(html, "hero-title-slot"),
+      heroSubtitle: extractClassTranslate(html, "hero-subtitle-slot"),
+      cta: extractClassTranslate(html, "cta-slot")
+    };
+    Object.keys(desktopFallbacks).forEach(function (key) {
+      if (patch.layout[key] || !desktopFallbacks[key]) {
+        return;
+      }
+      patch.layout[key] = desktopFallbacks[key];
+      importedFields.push("layout." + key);
+    });
+
     var mobileMap = {
       "--mobile-nav-x": ["mobileNav", "x"],
       "--mobile-nav-y": ["mobileNav", "y"],
@@ -334,8 +463,54 @@
       }
       patch.layout[target[0]] = patch.layout[target[0]] || {};
       patch.layout[target[0]][target[1]] = num;
-      importedFields.push("layout." + target[0] + "." + target[1]);
     });
+
+    var mobileKeys = ["mobileNav", "mobileHeroTitle", "mobileHeroSubtitle", "mobileCta"];
+    var hasAnyMobile = false;
+    var hasNonZeroMobile = false;
+    mobileKeys.forEach(function (key) {
+      if (!patch.layout[key]) {
+        return;
+      }
+      hasAnyMobile = true;
+      var x = parseInt(patch.layout[key].x, 10) || 0;
+      var y = parseInt(patch.layout[key].y, 10) || 0;
+      if (x !== 0 || y !== 0) {
+        hasNonZeroMobile = true;
+      }
+    });
+
+    if (hasAnyMobile && hasNonZeroMobile) {
+      mobileKeys.forEach(function (key) {
+        if (!patch.layout[key]) {
+          return;
+        }
+        importedFields.push("layout." + key + ".x");
+        importedFields.push("layout." + key + ".y");
+      });
+    }
+
+    if (hasAnyMobile && !hasNonZeroMobile) {
+      var inferredMobile = inferMobileFromDesktop(patch.layout);
+      var inferredKeys = Object.keys(inferredMobile);
+      if (inferredKeys.length) {
+        inferredKeys.forEach(function (key) {
+          patch.layout[key] = inferredMobile[key];
+          importedFields.push("layout." + key + ".x");
+          importedFields.push("layout." + key + ".y");
+        });
+        warnings.push("HOME mobile coordinates were all zero in source; inferred mobile overrides from desktop layout.");
+      }
+
+      if (!inferredKeys.length) {
+        mobileKeys.forEach(function (key) {
+          if (Object.prototype.hasOwnProperty.call(patch.layout, key)) {
+            delete patch.layout[key];
+          }
+        });
+        warnings.push("HOME mobile coordinates were all zero in source; kept existing draft mobile overrides.");
+      }
+    }
 
     if (hasLowConfidenceThemeColors(patch.theme)) {
       ["bgColor", "textColor", "accentColor", "mutedColor", "surfaceColor", "buttonTextColor"].forEach(function (key) {
@@ -346,7 +521,38 @@
       importedFields = importedFields.filter(function (field) {
         return !/^theme\.(bgColor|textColor|accentColor|mutedColor|surfaceColor|buttonTextColor)$/.test(String(field || ""));
       });
+
+      var derivedTheme = deriveHomeThemeFromMarkup(html);
+      var defaultTheme = {
+        bgColor: "#f2f7f3",
+        textColor: "#102822",
+        accentColor: "#0f7b6c",
+        mutedColor: "#4f6962",
+        surfaceColor: "#e5f0ea",
+        buttonTextColor: "#ffffff"
+      };
+      Object.keys(defaultTheme).forEach(function (key) {
+        patch.theme[key] = defaultTheme[key];
+        importedFields.push("theme." + key);
+      });
+
+      Object.keys(derivedTheme).forEach(function (key) {
+        var value = normalizeColorValue(derivedTheme[key]);
+        if (!value) {
+          return;
+        }
+        patch.theme[key] = value;
+      });
+
+      var derivedCount = Object.keys(derivedTheme).filter(function (key) {
+        return !!normalizeColorValue(derivedTheme[key]);
+      }).length;
+
       warnings.push("HOME theme colors looked low-confidence and were preserved from the existing draft.");
+      warnings.push("HOME theme defaults were applied for readability.");
+      if (derivedCount) {
+        warnings.push("HOME theme inferred partial colors from live markup styles.");
+      }
     }
 
     if (!importedFields.length) {
