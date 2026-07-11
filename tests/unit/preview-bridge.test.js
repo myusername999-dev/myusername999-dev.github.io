@@ -309,4 +309,38 @@ describe("preview bridge", () => {
     expect(result.selectedValue).toBe("home");
     expect(result.changed).toBe(true);
   });
+
+  it("resolves preview selection from config and current value", () => {
+    const bridge = loadBridge();
+    const selected = bridge.resolvePreviewSelection(
+      "page:products.html",
+      {},
+      {
+        getPreviewPageOptions: () => [
+          { value: "home", label: "HOME" },
+          { value: "page:products.html", label: "Products", page: { fileName: "products.html" } }
+        ]
+      }
+    );
+
+    expect(selected.value).toBe("page:products.html");
+    expect(selected.label).toBe("Products");
+  });
+
+  it("resolves preview selection fallback to home", () => {
+    const bridge = loadBridge();
+    const selected = bridge.resolvePreviewSelection(
+      "page:missing.html",
+      {},
+      {
+        getPreviewPageOptions: () => [
+          { value: "home", label: "HOME", page: null },
+          { value: "page:products.html", label: "Products", page: { fileName: "products.html" } }
+        ]
+      }
+    );
+
+    expect(selected.value).toBe("home");
+    expect(selected.label).toBe("HOME");
+  });
 });

@@ -343,6 +343,23 @@
     };
   }
 
+  function resolvePreviewSelection(value, config, dependencies) {
+    var deps = dependencies || {};
+    var getOptions = typeof deps.getPreviewPageOptions === "function"
+      ? deps.getPreviewPageOptions
+      : getPreviewPageOptions;
+    var normalizeValue = typeof deps.normalizePreviewPageValue === "function"
+      ? deps.normalizePreviewPageValue
+      : normalizePreviewPageValue;
+    var selectPage = typeof deps.selectPreviewPage === "function"
+      ? deps.selectPreviewPage
+      : selectPreviewPage;
+
+    var options = getOptions(config || {});
+    var selectedValue = normalizeValue(value, options);
+    return selectPage(options, selectedValue);
+  }
+
   window.ConfiguratorPreviewBridge = {
     normalizePageHref: normalizePageHref,
     getAssociatedPageDescriptors: getAssociatedPageDescriptors,
@@ -357,6 +374,7 @@
     getPreviewPageOptions: getPreviewPageOptions,
     normalizePreviewPageValue: normalizePreviewPageValue,
     normalizePreviewPage: normalizePreviewPage,
-    refreshPreviewPageOptions: refreshPreviewPageOptions
+    refreshPreviewPageOptions: refreshPreviewPageOptions,
+    resolvePreviewSelection: resolvePreviewSelection
   };
 })();

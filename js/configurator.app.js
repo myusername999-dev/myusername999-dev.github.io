@@ -2957,6 +2957,18 @@
   }
 
   function normalizePreviewPage(value, config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.resolvePreviewSelection === "function") {
+      return window.ConfiguratorPreviewBridge.resolvePreviewSelection(value, config, {
+        getPreviewPageOptions: getPreviewPageOptions,
+        normalizePreviewPageValue: function (candidateValue, options) {
+          if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizePreviewPageValue === "function") {
+            return window.ConfiguratorStateBridge.normalizePreviewPageValue(candidateValue, options);
+          }
+          return window.ConfiguratorPreviewBridge.normalizePreviewPageValue(candidateValue, options);
+        },
+        selectPreviewPage: selectPreviewPage
+      });
+    }
     var options = getPreviewPageOptions(config);
     if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.normalizePreviewPage === "function") {
       return window.ConfiguratorPreviewBridge.normalizePreviewPage(value, options, {
