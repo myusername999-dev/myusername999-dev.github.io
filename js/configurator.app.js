@@ -333,6 +333,12 @@
     dom.saveRepoDraft = document.getElementById("saveRepoDraft");
     dom.loadRepoDraft = document.getElementById("loadRepoDraft");
     dom.importLivePages = document.getElementById("importLivePages");
+    dom.resetVisibleCenter = document.getElementById("resetVisibleCenter");
+    dom.resetLayoutOnly = document.getElementById("resetLayoutOnly");
+    dom.resetFontsOnly = document.getElementById("resetFontsOnly");
+    dom.resetButtonsOnly = document.getElementById("resetButtonsOnly");
+    dom.resetLogosOnly = document.getElementById("resetLogosOnly");
+    dom.resetColorsOnly = document.getElementById("resetColorsOnly");
     dom.resetDraft = document.getElementById("resetDraft");
     dom.approval = document.getElementById("approval");
     dom.statusMessage = document.getElementById("statusMessage");
@@ -857,6 +863,42 @@
     if (dom.importLivePages) {
       dom.importLivePages.addEventListener("click", function () {
         importFromLivePages();
+      });
+    }
+
+    if (dom.resetVisibleCenter) {
+      dom.resetVisibleCenter.addEventListener("click", function () {
+        resetHomeToCenterVisibleDefaults();
+      });
+    }
+
+    if (dom.resetLayoutOnly) {
+      dom.resetLayoutOnly.addEventListener("click", function () {
+        resetLayoutDefaults();
+      });
+    }
+
+    if (dom.resetFontsOnly) {
+      dom.resetFontsOnly.addEventListener("click", function () {
+        resetFontsDefaults();
+      });
+    }
+
+    if (dom.resetButtonsOnly) {
+      dom.resetButtonsOnly.addEventListener("click", function () {
+        resetButtonsDefaults();
+      });
+    }
+
+    if (dom.resetLogosOnly) {
+      dom.resetLogosOnly.addEventListener("click", function () {
+        resetLogosDefaults();
+      });
+    }
+
+    if (dom.resetColorsOnly) {
+      dom.resetColorsOnly.addEventListener("click", function () {
+        resetColorsDefaults();
       });
     }
 
@@ -2528,6 +2570,7 @@
       var mergedState = mergeConfig(state, result && result.patch ? result.patch : {});
       state = mergeConfig(defaultConfig, mergedState);
       sanitizeState();
+      var visibilityClamp = clampImportedCtaOffsetsToVisibleArea();
 
       var report = result && result.report ? result.report : { importedFieldsCount: 0, warningsCount: 0 };
       var importedCount = parseInt(report.importedFieldsCount, 10) || 0;
@@ -2537,6 +2580,9 @@
           return String(item || "").trim().length > 0;
         })
         : [];
+      if (visibilityClamp.notes.length) {
+        statusHints = statusHints.concat(visibilityClamp.notes);
+      }
       var noteCount = statusHints.length;
       var remainingWarnings = Math.max(0, warningsCount - noteCount);
       var statusMessage = String(result && result.message ? result.message : "Live import completed.")
@@ -2551,6 +2597,169 @@
       var errorMessage = "Live import failed: " + String(error && error.message || "unknown error") + ".";
       setStatus(errorMessage, true);
     }
+  }
+
+  function clampImportedCtaOffsetsToVisibleArea() {
+    var notes = [];
+    if (!state || !state.layout) {
+      return { notes: notes };
+    }
+
+    function clampCtaAxis(target, axis, min, max) {
+      if (!target || typeof target !== "object") {
+        return false;
+      }
+      var current = parseInt(target[axis], 10);
+      if (Number.isNaN(current)) {
+        current = 0;
+      }
+      var bounded = clamp(current, min, max);
+      target[axis] = bounded;
+      return bounded !== current;
+    }
+
+    var desktopAdjusted = false;
+    if (state.layout.cta) {
+      desktopAdjusted = clampCtaAxis(state.layout.cta, "x", -120, 120) || desktopAdjusted;
+      desktopAdjusted = clampCtaAxis(state.layout.cta, "y", -220, 80) || desktopAdjusted;
+    }
+
+    var mobileAdjusted = false;
+    if (state.layout.mobileCta) {
+      mobileAdjusted = clampCtaAxis(state.layout.mobileCta, "x", -80, 80) || mobileAdjusted;
+      mobileAdjusted = clampCtaAxis(state.layout.mobileCta, "y", -140, 160) || mobileAdjusted;
+    }
+
+    if (desktopAdjusted) {
+      notes.push("HOME CTA desktop position was clamped to a safe visible range.");
+    }
+    if (mobileAdjusted) {
+      notes.push("HOME CTA mobile position was clamped to a safe visible range.");
+    }
+
+    return { notes: notes };
+  }
+
+  function resetHomeToCenterVisibleDefaults() {
+    resetLayoutDefaults({ includeMobile: true, forceCenterVisible: true });
+    state.display.previewPage = "home";
+    state.display.pageMode = "home";
+    state.display.previewDevice = "desktop";
+    state.display.mobileHeroCenter = true;
+    refresh("HOME layout reset to centered visible defaults.");
+    dom.approval.checked = false;
+  }
+
+  function resetLayoutDefaults(options) {
+    var defaults = deepClone(defaultConfig);
+    var includeMobile = !(options && options.includeMobile === false);
+    var forceCenterVisible = !!(options && options.forceCenterVisible);
+
+    state.layout.nav = deepClone(defaults.layout.nav);
+    state.layout.hero = deepClone(defaults.layout.hero);
+    state.layout.heroTitle = deepClone(defaults.layout.heroTitle);
+    state.layout.heroSubtitle = deepClone(defaults.layout.heroSubtitle);
+    state.layout.cta = deepClone(defaults.layout.cta);
+    state.background.x = defaults.background.x;
+    state.background.y = defaults.background.y;
+    state.background.transparency = defaults.background.transparency;
+
+    if (includeMobile) {
+      state.layout.mobileNav = deepClone(defaults.layout.mobileNav);
+      state.layout.mobileHeroTitle = deepClone(defaults.layout.mobileHeroTitle);
+      state.layout.mobileHeroSubtitle = deepClone(defaults.layout.mobileHeroSubtitle);
+      state.layout.mobileCta = deepClone(defaults.layout.mobileCta);
+    }
+
+    if (forceCenterVisible) {
+      state.layout.cta.x = 0;
+      state.layout.cta.y = 0;
+      state.layout.nav.x = 0;
+      state.layout.nav.y = 0;
+      state.layout.heroTitle.x = 0;
+      state.layout.heroTitle.y = 0;
+      state.layout.heroSubtitle.x = 0;
+      state.layout.heroSubtitle.y = 0;
+      state.layout.mobileCta.x = 0;
+      state.layout.mobileCta.y = 0;
+      state.layout.mobileNav.x = 0;
+      state.layout.mobileNav.y = 0;
+      state.layout.mobileHeroTitle.x = 0;
+      state.layout.mobileHeroTitle.y = 0;
+      state.layout.mobileHeroSubtitle.x = 0;
+      state.layout.mobileHeroSubtitle.y = 0;
+    }
+
+    if (!forceCenterVisible) {
+      refresh("Layout reset to defaults.");
+      dom.approval.checked = false;
+    }
+  }
+
+  function resetFontsDefaults() {
+    var defaults = deepClone(defaultConfig);
+    state.theme.fontFamily = defaults.theme.fontFamily;
+    state.theme.headingSize = defaults.theme.headingSize;
+    state.theme.bodySize = defaults.theme.bodySize;
+    state.theme.buttonTextSize = defaults.theme.buttonTextSize;
+    state.theme.mobileHeadingSize = defaults.theme.headingSize;
+    state.theme.mobileBodySize = defaults.theme.bodySize;
+    state.hero.titleFontFamily = defaults.hero.titleFontFamily;
+    state.hero.subtitleFontFamily = defaults.hero.subtitleFontFamily;
+    state.hero.titleAlign = defaults.hero.titleAlign;
+    state.hero.subtitleAlign = defaults.hero.subtitleAlign;
+    refresh("Fonts and typography reset to defaults.");
+    dom.approval.checked = false;
+  }
+
+  function resetButtonsDefaults() {
+    var defaults = deepClone(defaultConfig);
+    state.hero.buttons = deepClone(defaults.hero.buttons);
+    state.display.ctaTextOnly = defaults.display.ctaTextOnly;
+    state.theme.buttonTextSize = defaults.theme.buttonTextSize;
+    state.theme.buttonTextColor = defaults.theme.buttonTextColor;
+    state.layout.cta = deepClone(defaults.layout.cta);
+    state.layout.mobileCta = deepClone(defaults.layout.mobileCta);
+    refresh("Buttons reset to defaults.");
+    dom.approval.checked = false;
+  }
+
+  function resetLogosDefaults() {
+    var defaults = deepClone(defaultConfig);
+    state.brand.logos = deepClone(defaults.brand.logos);
+    state.brand.logoSrc = defaults.brand.logoSrc;
+    state.brand.logoFileName = defaults.brand.logoFileName;
+    state.layout.logo = deepClone(defaults.layout.logo);
+    if (dom.logo1Input) {
+      dom.logo1Input.value = "";
+    }
+    if (dom.logo2Input) {
+      dom.logo2Input.value = "";
+    }
+    refresh("Logos reset to defaults.");
+    dom.approval.checked = false;
+  }
+
+  function resetColorsDefaults() {
+    var defaults = deepClone(defaultConfig);
+    state.theme.bgColor = defaults.theme.bgColor;
+    state.theme.textColor = defaults.theme.textColor;
+    state.theme.accentColor = defaults.theme.accentColor;
+    state.theme.mutedColor = defaults.theme.mutedColor;
+    state.theme.surfaceColor = defaults.theme.surfaceColor;
+    state.theme.buttonTextColor = defaults.theme.buttonTextColor;
+    state.hero.titleColor = defaults.hero.titleColor;
+    state.hero.subtitleColor = defaults.hero.subtitleColor;
+    state.display.tabTextColor = defaults.display.tabTextColor;
+    state.display.tabBgColor = defaults.display.tabBgColor;
+    state.privacy.bgColor = defaults.privacy.bgColor;
+    state.privacy.textColor = defaults.privacy.textColor;
+    state.privacy.mutedColor = defaults.privacy.mutedColor;
+    state.privacy.lineColor = defaults.privacy.lineColor;
+    state.privacy.accentColor = defaults.privacy.accentColor;
+    state.privacy.cardColor = defaults.privacy.cardColor;
+    refresh("Colors reset to defaults.");
+    dom.approval.checked = false;
   }
 
   function buildPublishedHtml(config) {
@@ -2581,6 +2790,59 @@
   }
 
   function buildHomeMarkup(config, draggable) {
+        function parseHexColor(hex) {
+          var value = String(hex || "").trim().replace(/^#/, "");
+          if (value.length === 3) {
+            value = value.split("").map(function (part) { return part + part; }).join("");
+          }
+          if (!/^[0-9a-f]{6}$/i.test(value)) {
+            return null;
+          }
+          return {
+            r: parseInt(value.slice(0, 2), 16),
+            g: parseInt(value.slice(2, 4), 16),
+            b: parseInt(value.slice(4, 6), 16)
+          };
+        }
+
+        function relativeLuminance(hex) {
+          var rgb = parseHexColor(hex);
+          if (!rgb) {
+            return 0;
+          }
+          function channel(c) {
+            var ratio = c / 255;
+            return ratio <= 0.03928 ? ratio / 12.92 : Math.pow((ratio + 0.055) / 1.055, 2.4);
+          }
+          var r = channel(rgb.r);
+          var g = channel(rgb.g);
+          var b = channel(rgb.b);
+          return (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+        }
+
+        function contrastRatio(hexA, hexB) {
+          var l1 = relativeLuminance(hexA);
+          var l2 = relativeLuminance(hexB);
+          var high = Math.max(l1, l2);
+          var low = Math.min(l1, l2);
+          return (high + 0.05) / (low + 0.05);
+        }
+
+        function resolveVisibleCtaTextColor() {
+          var desired = normalizeHex(config.theme.buttonTextColor, "#ffffff");
+          var background = normalizeHex(config.theme.bgColor, "#f2f7f3");
+          var hasBackgroundImage = !!(config.background && String(config.background.src || "").trim());
+          if (desired.toLowerCase() === "#ffffff" && hasBackgroundImage) {
+            return desired;
+          }
+          if (contrastRatio(desired, background) >= 2.8) {
+            return desired;
+          }
+          return normalizeHex(config.theme.textColor, "#102822");
+        }
+
+        var visibleCtaTextColor = resolveVisibleCtaTextColor();
+
     var footerMarkup = draggable
       ? ""
       : "<footer class=\"site-footer-fixed\">&copy;VINATECH 2026. All rights reserved.</footer>";
@@ -2696,7 +2958,7 @@
         var buttonStyle = "background:" + escapeAttr(config.theme.accentColor) + ";color:" +
           escapeAttr(config.theme.buttonTextColor) + ";font-size:var(--preview-button-size);";
         if (ctaTextOnly) {
-          buttonStyle += "background:transparent;border-color:transparent;box-shadow:none;";
+          buttonStyle += "background:transparent;border-color:transparent;box-shadow:none;color:" + escapeAttr(visibleCtaTextColor) + ";";
         }
         return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + buttonStyle + "\">" +
           escapeHtml(button.label) +

@@ -29,4 +29,32 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("var href = resolvePreviewPageHref(fileHref);");
     expect(code).toContain("return \"../../\" + href;");
   });
+
+  it("uses contrast-safe CTA color when buttons are text-only", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("function resolveVisibleCtaTextColor()");
+    expect(code).toContain("contrastRatio(desired, background)");
+    expect(code).toContain("color:\" + escapeAttr(visibleCtaTextColor)");
+    expect(code).toContain("desired.toLowerCase() === \"#ffffff\"");
+    expect(code).toContain("hasBackgroundImage");
+  });
+
+  it("clamps imported CTA offsets to visible range", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("function clampImportedCtaOffsetsToVisibleArea()");
+    expect(code).toContain("clampCtaAxis(state.layout.cta, \"y\", -220, 80)");
+    expect(code).toContain("clampCtaAxis(state.layout.mobileCta, \"y\", -140, 160)");
+    expect(code).toContain("var visibilityClamp = clampImportedCtaOffsetsToVisibleArea();");
+  });
+
+  it("provides granular reset helpers and center-visible reset", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("function resetHomeToCenterVisibleDefaults()");
+    expect(code).toContain("function resetLayoutDefaults(options)");
+    expect(code).toContain("function resetFontsDefaults()");
+    expect(code).toContain("function resetButtonsDefaults()");
+    expect(code).toContain("function resetLogosDefaults()");
+    expect(code).toContain("function resetColorsDefaults()");
+    expect(code).toContain("state.layout.cta.y = 0;");
+  });
 });
