@@ -80,6 +80,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - validation gating (`shouldValidateState`)
    - associated-page inclusion gating (`shouldIncludeAssociatedPages`)
    - execution planning (`getPublishExecutionPlan`)
+   - transport branching (`resolvePublishFlowContext`, `shouldUseDirectoryPublishing`)
    - state validation (`validateStateFromConfig`)
    - preserve-existing-home decision (`shouldPreserveExistingHomeOnPublish`)
 7. Draft preference/script extraction is active through:

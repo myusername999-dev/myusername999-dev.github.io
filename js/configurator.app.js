@@ -1946,8 +1946,15 @@
 
   async function handlePublish(scope) {
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
+    var hasDirectoryPicker = typeof window.showDirectoryPicker === "function";
+    var publishFlow = null;
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.resolvePublishFlowContext === "function") {
+      publishFlow = window.ConfiguratorPublishBridge.resolvePublishFlowContext(scope, previewDevice, hasDirectoryPicker);
+    }
     var publishPlan = null;
-    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.getPublishExecutionPlan === "function") {
+    if (publishFlow && publishFlow.plan) {
+      publishPlan = publishFlow.plan;
+    } else if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.getPublishExecutionPlan === "function") {
       publishPlan = window.ConfiguratorPublishBridge.getPublishExecutionPlan(scope, previewDevice);
     }
     var publishScope = publishPlan ? publishPlan.scope : normalizePublishScope(scope);
@@ -1974,7 +1981,10 @@
     var publishAssets = publishTargets.assets;
 
     try {
-      if (typeof window.showDirectoryPicker === "function") {
+      var shouldUseDirectoryTransport = publishFlow
+        ? publishFlow.transport === "filesystem"
+        : hasDirectoryPicker;
+      if (shouldUseDirectoryTransport) {
         publishStage = "resolve-folder";
         var projectDirectory = await resolveProjectDirectoryHandle();
         if (!projectDirectory) {

@@ -137,6 +137,17 @@
     };
   }
 
+  function shouldUseDirectoryPublishing(hasDirectoryPicker) {
+    return !!hasDirectoryPicker;
+  }
+
+  function resolvePublishFlowContext(scope, previewDevice, hasDirectoryPicker) {
+    return {
+      plan: getPublishExecutionPlan(scope, previewDevice),
+      transport: shouldUseDirectoryPublishing(hasDirectoryPicker) ? "filesystem" : "download"
+    };
+  }
+
   window.ConfiguratorPublishBridge = {
     normalizePublishScope: normalizePublishScope,
     getPublishTargets: getPublishTargets,
@@ -145,6 +156,8 @@
     shouldValidateState: shouldValidateState,
     shouldIncludeAssociatedPages: shouldIncludeAssociatedPages,
     getPublishExecutionPlan: getPublishExecutionPlan,
+    shouldUseDirectoryPublishing: shouldUseDirectoryPublishing,
+    resolvePublishFlowContext: resolvePublishFlowContext,
     buildScopedPublishSuccessMessage: buildScopedPublishSuccessMessage,
     buildScopedDownloadSummary: buildScopedDownloadSummary,
     buildScopedDownloadMessage: buildScopedDownloadMessage

@@ -98,4 +98,19 @@ describe("publish bridge", () => {
       assets: false
     });
   });
+
+  it("determines directory publish transport availability", () => {
+    const bridge = loadBridge();
+    expect(bridge.shouldUseDirectoryPublishing(true)).toBe(true);
+    expect(bridge.shouldUseDirectoryPublishing(false)).toBe(false);
+  });
+
+  it("resolves publish flow context with transport and plan", () => {
+    const bridge = loadBridge();
+    const flow = bridge.resolvePublishFlowContext("all", "desktop", true);
+
+    expect(flow.transport).toBe("filesystem");
+    expect(flow.plan.scope).toBe("all");
+    expect(flow.plan.includeAssociatedPages).toBe(true);
+  });
 });
