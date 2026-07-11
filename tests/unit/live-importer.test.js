@@ -86,4 +86,39 @@ describe("live importer", () => {
     expect(result.patch.layout.mobileCta).toBeUndefined();
     expect(result.diagnostics.unresolvedFields).toContain("home:layout.nav");
   });
+
+  it("emits user-facing status hints when fallback warnings are present", async () => {
+    const importer = loadImporter();
+    const bridge = {
+      extractHomePatch: () => ({
+        patch: { hero: { title: "VinATech" } },
+        importedFields: ["hero.title"],
+        warnings: [
+          "HOME hero title was empty in source markup; used brand name as fallback.",
+          "HOME theme colors looked low-confidence and were preserved from the existing draft.",
+          "HOME theme colors looked low-confidence and were preserved from the existing draft."
+        ]
+      }),
+      extractContactPatch: () => ({ patch: { contact: {} }, importedFields: [], warnings: [] }),
+      extractPrivacyPatch: () => ({ patch: { privacy: {} }, importedFields: [], warnings: [] }),
+      mergeImportPatches: (a, b) => ({ ...(a || {}), ...(b || {}) }),
+      buildImportReport: (pages) => ({
+        importedFieldsCount: 1,
+        warningsCount: 3,
+        failedPages: [],
+        pages,
+        message: "Live import completed."
+      })
+    };
+
+    const result = await importer.importFromLivePages({
+      fetchFn: async () => ({ ok: true, status: 200, text: async () => "<html></html>" }),
+      bridge
+    });
+
+    expect(result.diagnostics.statusHints).toEqual([
+      "HOME title missing in source; using brand name.",
+      "HOME theme looked low-confidence; kept existing draft colors."
+    ]);
+  });
 });

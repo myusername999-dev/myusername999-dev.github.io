@@ -117,6 +117,55 @@
     return String((styleMap && styleMap[key]) || "").trim();
   }
 
+  function normalizeColorToken(value) {
+    var token = String(value || "").trim().toLowerCase();
+    if (!token) {
+      return "";
+    }
+    return token.replace(/\s+/g, "");
+  }
+
+  function isNearWhiteColor(value) {
+    var token = normalizeColorToken(value);
+    if (!token) {
+      return false;
+    }
+    if (token === "#fff" || token === "#ffffff" || token === "white" || token === "rgb(255,255,255)" || token === "rgba(255,255,255,1)") {
+      return true;
+    }
+    return false;
+  }
+
+  function hasLowConfidenceThemeColors(themePatch) {
+    var theme = themePatch && typeof themePatch === "object" ? themePatch : {};
+    var keys = ["bgColor", "textColor", "accentColor", "mutedColor", "surfaceColor", "buttonTextColor"];
+    var tokens = [];
+    var whiteCount = 0;
+
+    keys.forEach(function (key) {
+      var token = normalizeColorToken(theme[key]);
+      if (!token) {
+        return;
+      }
+      tokens.push(token);
+      if (isNearWhiteColor(token)) {
+        whiteCount += 1;
+      }
+    });
+
+    if (!tokens.length) {
+      return false;
+    }
+
+    var unique = {};
+    tokens.forEach(function (token) {
+      unique[token] = true;
+    });
+    var uniqueCount = Object.keys(unique).length;
+
+    return whiteCount >= 4 || uniqueCount <= 2;
+  }
+
   function extractRootStyle(html, className) {
     var tag = findTagByClass(html, className);
     if (!tag) {
@@ -184,6 +233,10 @@
     if (heroTitle) {
       patch.hero.title = heroTitle;
       importedFields.push("hero.title");
+    } else if (patch.brand && patch.brand.name) {
+      patch.hero.title = String(patch.brand.name);
+      importedFields.push("hero.title");
+      warnings.push("HOME hero title was empty in source markup; used brand name as fallback.");
     }
 
     var heroSubtitle = extractFirstText(html, [
@@ -283,6 +336,18 @@
       patch.layout[target[0]][target[1]] = num;
       importedFields.push("layout." + target[0] + "." + target[1]);
     });
+
+    if (hasLowConfidenceThemeColors(patch.theme)) {
+      ["bgColor", "textColor", "accentColor", "mutedColor", "surfaceColor", "buttonTextColor"].forEach(function (key) {
+        if (Object.prototype.hasOwnProperty.call(patch.theme, key)) {
+          delete patch.theme[key];
+        }
+      });
+      importedFields = importedFields.filter(function (field) {
+        return !/^theme\.(bgColor|textColor|accentColor|mutedColor|surfaceColor|buttonTextColor)$/.test(String(field || ""));
+      });
+      warnings.push("HOME theme colors looked low-confidence and were preserved from the existing draft.");
+    }
 
     if (!importedFields.length) {
       warnings.push("No HOME fields could be extracted.");

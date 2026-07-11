@@ -102,6 +102,42 @@ describe("import bridge", () => {
     expect(privacyResult.patch.privacy.topTabsTransparent).toBe(true);
   });
 
+  it("preserves existing draft colors when home theme vars are low-confidence placeholders", () => {
+    const bridge = loadBridge();
+    const html = [
+      "<html><head><title>VinATech</title></head><body>",
+      "<main class=\"home-root\" style=\"--preview-bg:#ffffff;--preview-text:#ffffff;--preview-accent:#ffffff;--preview-muted:#ffffff;--preview-surface:#ffffff;--preview-button-text:#ffffff;--preview-heading-size:58px\">",
+      "<h1>Visible Title</h1>",
+      "<p>Visible Subtitle</p>",
+      "</main></body></html>"
+    ].join("");
+
+    const result = bridge.extractHomePatch(html);
+
+    expect(result.patch.theme.bgColor).toBeUndefined();
+    expect(result.patch.theme.textColor).toBeUndefined();
+    expect(result.patch.theme.accentColor).toBeUndefined();
+    expect(result.patch.theme.headingSize).toBe(58);
+    expect(result.warnings.some((warning) => warning.includes("low-confidence"))).toBe(true);
+  });
+
+  it("falls back hero title to brand name when source h1 is empty", () => {
+    const bridge = loadBridge();
+    const html = [
+      "<html><head><title>VinATech</title></head><body>",
+      "<main class=\"home-root\" style=\"--preview-bg:#102822\">",
+      "<h1></h1>",
+      "<p>Inspire. Innovate. Ambition.</p>",
+      "</main></body></html>"
+    ].join("");
+
+    const result = bridge.extractHomePatch(html);
+
+    expect(result.patch.brand.name).toBe("VinATech");
+    expect(result.patch.hero.title).toBe("VinATech");
+    expect(result.warnings.some((warning) => warning.includes("hero title was empty"))).toBe(true);
+  });
+
   it("merges nested patches and builds report summary", () => {
     const bridge = loadBridge();
 

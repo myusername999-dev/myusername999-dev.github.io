@@ -157,6 +157,29 @@
       });
     });
 
+    var statusHints = [];
+    Object.keys(pageResults).forEach(function (pageKey) {
+      var pageResult = pageResults[pageKey] || {};
+      var warnings = Array.isArray(pageResult.warnings) ? pageResult.warnings : [];
+      warnings.forEach(function (warningText) {
+        var warning = String(warningText || "").trim();
+        if (!warning) {
+          return;
+        }
+        if (warning.toLowerCase().indexOf("hero title was empty") >= 0) {
+          statusHints.push("HOME title missing in source; using brand name.");
+          return;
+        }
+        if (warning.toLowerCase().indexOf("low-confidence") >= 0) {
+          statusHints.push("HOME theme looked low-confidence; kept existing draft colors.");
+        }
+      });
+    });
+
+    if (statusHints.length) {
+      diagnostics.statusHints = Array.from(new Set(statusHints));
+    }
+
     return {
       ok: report.failedPages.length < 3,
       patch: mergedPatch,

@@ -2532,9 +2532,18 @@
       var report = result && result.report ? result.report : { importedFieldsCount: 0, warningsCount: 0 };
       var importedCount = parseInt(report.importedFieldsCount, 10) || 0;
       var warningsCount = parseInt(report.warningsCount, 10) || 0;
+      var statusHints = result && result.diagnostics && Array.isArray(result.diagnostics.statusHints)
+        ? result.diagnostics.statusHints.filter(function (item) {
+          return String(item || "").trim().length > 0;
+        })
+        : [];
+      var noteCount = statusHints.length;
+      var remainingWarnings = Math.max(0, warningsCount - noteCount);
       var statusMessage = String(result && result.message ? result.message : "Live import completed.")
         + " Imported fields: " + importedCount + "."
-        + (warningsCount ? " Warnings: " + warningsCount + "." : "");
+        + (noteCount ? " Notes: " + noteCount + "." : "")
+        + (remainingWarnings ? " Warnings: " + remainingWarnings + "." : "")
+        + (statusHints.length ? " " + statusHints.join(" ") : "");
 
       refresh(statusMessage);
       dom.approval.checked = false;
@@ -2582,27 +2591,42 @@
     var showHomeTabSelector = tabMode === "top-and-home";
     var showTabCards = tabMode === "top-and-home";
 
+    function resolvePreviewSiteHref(hrefValue) {
+      var href = String(hrefValue || "").trim();
+      if (!draggable) {
+        return href;
+      }
+      if (!href || href === "#" || href.charAt(0) === "#") {
+        return href;
+      }
+      if (/^(?:[a-z]+:|\/|\.\.\/)/i.test(href)) {
+        return href;
+      }
+      return "../../" + href;
+    }
+
     function resolveTabHref(tab, id) {
       var label = String((tab && tab.label) || "").trim().toLowerCase();
       var sectionTitle = String((tab && tab.sectionTitle) || "").trim().toLowerCase();
       if (label === "home") {
-        return "index.html";
+        return resolvePreviewSiteHref("index.html");
       }
       if (label === "news") {
-        return "news.html";
+        return resolvePreviewSiteHref("news.html");
       }
       if (label.indexOf("contact") >= 0 || sectionTitle.indexOf("contact") >= 0) {
-        return "contact.html";
+        return resolvePreviewSiteHref("contact.html");
       }
       if (label.indexOf("privacy") >= 0 || sectionTitle.indexOf("privacy") >= 0) {
-        return "privacy.html";
+        return resolvePreviewSiteHref("privacy.html");
       }
       var linkedPage = normalizePageHref(tab && tab.pageHref);
-      return linkedPage || (showTabCards ? "#" + id : "#");
+      return linkedPage ? resolvePreviewSiteHref(linkedPage) : (showTabCards ? "#" + id : "#");
     }
 
-    var bgImage = config.background.src
-      ? "style=\"background-image:url('" + escapeAttr(config.background.src) + "');background-size:115% 115%;background-position:" +
+    var backgroundPreviewSrc = resolvePreviewAssetPath(config.background.src, draggable);
+    var bgImage = backgroundPreviewSrc
+      ? "style=\"background-image:url('" + escapeAttr(backgroundPreviewSrc) + "');background-size:115% 115%;background-position:" +
         config.background.x +
         "% " +
         config.background.y +
@@ -2641,12 +2665,13 @@
       .map(function (tab) {
         var id = slugify(tab.sectionId || tab.label || "section");
         var cardStyle = "background:" + escapeAttr(tab.sectionBackgroundColor || config.theme.surfaceColor) + ";";
-        if (tab.sectionBackgroundSrc) {
+        var sectionBgSrc = resolvePreviewAssetPath(tab.sectionBackgroundSrc, draggable);
+        if (sectionBgSrc) {
           var tabBgTransparency = normalizeTabImageTransparency(tab.sectionBackgroundTransparency, 36) / 100;
           var tabBgTopAlpha = tabBgTransparency.toFixed(2);
           var tabBgBottomAlpha = Math.min(0.95, tabBgTransparency + 0.12).toFixed(2);
           cardStyle += "background-image:linear-gradient(180deg, rgba(255,255,255," + tabBgTopAlpha + "), rgba(255,255,255," + tabBgBottomAlpha + ")),url('" +
-            escapeAttr(tab.sectionBackgroundSrc) + "');background-size:cover;background-position:center;";
+            escapeAttr(sectionBgSrc) + "');background-size:cover;background-position:center;";
         }
         var titleStyle = "color:" + escapeAttr(tab.sectionTitleColor || config.theme.textColor) + ";" +
           (tab.sectionFontFamily ? "font-family:'" + escapeAttr(tab.sectionFontFamily) + "','Segoe UI',sans-serif;" : "");
@@ -2666,6 +2691,7 @@
     var buttonLinks = config.hero.buttons
       .map(function (button) {
         var href = String(button.href || "#").trim() || "#";
+        href = resolvePreviewSiteHref(href);
         var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
         var buttonStyle = "background:" + escapeAttr(config.theme.accentColor) + ";color:" +
           escapeAttr(config.theme.buttonTextColor) + ";font-size:var(--preview-button-size);";
@@ -2681,8 +2707,9 @@
     var logos = ensureTwoLogos(config.brand)
       .map(function (logo, index) {
         var label = index === 0 ? config.brand.name : "Logo 2";
-        var inner = logo.src
-          ? "<img src=\"" + escapeAttr(logo.src) + "\" alt=\"" + escapeAttr(label) + "\">"
+        var logoSrc = resolvePreviewAssetPath(logo.src, draggable);
+        var inner = logoSrc
+          ? "<img src=\"" + escapeAttr(logoSrc) + "\" alt=\"" + escapeAttr(label) + "\">"
           : "<span class=\"logo-fallback\">" + escapeHtml(label) + "</span>";
         return "<div class=\"logo-slot\" " + logoDragAttr(index, draggable) + logoStyleAttr(logo) + ">" + inner + "</div>";
       })
@@ -3193,6 +3220,20 @@
       }
     }
     return options[0];
+  }
+
+  function selectPreviewPage(options, selectedValue) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.selectPreviewPage === "function") {
+      return window.ConfiguratorPreviewBridge.selectPreviewPage(options, selectedValue);
+    }
+    var list = Array.isArray(options) ? options : [];
+    var target = String(selectedValue || "");
+    for (var index = 0; index < list.length; index += 1) {
+      if (String(list[index].value || "") === target) {
+        return list[index];
+      }
+    }
+    return list[0] || { value: "home", label: "HOME", page: null };
   }
 
   function isPrivacyPolicyDescriptor(tab) {
@@ -4352,11 +4393,23 @@
     return input + separator + encodedKey + "=" + encodedValue + hash;
   }
 
+  function resolvePreviewPageHref(fileHref) {
+    var href = String(fileHref || "").trim();
+    if (!href) {
+      return href;
+    }
+    if (/^(?:[a-z]+:|\/|\.\.\/)/i.test(href)) {
+      return href;
+    }
+    return "../../" + href;
+  }
+
   function buildPrivacyPreviewHref(fileHref, config) {
     var display = (config && config.display) || {};
     var privacy = (config && config.privacy) || {};
     var previewDevice = normalizePreviewDevice(config && config.display && config.display.previewDevice);
-    var href = addQueryParam(fileHref, "configuratorPreview", "1");
+    var href = resolvePreviewPageHref(fileHref);
+    href = addQueryParam(href, "configuratorPreview", "1");
     href = addQueryParam(href, "pdevice", previewDevice);
     href = addQueryParam(href, "pbg", normalizeHex(privacy.bgColor, "#f8fbfa"));
     href = addQueryParam(href, "ptxt", normalizeHex(privacy.textColor, "#18322b"));
@@ -4380,7 +4433,8 @@
     var privacy = (config && config.privacy) || {};
     var contact = (config && config.contact) || {};
     var previewDevice = normalizePreviewDevice(config && config.display && config.display.previewDevice);
-    var href = addQueryParam(fileHref, "configuratorPreview", "1");
+    var href = resolvePreviewPageHref(fileHref);
+    href = addQueryParam(href, "configuratorPreview", "1");
     href = addQueryParam(href, "pdevice", previewDevice);
     href = addQueryParam(href, "ctitle", String(contact.title || ""));
     href = addQueryParam(href, "cintro", String(contact.intro || ""));
@@ -4433,6 +4487,23 @@
     }
     var src = String(value || "").trim();
     return src;
+  }
+
+  function resolvePreviewAssetPath(src, draggable) {
+    var value = String(src || "").trim();
+    if (!value) {
+      return "";
+    }
+    if (!draggable) {
+      return value;
+    }
+    if (/^(?:https?:|data:|blob:|\/|\.\.\/)/i.test(value)) {
+      return value;
+    }
+    if (/^images\//i.test(value)) {
+      return "../../" + value;
+    }
+    return value;
   }
 
   function sanitizeFileName(value) {
