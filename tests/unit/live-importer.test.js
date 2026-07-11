@@ -36,6 +36,10 @@ describe("live importer", () => {
     expect(result.patch.contact.title).toBe("Contact VINATECH Limited");
     expect(result.patch.privacy.title).toBe("Privacy Policy");
     expect(result.report.failedPages).toEqual([]);
+    expect(result.diagnostics).toBeTruthy();
+    expect(result.diagnostics.confidenceByPage.home).toMatch(/high|medium|low/);
+    expect(Array.isArray(result.diagnostics.unresolvedFields)).toBe(true);
+    expect(result.diagnostics.preservedByPolicy).toContain("layout.mobileNav");
   });
 
   it("reports failed pages while preserving successful imports", async () => {
@@ -57,5 +61,29 @@ describe("live importer", () => {
     expect(result.report.failedPages).toEqual(["privacy"]);
     expect(result.report.message).toContain("with issues");
     expect(result.patch.contact.title).toBe("Loaded");
+    expect(result.diagnostics.confidenceByPage.privacy).toBe("low");
+    expect(result.diagnostics.unresolvedFields.some((field) => field.startsWith("contact:"))).toBe(true);
+  });
+
+  it("keeps unresolved mobile fields out of patch so runtime can preserve existing overrides", async () => {
+    const importer = loadImporter();
+    const fetchFn = async (url) => ({
+      ok: true,
+      status: 200,
+      text: async () => {
+        if (url.includes("index.html")) {
+          return "<title>VINATECH</title><main class=\"home-root\" style=\"--preview-bg:#000\"><h1>Home</h1><p>Subtitle</p></main>";
+        }
+        return "<h1>Page</h1><p>Text</p>";
+      }
+    });
+
+    const result = await importer.importFromLivePages({ fetchFn });
+
+    expect(result.patch.layout.mobileNav).toBeUndefined();
+    expect(result.patch.layout.mobileHeroTitle).toBeUndefined();
+    expect(result.patch.layout.mobileHeroSubtitle).toBeUndefined();
+    expect(result.patch.layout.mobileCta).toBeUndefined();
+    expect(result.diagnostics.unresolvedFields).toContain("home:layout.nav");
   });
 });

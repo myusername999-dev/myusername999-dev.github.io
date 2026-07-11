@@ -64,6 +64,14 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - `privacy.html`
 3. The importer merges detected values into current draft state instead of replacing the full draft object.
 4. Desktop and mobile layout values are both imported when present in HOME page style variables.
+5. Import report now includes diagnostics:
+   - confidence by page (`high` / `medium` / `low`)
+   - unresolved field list (`page:field`)
+   - preserved-by-policy list for fields intentionally left to existing draft state
+6. Known preservation-first limitations:
+   - mobile layout overrides are preserved unless explicit mobile CSS vars are found
+   - detailed tab/gallery structures are preserved from existing draft unless reliably inferable
+   - contact field schema is preserved unless explicit form structure extraction is added
 
 ### 7. Run automated tests
 1. Run all tests:
@@ -80,6 +88,26 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - `tests/unit/live-importer.test.js`
 3. End-to-end bridge/importer cooperation is covered by:
    - `tests/integration/live-page-import.test.js`
+4. Environment-preservation behavior after import is covered by:
+   - `tests/integration/environment-support.test.js`
+5. Importer test matrix should include:
+   - full success import across HOME/CONTACT/PRIVACY
+   - partial fetch failure fallback
+   - unresolved-fields diagnostics emission
+   - mobile override preservation when mobile coordinates are absent
+
+### 7.2 Import failure triage
+1. Parser failure indicators:
+   - `unresolvedFields` grows unexpectedly for one page while fetch succeeds.
+2. Fetch/input failure indicators:
+   - page listed in `failedPages` with warning containing non-200 status.
+3. Merge-policy regression indicators:
+   - mobile overrides change even when importer patch lacks mobile fields.
+4. Suggested triage flow:
+   - run `npm test`
+   - inspect `tests/unit/import-bridge.test.js` first for selector/parser issues
+   - inspect `tests/unit/live-importer.test.js` for diagnostics/flow issues
+   - inspect `tests/integration/environment-support.test.js` for preservation regressions
 
 ### 8. Current migration status
 1. Folder structure and module entry pages are in place.
