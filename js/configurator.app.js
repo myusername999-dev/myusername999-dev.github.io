@@ -2043,7 +2043,13 @@
           if (publishHomePage) {
             localStorage.setItem(LAST_PUBLISHED_KEY, html);
           }
-          setStatus(buildScopedPublishSuccessMessage(projectDirectory, publishScope, includeAssociatedPages, writtenAssociatedPagesCount, savedAssetsResult), false);
+          setStatus(buildPublishOutcomeStatus("filesystem-success", {
+            projectDirectoryName: String(projectDirectory.name || "selected folder"),
+            scope: publishScope,
+            includeAssociatedPages: includeAssociatedPages,
+            associatedCount: writtenAssociatedPagesCount,
+            assetSuffix: assetStatusSuffix(savedAssetsResult)
+          }), false);
           return;
         } catch (writeError) {
           if (writeError && writeError.name === "AbortError") {
@@ -2076,7 +2082,12 @@
       if (publishHomePage) {
         localStorage.setItem(LAST_PUBLISHED_KEY, html);
       }
-      setStatus(buildScopedDownloadMessage(publishScope, includeAssociatedPages, downloadedAssociatedPagesCount, noFsAssetsResult), false);
+      setStatus(buildPublishOutcomeStatus("download-success", {
+        scope: publishScope,
+        includeAssociatedPages: includeAssociatedPages,
+        associatedCount: downloadedAssociatedPagesCount,
+        assetSuffix: assetStatusSuffix(noFsAssetsResult)
+      }), false);
       return;
     } catch (error) {
       if (error && error.name === "AbortError") {
@@ -2144,7 +2155,13 @@
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
     }
 
-    setStatus("Folder write unavailable (" + cause + "). " + buildScopedDownloadSummary(publishScope, includeAssociatedPages, associatedCount) + assetStatusSuffix(assetsResult), false);
+    setStatus(buildPublishOutcomeStatus("download-fallback", {
+      scope: publishScope,
+      includeAssociatedPages: includeAssociatedPages,
+      associatedCount: associatedCount,
+      cause: cause,
+      assetSuffix: assetStatusSuffix(assetsResult)
+    }), false);
   }
 
   function normalizePublishScope(scope) {
@@ -2244,6 +2261,49 @@
       );
     }
     return "Browser folder-write API unavailable. " + buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount) + assetStatusSuffix(assetsResult);
+  }
+
+  function buildPublishOutcomeStatus(mode, details) {
+    var info = details || {};
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.resolvePublishOutcomeStatus === "function") {
+      return window.ConfiguratorPublishBridge.resolvePublishOutcomeStatus(mode, info);
+    }
+
+    if (mode === "filesystem-success") {
+      var location = String(info.projectDirectoryName || "selected folder");
+      var scope = normalizePublishScope(info.scope);
+      var includeAssociatedPages = !!info.includeAssociatedPages;
+      var associatedCount = parseInt(info.associatedCount, 10) || 0;
+      var assetSuffix = String(info.assetSuffix || "");
+      var base = "Publish complete in " + location + ". ";
+      if (scope === "privacy") {
+        return base + "Saved privacy.html.";
+      }
+      if (scope === "contact") {
+        return base + "Saved contact.html.";
+      }
+      if (scope === "home") {
+        return base + "Saved index.html." + assetSuffix;
+      }
+      if (includeAssociatedPages) {
+        return base + "Saved index.html, privacy.html, contact.html, and " + associatedCount + " associated page(s)." + assetSuffix;
+      }
+      return base + "Saved index.html, privacy.html, and contact.html." + assetSuffix;
+    }
+
+    if (mode === "download-success") {
+      return "Browser folder-write API unavailable. "
+        + buildScopedDownloadSummary(info.scope, !!info.includeAssociatedPages, parseInt(info.associatedCount, 10) || 0)
+        + String(info.assetSuffix || "");
+    }
+
+    if (mode === "download-fallback") {
+      return "Folder write unavailable (" + String(info.cause || "unknown reason") + "). "
+        + buildScopedDownloadSummary(info.scope, !!info.includeAssociatedPages, parseInt(info.associatedCount, 10) || 0)
+        + String(info.assetSuffix || "");
+    }
+
+    return "Publish status unavailable.";
   }
 
   function validateState() {

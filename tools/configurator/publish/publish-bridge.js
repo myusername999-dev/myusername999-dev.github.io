@@ -148,6 +148,38 @@
     };
   }
 
+  function resolvePublishOutcomeStatus(mode, details) {
+    var info = details || {};
+    var scope = normalizePublishScope(info.scope);
+    var includeAssociatedPages = !!info.includeAssociatedPages;
+    var associatedCount = parseInt(info.associatedCount, 10) || 0;
+    var assetSuffix = String(info.assetSuffix || "");
+    var cause = String(info.cause || "unknown reason");
+    var projectDirectoryName = String(info.projectDirectoryName || "selected folder");
+
+    if (mode === "filesystem-success") {
+      return buildScopedPublishSuccessMessage(
+        projectDirectoryName,
+        scope,
+        includeAssociatedPages,
+        associatedCount,
+        assetSuffix
+      );
+    }
+
+    if (mode === "download-success") {
+      return buildScopedDownloadMessage(scope, includeAssociatedPages, associatedCount, assetSuffix);
+    }
+
+    if (mode === "download-fallback") {
+      return "Folder write unavailable (" + cause + "). "
+        + buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount)
+        + assetSuffix;
+    }
+
+    return "Publish status unavailable.";
+  }
+
   window.ConfiguratorPublishBridge = {
     normalizePublishScope: normalizePublishScope,
     getPublishTargets: getPublishTargets,
@@ -158,6 +190,7 @@
     getPublishExecutionPlan: getPublishExecutionPlan,
     shouldUseDirectoryPublishing: shouldUseDirectoryPublishing,
     resolvePublishFlowContext: resolvePublishFlowContext,
+    resolvePublishOutcomeStatus: resolvePublishOutcomeStatus,
     buildScopedPublishSuccessMessage: buildScopedPublishSuccessMessage,
     buildScopedDownloadSummary: buildScopedDownloadSummary,
     buildScopedDownloadMessage: buildScopedDownloadMessage

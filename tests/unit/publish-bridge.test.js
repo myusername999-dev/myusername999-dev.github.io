@@ -113,4 +113,34 @@ describe("publish bridge", () => {
     expect(flow.plan.scope).toBe("all");
     expect(flow.plan.includeAssociatedPages).toBe(true);
   });
+
+  it("resolves filesystem success publish outcome message", () => {
+    const bridge = loadBridge();
+    const message = bridge.resolvePublishOutcomeStatus("filesystem-success", {
+      projectDirectoryName: "site-root",
+      scope: "all",
+      includeAssociatedPages: true,
+      associatedCount: 2,
+      assetSuffix: " Copied 1 asset."
+    });
+
+    expect(message).toContain("Publish complete in site-root.");
+    expect(message).toContain("2 associated page");
+    expect(message).toContain("Copied 1 asset.");
+  });
+
+  it("resolves download fallback publish outcome message", () => {
+    const bridge = loadBridge();
+    const message = bridge.resolvePublishOutcomeStatus("download-fallback", {
+      scope: "home",
+      includeAssociatedPages: false,
+      associatedCount: 0,
+      cause: "Abort at write-index",
+      assetSuffix: " No new assets copied."
+    });
+
+    expect(message).toContain("Folder write unavailable (Abort at write-index).");
+    expect(message).toContain("Downloaded index.html.");
+    expect(message).toContain("No new assets copied.");
+  });
 });
