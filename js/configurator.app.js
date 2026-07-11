@@ -2677,6 +2677,12 @@
   }
 
   function getAssociatedTabPages(config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.getAssociatedTabPages === "function") {
+      return window.ConfiguratorPreviewBridge.getAssociatedTabPages(config, {
+        isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
+        buildAssociatedTabPageHtml: buildAssociatedTabPageHtml
+      });
+    }
     var descriptors = getAssociatedPageDescriptors(config);
     return descriptors
       .filter(function (descriptor) {

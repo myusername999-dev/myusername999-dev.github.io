@@ -95,12 +95,35 @@
     return list[0] || { value: "home", label: "HOME (index.html)", page: null };
   }
 
+  function getAssociatedTabPages(config, dependencies) {
+    var deps = dependencies || {};
+    var descriptors = getAssociatedPageDescriptors(config);
+    var isPrivacyDescriptor = typeof deps.isPrivacyPolicyDescriptor === "function"
+      ? deps.isPrivacyPolicyDescriptor
+      : isPrivacyPolicyDescriptor;
+    var buildPageHtml = typeof deps.buildAssociatedTabPageHtml === "function"
+      ? deps.buildAssociatedTabPageHtml
+      : null;
+
+    return descriptors
+      .filter(function (descriptor) {
+        return !isPrivacyDescriptor(descriptor);
+      })
+      .map(function (descriptor) {
+        return {
+          fileName: descriptor.fileName,
+          html: buildPageHtml ? buildPageHtml(descriptor, config) : ""
+        };
+      });
+  }
+
   window.ConfiguratorPreviewBridge = {
     normalizePageHref: normalizePageHref,
     getAssociatedPageDescriptors: getAssociatedPageDescriptors,
     isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
     isContactDescriptor: isContactDescriptor,
     isFixedPageFileName: isFixedPageFileName,
-    selectPreviewPage: selectPreviewPage
+    selectPreviewPage: selectPreviewPage,
+    getAssociatedTabPages: getAssociatedTabPages
   };
 })();

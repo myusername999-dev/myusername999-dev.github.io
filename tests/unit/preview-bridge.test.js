@@ -73,4 +73,23 @@ describe("preview bridge", () => {
       }
     ]);
   });
+
+  it("builds associated tab pages and filters privacy descriptors", () => {
+    const bridge = loadBridge();
+    const config = {
+      tabs: [
+        { pageHref: "products", sectionTitle: "Products", sectionText: "Our catalog" },
+        { pageHref: "privacy", sectionTitle: "Privacy" }
+      ],
+      hero: { buttons: [] }
+    };
+
+    const pages = bridge.getAssociatedTabPages(config, {
+      buildAssociatedTabPageHtml: (descriptor) => `html:${descriptor.fileName}`
+    });
+
+    expect(pages).toEqual([
+      { fileName: "products.html", html: "html:products.html" }
+    ]);
+  });
 });
