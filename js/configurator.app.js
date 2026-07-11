@@ -4104,6 +4104,9 @@
   }
 
   function normalizeTextAlign(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeTextAlign === "function") {
+      return window.ConfiguratorStateBridge.normalizeTextAlign(value);
+    }
     var candidate = String(value || "left").toLowerCase();
     if (candidate !== "left" && candidate !== "center" && candidate !== "right") {
       return "left";
@@ -4224,6 +4227,9 @@
   }
 
   function normalizeContactFieldType(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeContactFieldType === "function") {
+      return window.ConfiguratorStateBridge.normalizeContactFieldType(value);
+    }
     var candidate = String(value || "text").toLowerCase();
     if (candidate === "email" || candidate === "textarea" || candidate === "checkbox") {
       return candidate;
@@ -4232,6 +4238,9 @@
   }
 
   function normalizeContactFields(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeContactFields === "function") {
+      return window.ConfiguratorStateBridge.normalizeContactFields(value);
+    }
     var source = Array.isArray(value) ? value : createDefaultContactFields();
     var fields = source
       .map(function (field, index) {

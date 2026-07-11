@@ -48,4 +48,26 @@ describe("state bridge", () => {
     expect(bridge.normalizeHex("#abcdef", "#000000")).toBe("#abcdef");
     expect(bridge.normalizeHex("oops", "#111111")).toBe("#111111");
   });
+
+  it("normalizes text alignment", () => {
+    const bridge = loadBridge();
+    expect(bridge.normalizeTextAlign("center")).toBe("center");
+    expect(bridge.normalizeTextAlign("diagonal")).toBe("left");
+  });
+
+  it("normalizes contact field type", () => {
+    const bridge = loadBridge();
+    expect(bridge.normalizeContactFieldType("email")).toBe("email");
+    expect(bridge.normalizeContactFieldType("unsupported")).toBe("text");
+  });
+
+  it("normalizes contact fields and enforces consent", () => {
+    const bridge = loadBridge();
+    const fields = bridge.normalizeContactFields([
+      { id: "team", label: "Team Name", type: "text", required: false, placeholder: "" }
+    ]);
+
+    expect(fields.some((item) => item.id === "consent")).toBe(true);
+    expect(fields[0].id).toBe("team");
+  });
 });

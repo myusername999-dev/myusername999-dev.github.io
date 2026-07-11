@@ -71,6 +71,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - `tools/configurator/mobile/mobile-bridge.js`
 4. State normalization extraction is active through:
    - `tools/configurator/core/state-bridge.js`
+   - includes page/tab/preview normalization plus text-align and contact-field normalization
 5. Preview descriptor/selection extraction is active through:
    - `tools/configurator/core/preview-bridge.js`
 6. Publish decision extraction now includes:

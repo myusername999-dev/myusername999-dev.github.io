@@ -45,6 +45,68 @@
     return clamp(parsed, 0, 95);
   }
 
+  function normalizeTextAlign(value) {
+    var candidate = String(value || "left").toLowerCase();
+    if (candidate !== "left" && candidate !== "center" && candidate !== "right") {
+      return "left";
+    }
+    return candidate;
+  }
+
+  function slugify(value) {
+    return String(value || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+  }
+
+  function createDefaultContactFields() {
+    return [
+      { id: "first-name", label: "First Name", type: "text", required: true, placeholder: "Your first name" },
+      { id: "last-name", label: "Last Name", type: "text", required: true, placeholder: "Your last name" },
+      { id: "business-email", label: "Business Email", type: "email", required: true, placeholder: "name@company.com" },
+      { id: "company", label: "Company", type: "text", required: true, placeholder: "Company name" },
+      { id: "message", label: "Message", type: "textarea", required: true, placeholder: "How can we help?" },
+      { id: "consent", label: "I agree to the Privacy Policy", type: "checkbox", required: true, placeholder: "" }
+    ];
+  }
+
+  function normalizeContactFieldType(value) {
+    var candidate = String(value || "text").toLowerCase();
+    if (candidate === "email" || candidate === "textarea" || candidate === "checkbox") {
+      return candidate;
+    }
+    return "text";
+  }
+
+  function normalizeContactFields(value) {
+    var source = Array.isArray(value) ? value : createDefaultContactFields();
+    var fields = source
+      .map(function (field, index) {
+        var fallbackLabel = "Field " + (index + 1);
+        var label = String((field && field.label) || fallbackLabel).trim() || fallbackLabel;
+        var type = normalizeContactFieldType(field && field.type);
+        var id = slugify((field && field.id) || label || ("field-" + (index + 1)));
+        return {
+          id: id || ("field-" + (index + 1)),
+          label: label,
+          type: type,
+          required: type === "checkbox" ? true : !!(field && field.required),
+          placeholder: String((field && field.placeholder) || "")
+        };
+      })
+      .filter(function (field) {
+        return !!field.label;
+      });
+
+    if (!fields.some(function (field) { return field.id === "consent"; })) {
+      fields.push({ id: "consent", label: "I agree to the Privacy Policy", type: "checkbox", required: true, placeholder: "" });
+    }
+    return fields;
+  }
+
   function normalizePreviewPageValue(value, options) {
     var candidate = String(value || "home").trim();
     if (!candidate || candidate === "home") {
@@ -72,6 +134,9 @@
     normalizeTabMode: normalizeTabMode,
     normalizePageMode: normalizePageMode,
     normalizeTabImageTransparency: normalizeTabImageTransparency,
-    normalizePreviewPageValue: normalizePreviewPageValue
+    normalizePreviewPageValue: normalizePreviewPageValue,
+    normalizeTextAlign: normalizeTextAlign,
+    normalizeContactFieldType: normalizeContactFieldType,
+    normalizeContactFields: normalizeContactFields
   };
 })();
