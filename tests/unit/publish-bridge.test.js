@@ -68,4 +68,34 @@ describe("publish bridge", () => {
     expect(bridge.shouldPreserveExistingHomeOnPublish(true, '<div class="home-root"></div>')).toBe(false);
     expect(bridge.shouldPreserveExistingHomeOnPublish(false, '<div></div>')).toBe(false);
   });
+
+  it("builds publish execution plan for all scope on desktop", () => {
+    const bridge = loadBridge();
+    const plan = bridge.getPublishExecutionPlan("all", "desktop");
+
+    expect(plan.scope).toBe("all");
+    expect(plan.shouldValidate).toBe(true);
+    expect(plan.includeAssociatedPages).toBe(true);
+    expect(plan.targets).toEqual({
+      home: true,
+      privacy: true,
+      contact: true,
+      assets: true
+    });
+  });
+
+  it("builds publish execution plan for contact scope on mobile", () => {
+    const bridge = loadBridge();
+    const plan = bridge.getPublishExecutionPlan("contact", "mobile");
+
+    expect(plan.scope).toBe("contact");
+    expect(plan.shouldValidate).toBe(false);
+    expect(plan.includeAssociatedPages).toBe(false);
+    expect(plan.targets).toEqual({
+      home: false,
+      privacy: false,
+      contact: true,
+      assets: false
+    });
+  });
 });

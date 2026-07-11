@@ -79,6 +79,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - scoped target derivation (`getPublishTargets`)
    - validation gating (`shouldValidateState`)
    - associated-page inclusion gating (`shouldIncludeAssociatedPages`)
+   - execution planning (`getPublishExecutionPlan`)
    - state validation (`validateStateFromConfig`)
    - preserve-existing-home decision (`shouldPreserveExistingHomeOnPublish`)
 7. Draft preference/script extraction is active through:
@@ -87,7 +88,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
 
 ### 10. Remaining 3-phase plan
 1. Phase 1 (completed): Extract preview-window open decision logic into preview bridge.
-2. Phase 2 (next): Extract publish orchestration core flow from legacy runtime into publish modules while keeping wrapper fallbacks.
+2. Phase 2 (in progress): Extract publish orchestration core flow from legacy runtime into publish modules while keeping wrapper fallbacks.
 3. Phase 3 (final): Extract draft save/load orchestration and finish fallback cleanup with stabilization tests.
 
 ### 8. Troubleshooting

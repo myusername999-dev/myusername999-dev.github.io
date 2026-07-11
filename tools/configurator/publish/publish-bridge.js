@@ -127,6 +127,16 @@
     return "Browser folder-write API unavailable. " + buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount) + suffix;
   }
 
+  function getPublishExecutionPlan(scope, previewDevice) {
+    var publishScope = normalizePublishScope(scope);
+    return {
+      scope: publishScope,
+      targets: getPublishTargets(publishScope),
+      shouldValidate: shouldValidateState(publishScope),
+      includeAssociatedPages: shouldIncludeAssociatedPages(previewDevice, publishScope)
+    };
+  }
+
   window.ConfiguratorPublishBridge = {
     normalizePublishScope: normalizePublishScope,
     getPublishTargets: getPublishTargets,
@@ -134,6 +144,7 @@
     shouldPreserveExistingHomeOnPublish: shouldPreserveExistingHomeOnPublish,
     shouldValidateState: shouldValidateState,
     shouldIncludeAssociatedPages: shouldIncludeAssociatedPages,
+    getPublishExecutionPlan: getPublishExecutionPlan,
     buildScopedPublishSuccessMessage: buildScopedPublishSuccessMessage,
     buildScopedDownloadSummary: buildScopedDownloadSummary,
     buildScopedDownloadMessage: buildScopedDownloadMessage

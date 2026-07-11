@@ -1945,13 +1945,19 @@
   }
 
   async function handlePublish(scope) {
-    var publishScope = normalizePublishScope(scope);
+    var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
+    var publishPlan = null;
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.getPublishExecutionPlan === "function") {
+      publishPlan = window.ConfiguratorPublishBridge.getPublishExecutionPlan(scope, previewDevice);
+    }
+    var publishScope = publishPlan ? publishPlan.scope : normalizePublishScope(scope);
     if (!dom.approval.checked) {
       setStatus("Approve the preview checkbox before publishing.", true);
       return;
     }
 
-    if (shouldValidateStateForPublish(publishScope)) {
+    var shouldValidate = publishPlan ? !!publishPlan.shouldValidate : shouldValidateStateForPublish(publishScope);
+    if (shouldValidate) {
       var validationErrors = validateState();
       if (validationErrors.length) {
         setStatus(validationErrors[0], true);
@@ -1960,9 +1966,8 @@
     }
 
     var publishStage = "start";
-    var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
-    var includeAssociatedPages = shouldIncludeAssociatedPagesForPublish(previewDevice, publishScope);
-    var publishTargets = getPublishTargets(publishScope);
+    var includeAssociatedPages = publishPlan ? !!publishPlan.includeAssociatedPages : shouldIncludeAssociatedPagesForPublish(previewDevice, publishScope);
+    var publishTargets = publishPlan ? publishPlan.targets : getPublishTargets(publishScope);
     var publishHomePage = publishTargets.home;
     var publishPrivacyPage = publishTargets.privacy;
     var publishContactPage = publishTargets.contact;
