@@ -205,6 +205,21 @@
       + ". Re-select your project root folder and try again.";
   }
 
+  function resolvePublishErrorPolicy(errorInfo, stage) {
+    var info = errorInfo || { kind: "failure", reason: "Unknown write error" };
+    var publishStage = String(stage || "unknown");
+    if (info.kind === "abort") {
+      return {
+        action: "fallback-download",
+        fallbackCause: "Abort at " + publishStage + " (" + String(info.reason || "AbortError") + ")"
+      };
+    }
+    return {
+      action: "status-failure",
+      message: buildPublishFailureStatus(publishStage, info.reason || "Unknown write error")
+    };
+  }
+
   window.ConfiguratorPublishBridge = {
     normalizePublishScope: normalizePublishScope,
     getPublishTargets: getPublishTargets,
@@ -219,6 +234,7 @@
     classifyPublishError: classifyPublishError,
     buildPublishAbortStatus: buildPublishAbortStatus,
     buildPublishFailureStatus: buildPublishFailureStatus,
+    resolvePublishErrorPolicy: resolvePublishErrorPolicy,
     buildScopedPublishSuccessMessage: buildScopedPublishSuccessMessage,
     buildScopedDownloadSummary: buildScopedDownloadSummary,
     buildScopedDownloadMessage: buildScopedDownloadMessage

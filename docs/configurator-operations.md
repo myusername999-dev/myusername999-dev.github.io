@@ -83,6 +83,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - transport branching (`resolvePublishFlowContext`, `shouldUseDirectoryPublishing`)
    - outcome status resolution (`resolvePublishOutcomeStatus`)
    - error classification/status composition (`classifyPublishError`, `buildPublishAbortStatus`, `buildPublishFailureStatus`)
+   - fallback trigger policy (`resolvePublishErrorPolicy`)
    - state validation (`validateStateFromConfig`)
    - preserve-existing-home decision (`shouldPreserveExistingHomeOnPublish`)
 7. Draft preference/script extraction is active through:
@@ -91,8 +92,8 @@ These pages route into the same configurator runtime with panel focus, so behavi
 
 ### 10. Remaining 3-phase plan
 1. Phase 1 (completed): Extract preview-window open decision logic into preview bridge.
-2. Phase 2 (in progress): Extract publish orchestration core flow from legacy runtime into publish modules while keeping wrapper fallbacks.
-3. Phase 3 (final): Extract draft save/load orchestration and finish fallback cleanup with stabilization tests.
+2. Phase 2 (completed): Extract publish orchestration core flow from legacy runtime into publish modules while keeping wrapper fallbacks.
+3. Phase 3 (next/final): Extract draft save/load orchestration and finish fallback cleanup with stabilization tests.
 
 ### 8. Troubleshooting
 1. Folder picker does not open:

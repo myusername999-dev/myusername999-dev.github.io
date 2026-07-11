@@ -2099,20 +2099,39 @@
       var publishErrorInfo = window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.classifyPublishError === "function"
         ? window.ConfiguratorPublishBridge.classifyPublishError(error)
         : { kind: (error && error.name === "AbortError") ? "abort" : "failure", reason: String(error && error.message || "Unknown write error") };
-      if (publishErrorInfo.kind === "abort") {
-        var abortReason = publishErrorInfo.reason || "AbortError";
+      var publishErrorPolicy = window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.resolvePublishErrorPolicy === "function"
+        ? window.ConfiguratorPublishBridge.resolvePublishErrorPolicy(publishErrorInfo, publishStage)
+        : null;
+
+      if (publishErrorPolicy && publishErrorPolicy.action === "fallback-download") {
         var abortedPublishPayload = preparePublishPayload(state);
         var abortedHtml = buildPublishedHtml(abortedPublishPayload.config);
-        await publishByDownloadFallback(abortedPublishPayload, abortedHtml, includeAssociatedPages, "Abort at " + publishStage + " (" + abortReason + ")", publishScope);
+        await publishByDownloadFallback(
+          abortedPublishPayload,
+          abortedHtml,
+          includeAssociatedPages,
+          String(publishErrorPolicy.fallbackCause || "Abort at " + publishStage + " (AbortError)"),
+          publishScope
+        );
+        return;
+      }
+
+      if (!publishErrorPolicy && publishErrorInfo.kind === "abort") {
+        var abortReason = publishErrorInfo.reason || "AbortError";
+        var fallbackPublishPayload = preparePublishPayload(state);
+        var fallbackHtml = buildPublishedHtml(fallbackPublishPayload.config);
+        await publishByDownloadFallback(fallbackPublishPayload, fallbackHtml, includeAssociatedPages, "Abort at " + publishStage + " (" + abortReason + ")", publishScope);
         return;
       }
 
       rememberedProjectDirectory = null;
       await clearRememberedProjectDirectory();
       var reason = publishErrorInfo.reason || "Unknown write error";
-      var failureStatus = window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.buildPublishFailureStatus === "function"
-        ? window.ConfiguratorPublishBridge.buildPublishFailureStatus(publishStage, reason)
-        : "Direct folder publish failed at step: " + publishStage + ". " + reason + ". Re-select your project root folder and try again.";
+      var failureStatus = publishErrorPolicy && publishErrorPolicy.action === "status-failure"
+        ? String(publishErrorPolicy.message || "Direct folder publish failed at step: " + publishStage + ". " + reason + ". Re-select your project root folder and try again.")
+        : (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.buildPublishFailureStatus === "function"
+          ? window.ConfiguratorPublishBridge.buildPublishFailureStatus(publishStage, reason)
+          : "Direct folder publish failed at step: " + publishStage + ". " + reason + ". Re-select your project root folder and try again.");
       setStatus(failureStatus, true);
     }
   }

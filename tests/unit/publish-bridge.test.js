@@ -163,4 +163,16 @@ describe("publish bridge", () => {
     expect(failureStatus).toContain("Direct folder publish failed at step: write-assets.");
     expect(failureStatus).toContain("disk unavailable");
   });
+
+  it("resolves publish error policy for abort and failure", () => {
+    const bridge = loadBridge();
+
+    const abortPolicy = bridge.resolvePublishErrorPolicy({ kind: "abort", reason: "user canceled" }, "write-index");
+    const failurePolicy = bridge.resolvePublishErrorPolicy({ kind: "failure", reason: "disk unavailable" }, "write-assets");
+
+    expect(abortPolicy.action).toBe("fallback-download");
+    expect(abortPolicy.fallbackCause).toContain("Abort at write-index (user canceled)");
+    expect(failurePolicy.action).toBe("status-failure");
+    expect(failurePolicy.message).toContain("Direct folder publish failed at step: write-assets.");
+  });
 });
