@@ -360,6 +360,53 @@
     return selectPage(options, selectedValue);
   }
 
+  function resolvePreviewOpenPlan(previewSelection, config, dependencies) {
+    var deps = dependencies || {};
+    var selection = previewSelection || { value: "home", label: "HOME (index.html)", page: null };
+    var isPrivacyDescriptor = typeof deps.isPrivacyPolicyDescriptor === "function"
+      ? deps.isPrivacyPolicyDescriptor
+      : isPrivacyPolicyDescriptor;
+    var isContactDescriptorFn = typeof deps.isContactDescriptor === "function"
+      ? deps.isContactDescriptor
+      : isContactDescriptor;
+    var normalizeHref = typeof deps.normalizePageHref === "function"
+      ? deps.normalizePageHref
+      : normalizePageHref;
+    var buildPrivacyHref = typeof deps.buildPrivacyPreviewHref === "function"
+      ? deps.buildPrivacyPreviewHref
+      : function (href) { return href; };
+    var buildContactHref = typeof deps.buildContactPreviewHref === "function"
+      ? deps.buildContactPreviewHref
+      : function (href) { return href; };
+    var buildPublishedHtml = typeof deps.buildPublishedHtml === "function"
+      ? deps.buildPublishedHtml
+      : function () { return ""; };
+    var buildAssociatedPublishedHtml = typeof deps.buildAssociatedPublishedHtml === "function"
+      ? deps.buildAssociatedPublishedHtml
+      : function () { return ""; };
+
+    if (selection.value !== "home" && (isPrivacyDescriptor(selection.page) || isContactDescriptorFn(selection.page))) {
+      var pageHref = normalizeHref(selection.page && selection.page.fileName)
+        || (isPrivacyDescriptor(selection.page) ? "privacy.html" : "contact.html");
+      var previewHref = isPrivacyDescriptor(selection.page)
+        ? buildPrivacyHref(pageHref, config)
+        : buildContactHref(pageHref, config);
+      return {
+        mode: "url",
+        url: previewHref,
+        label: String(selection.label || "Page")
+      };
+    }
+
+    return {
+      mode: "html",
+      html: selection.value === "home"
+        ? buildPublishedHtml(config)
+        : buildAssociatedPublishedHtml(selection.page, config),
+      label: String(selection.label || "Page")
+    };
+  }
+
   window.ConfiguratorPreviewBridge = {
     normalizePageHref: normalizePageHref,
     getAssociatedPageDescriptors: getAssociatedPageDescriptors,
@@ -375,6 +422,7 @@
     normalizePreviewPageValue: normalizePreviewPageValue,
     normalizePreviewPage: normalizePreviewPage,
     refreshPreviewPageOptions: refreshPreviewPageOptions,
-    resolvePreviewSelection: resolvePreviewSelection
+    resolvePreviewSelection: resolvePreviewSelection,
+    resolvePreviewOpenPlan: resolvePreviewOpenPlan
   };
 })();

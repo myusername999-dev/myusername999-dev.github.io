@@ -74,7 +74,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - includes page/tab/preview normalization, text-align/contact-field normalization, and logo/gallery helper normalization
 5. Preview descriptor/selection extraction is active through:
    - `tools/configurator/core/preview-bridge.js`
-   - includes privacy/contact descriptor detection, fixed-page filename detection, selected preview option resolution, full preview selection resolution from config/value, preview page option construction, preview page value normalization, preview page options refresh orchestration, page href normalization, associated page descriptor derivation, associated tab-page list generation, associated tab-page HTML shell building, associated page markup composition, and associated published-page HTML shell building
+   - includes privacy/contact descriptor detection, fixed-page filename detection, selected preview option resolution, full preview selection resolution from config/value, preview page option construction, preview page value normalization, preview page options refresh orchestration, page href normalization, associated page descriptor derivation, associated tab-page list generation, associated tab-page HTML shell building, associated page markup composition, associated published-page HTML shell building, and preview-window open plan resolution (direct URL vs generated HTML)
 6. Publish decision extraction now includes:
    - scoped target derivation (`getPublishTargets`)
    - validation gating (`shouldValidateState`)
@@ -84,6 +84,11 @@ These pages route into the same configurator runtime with panel focus, so behavi
 7. Draft preference/script extraction is active through:
    - `tools/configurator/draft/draft-bridge.js`
 8. Publish/save/restore deep logic extraction from legacy runtime remains incremental and continues in next phases.
+
+### 10. Remaining 3-phase plan
+1. Phase 1 (completed): Extract preview-window open decision logic into preview bridge.
+2. Phase 2 (next): Extract publish orchestration core flow from legacy runtime into publish modules while keeping wrapper fallbacks.
+3. Phase 3 (final): Extract draft save/load orchestration and finish fallback cleanup with stabilization tests.
 
 ### 8. Troubleshooting
 1. Folder picker does not open:

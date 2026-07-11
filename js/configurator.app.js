@@ -1882,6 +1882,39 @@
 
   function openPreviewWindow() {
     var previewSelection = normalizePreviewPage(state.display && state.display.previewPage, state);
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.resolvePreviewOpenPlan === "function") {
+      var openPlan = window.ConfiguratorPreviewBridge.resolvePreviewOpenPlan(previewSelection, state, {
+        isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
+        isContactDescriptor: isContactDescriptor,
+        normalizePageHref: normalizePageHref,
+        buildPrivacyPreviewHref: buildPrivacyPreviewHref,
+        buildContactPreviewHref: buildContactPreviewHref,
+        buildPublishedHtml: buildPublishedHtml,
+        buildAssociatedPublishedHtml: buildAssociatedPublishedHtml
+      });
+
+      if (openPlan.mode === "url") {
+        var directWindowFromPlan = window.open(openPlan.url, "_blank", "noopener,noreferrer");
+        if (!directWindowFromPlan) {
+          setStatus("Preview popup blocked by browser.", true);
+          return;
+        }
+        setStatus("Opened " + openPlan.label + " preview in new tab.", false);
+        return;
+      }
+
+      var previewWindowFromPlan = window.open("", "_blank", "noopener,noreferrer");
+      if (!previewWindowFromPlan) {
+        setStatus("Preview popup blocked by browser.", true);
+        return;
+      }
+      previewWindowFromPlan.document.open();
+      previewWindowFromPlan.document.write(openPlan.html || "");
+      previewWindowFromPlan.document.close();
+      setStatus("Opened " + openPlan.label + " preview in new tab.", false);
+      return;
+    }
+
     if (previewSelection.value !== "home" && (isPrivacyPolicyDescriptor(previewSelection.page) || isContactDescriptor(previewSelection.page))) {
       var pageHref = normalizePageHref(previewSelection.page && previewSelection.page.fileName)
         || (isPrivacyPolicyDescriptor(previewSelection.page) ? "privacy.html" : "contact.html");

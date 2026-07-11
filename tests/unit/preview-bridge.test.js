@@ -343,4 +343,48 @@ describe("preview bridge", () => {
     expect(selected.value).toBe("home");
     expect(selected.label).toBe("HOME");
   });
+
+  it("resolves preview open plan for fixed pages to direct url", () => {
+    const bridge = loadBridge();
+    const plan = bridge.resolvePreviewOpenPlan(
+      {
+        value: "page:privacy.html",
+        label: "Privacy Policy",
+        page: { fileName: "privacy.html", sectionTitle: "Privacy" }
+      },
+      {},
+      {
+        buildPrivacyPreviewHref: (href) => `privacy-preview:${href}`,
+        buildContactPreviewHref: (href) => `contact-preview:${href}`
+      }
+    );
+
+    expect(plan).toEqual({
+      mode: "url",
+      url: "privacy-preview:privacy.html",
+      label: "Privacy Policy"
+    });
+  });
+
+  it("resolves preview open plan for home to html", () => {
+    const bridge = loadBridge();
+    const plan = bridge.resolvePreviewOpenPlan(
+      {
+        value: "home",
+        label: "HOME (index.html)",
+        page: null
+      },
+      { brand: { name: "VinATech" } },
+      {
+        buildPublishedHtml: () => "<html>home</html>",
+        buildAssociatedPublishedHtml: () => "<html>associated</html>"
+      }
+    );
+
+    expect(plan).toEqual({
+      mode: "html",
+      html: "<html>home</html>",
+      label: "HOME (index.html)"
+    });
+  });
 });
