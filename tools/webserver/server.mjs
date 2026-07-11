@@ -29,6 +29,10 @@ function getContentType(pathName) {
 
 function safeResolvePath(urlPath) {
   const decoded = decodeURIComponent(urlPath.split("?")[0]);
+  const segments = decoded.split(/[\\/]+/).filter(Boolean);
+  if (segments.includes("..")) {
+    return null;
+  }
   const normalized = normalize(decoded).replace(/^([/\\])+/, "");
   const requested = normalized || "tools/configurator/index.html";
   const candidate = resolve(ROOT, requested);

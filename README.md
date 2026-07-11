@@ -6,6 +6,14 @@ Canonical configurator location:
 
 - `tools/configurator/index.html`
 
+Focused module pages:
+
+- `tools/configurator/settings/colors.html`
+- `tools/configurator/settings/fonts.html`
+- `tools/configurator/settings/buttons.html`
+- `tools/configurator/settings/logos.html`
+- `tools/configurator/publish/index.html`
+
 Compatibility entry still exists at `configurator.html` and redirects to the canonical location.
 
 Run local server for testing:

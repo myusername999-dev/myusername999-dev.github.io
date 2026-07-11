@@ -18,6 +18,15 @@
 3. Publish services: `tools/configurator/publish/`
 4. Test suites: `tests/`
 
+### 3.1 Focused module pages
+1. Colors page: `tools/configurator/settings/colors.html`
+2. Fonts page: `tools/configurator/settings/fonts.html`
+3. Buttons page: `tools/configurator/settings/buttons.html`
+4. Logos page: `tools/configurator/settings/logos.html`
+5. Publish page: `tools/configurator/publish/index.html`
+
+These pages route into the same configurator runtime with panel focus, so behavior stays consistent while editing becomes more manageable.
+
 ### 4. Working with page edit modes
 1. Switch editor mode between Home, Privacy, and Contact.
 2. Apply settings in separated sections:
@@ -53,6 +62,11 @@
    - `npm run test:watch`
 3. Test policy:
    - All test code lives under `tests/`.
+
+### 9. Current migration status
+1. Folder structure and module entry pages are in place.
+2. Desktop and mobile baseline tests are passing.
+3. Publish/save/restore deep logic extraction from legacy runtime is incremental and continues in next phases.
 
 ### 8. Troubleshooting
 1. Folder picker does not open:

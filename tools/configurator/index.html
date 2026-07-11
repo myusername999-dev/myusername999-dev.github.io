@@ -16,6 +16,7 @@
         <p class="eyebrow">Design Lab</p>
         <h1>Homepage Configurator</h1>
         <p class="subtitle">Experiment with style, layout, and content before publishing.</p>
+        <p class="hint">Open focused modules: <a href="settings/colors.html">Colors</a> | <a href="settings/fonts.html">Fonts</a> | <a href="settings/buttons.html">Buttons</a> | <a href="settings/logos.html">Logos</a> | <a href="publish/index.html">Publish</a></p>
       </header>
 
       <section class="panel page-mode-panel">
@@ -32,7 +33,7 @@
 
       <div id="homeControls">
 
-      <section class="panel">
+      <section id="panel-branding" class="panel">
         <h2>Branding</h2>
         <p class="hint">Publish writes uploaded images into images/ in your selected project folder.</p>
         <label>Brand Name<input id="brandName" type="text"></label>
@@ -44,7 +45,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section id="panel-colors" class="panel">
         <h2>Colors</h2>
         <p class="hint">Text changes main heading text color. Muted changes softer text like hero subtitle and card description text.</p>
         <div class="color-grid">
@@ -57,7 +58,7 @@
         </div>
       </section>
 
-      <section class="panel logos-panel">
+      <section id="panel-logos" class="panel logos-panel">
         <h2>Logos Studio</h2>
         <p class="hint">Use drag on preview or fine tune with X/Y, size, rotation (1 deg), and transparency.</p>
         <div class="logo-editor-grid">
@@ -92,7 +93,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section id="panel-fonts" class="panel">
         <h2>Typography</h2>
         <label>Font Family
           <select id="fontFamily">
@@ -179,7 +180,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section id="panel-buttons" class="panel">
         <div class="tabs-head">
           <h2>Action Buttons</h2>
           <button id="addButton" type="button">Add Button</button>
@@ -188,7 +189,7 @@
         <div id="buttonsEditor" class="tabs-editor"></div>
       </section>
 
-      <section class="panel">
+      <section id="panel-layout" class="panel">
         <h2>Layout</h2>
         <p class="hint">Drag in preview or fine-tune numerically.</p>
         <p class="hint">Background Focus X/Y chooses which point of the background image stays centered in view. It applies only when a background image is uploaded.</p>
@@ -224,7 +225,7 @@
         </fieldset>
       </section>
 
-      <section class="panel">
+      <section id="panel-tabs" class="panel">
         <div class="tabs-head">
           <h2>Tabs</h2>
           <button id="addTab" type="button">New Tab</button>
@@ -330,7 +331,7 @@
         </section>
       </div>
 
-      <section class="panel actions">
+      <section id="panel-publish" class="panel actions">
         <label class="approval"><input id="approval" type="checkbox"> I approve this preview for publish</label>
         <div class="action-row">
           <button id="previewHome" type="button">Preview HOME</button>
@@ -381,6 +382,7 @@
 
   <footer class="site-footer-fixed">&copy;VINATECH 2026. All rights reserved.</footer>
 
+  <script src="core/focus-panel.js"></script>
   <script src="../../js/configurator.draft.js?v=20260709a"></script>
   <script src="../../js/configurator.app.js?v=20260709a"></script>
 </body>
