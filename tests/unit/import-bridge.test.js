@@ -40,6 +40,68 @@ describe("import bridge", () => {
     expect(result.warnings).toEqual([]);
   });
 
+  it("handles single-quoted attributes and translate3d drag styles", () => {
+    const bridge = loadBridge();
+    const html = [
+      "<html><head><title>VinATech</title></head><body>",
+      "<main style='--preview-bg:#010203;--mobile-nav-x:5px;--mobile-nav-y:6px;font-family:\"Space Grotesk\",sans-serif' class='hero stage home-root'>",
+      "<div style='transform:translate3d(12px, 18px, 0)' data-drag-key='nav'></div>",
+      "<h1>Home Title</h1>",
+      "<p>Home Subtitle</p>",
+      "</main></body></html>"
+    ].join("");
+
+    const result = bridge.extractHomePatch(html);
+
+    expect(result.patch.brand.name).toBe("VinATech");
+    expect(result.patch.layout.nav).toEqual({ x: 12, y: 18 });
+    expect(result.patch.layout.mobileNav).toEqual({ x: 5, y: 6 });
+    expect(result.patch.hero.subtitle).toBe("Home Subtitle");
+  });
+
+  it("extracts contact and privacy metadata from production-like markup", () => {
+    const bridge = loadBridge();
+
+    const contactHtml = [
+      "<div class='contact-root' style='--contact-bg-color:#f8fbfa;--contact-text-color:#18322b;--contact-tab-text-color:#18322b;--contact-tab-bg-color:#ffffff'>",
+      "<nav class='contact-nav transparent-tabs'></nav>",
+      "<section class='contact-hero'><p class='eyebrow'>Get In Touch</p><h1>Contact VINATECH Limited</h1><p>Tell us about your project needs.</p></section>",
+      "<form action='https://formspree.io/f/mrevdeyn' data-subject-prefix='Website Contact Request'>",
+      "<button type='submit'>Send Request</button>",
+      "</form>",
+      "</div>"
+    ].join("");
+
+    const contactResult = bridge.extractContactPatch(contactHtml);
+    expect(contactResult.patch.contact.title).toBe("Contact VINATECH Limited");
+    expect(contactResult.patch.contact.intro).toBe("Tell us about your project needs.");
+    expect(contactResult.patch.contact.submitLabel).toBe("Send Request");
+    expect(contactResult.patch.contact.emailSubject).toBe("Website Contact Request");
+    expect(contactResult.patch.contact.formEndpoint).toBe("https://formspree.io/f/mrevdeyn");
+    expect(contactResult.patch.contact.bgColor).toBe("#f8fbfa");
+    expect(contactResult.patch.contact.topTabsTransparent).toBe(true);
+
+    const privacyHtml = [
+      "<div class='privacy-root' style='--privacy-bg-color:#f8fbfa;--privacy-text-color:#18322b;--privacy-top-band-height:76px;--privacy-card-padding:26px'>",
+      "<nav class='top-nav transparent-tabs'></nav>",
+      "<section class='hero'><p class='eyebrow'>Privacy And Data Protection</p><h1>Privacy Policy</h1><p>Policy intro summary.</p></section>",
+      "<article><h2>1. Scope And Principles</h2><p>Scope paragraph.</p></article>",
+      "<article><h2>2. Data We Process</h2><p>Data paragraph.</p></article>",
+      "</div>"
+    ].join("");
+
+    const privacyResult = bridge.extractPrivacyPatch(privacyHtml);
+    expect(privacyResult.patch.privacy.title).toBe("Privacy Policy");
+    expect(privacyResult.patch.privacy.intro).toBe("Policy intro summary.");
+    expect(privacyResult.patch.privacy.scopeText).toBe("Scope paragraph.");
+    expect(privacyResult.patch.privacy.dataText).toBe("Data paragraph.");
+    expect(privacyResult.patch.privacy.bgColor).toBe("#f8fbfa");
+    expect(privacyResult.patch.privacy.textColor).toBe("#18322b");
+    expect(privacyResult.patch.privacy.topBandHeight).toBe(76);
+    expect(privacyResult.patch.privacy.cardPadding).toBe(26);
+    expect(privacyResult.patch.privacy.topTabsTransparent).toBe(true);
+  });
+
   it("merges nested patches and builds report summary", () => {
     const bridge = loadBridge();
 

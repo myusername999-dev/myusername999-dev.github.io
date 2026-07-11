@@ -1,6 +1,39 @@
 (function () {
   "use strict";
 
+  function escapeRegex(value) {
+    return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function getAttributeValue(attributesText, attributeName) {
+    var re = new RegExp("(?:^|\\s)" + escapeRegex(attributeName) + "\\s*=\\s*(\"([^\"]*)\"|'([^']*)')", "i");
+    var match = String(attributesText || "").match(re);
+    if (!match) {
+      return "";
+    }
+    return String(typeof match[2] === "string" ? match[2] : (match[3] || ""));
+  }
+
+  function getTagAttributeValue(tagText, attributeName) {
+    var attributesText = String(tagText || "").replace(/^<[^\s>]+\s*|\/?\s*>$/g, "");
+    return getAttributeValue(attributesText, attributeName);
+  }
+
+  function findTagByClass(html, className) {
+    var source = String(html || "");
+    var tagRe = /<([a-z0-9-]+)\b([^>]*)>/gi;
+    var match = tagRe.exec(source);
+    while (match) {
+      var attributesText = String(match[2] || "");
+      var classAttr = getAttributeValue(attributesText, "class");
+      if (classAttr && new RegExp("(?:^|\\s)" + escapeRegex(className) + "(?:\\s|$)", "i").test(classAttr)) {
+        return "<" + String(match[1] || "") + attributesText + ">";
+      }
+      match = tagRe.exec(source);
+    }
+    return "";
+  }
+
   function stripTags(value) {
     return String(value || "")
       .replace(/<[^>]*>/g, " ")
@@ -42,13 +75,32 @@
 
   function parseTranslate(styleText) {
     var input = String(styleText || "");
-    var match = input.match(/translate\(\s*(-?\d+(?:\.\d+)?)px\s*,\s*(-?\d+(?:\.\d+)?)px\s*\)/i);
-    if (!match) {
+
+    function toInt(value) {
+      var number = parseFloat(String(value || ""));
+      if (isNaN(number)) {
+        return 0;
+      }
+      return Math.round(number);
+    }
+
+    var match = input.match(/translate(?:3d)?\(\s*(-?\d+(?:\.\d+)?)px\s*,\s*(-?\d+(?:\.\d+)?)px(?:\s*,\s*-?\d+(?:\.\d+)?(?:px)?)?\s*\)/i);
+    if (match) {
+      return {
+        x: toInt(match[1]),
+        y: toInt(match[2])
+      };
+    }
+
+    var xMatch = input.match(/translateX\(\s*(-?\d+(?:\.\d+)?)px\s*\)/i);
+    var yMatch = input.match(/translateY\(\s*(-?\d+(?:\.\d+)?)px\s*\)/i);
+    if (!xMatch && !yMatch) {
       return null;
     }
+
     return {
-      x: parseInt(match[1], 10) || 0,
-      y: parseInt(match[2], 10) || 0
+      x: xMatch ? toInt(xMatch[1]) : 0,
+      y: yMatch ? toInt(yMatch[1]) : 0
     };
   }
 
@@ -66,9 +118,11 @@
   }
 
   function extractRootStyle(html, className) {
-    var re = new RegExp("<[^>]*class=\\\"[^\\\"]*" + className + "[^\\\"]*\\\"[^>]*style=\\\"([^\\\"]*)\\\"", "i");
-    var match = String(html || "").match(re);
-    return match ? String(match[1] || "") : "";
+    var tag = findTagByClass(html, className);
+    if (!tag) {
+      return "";
+    }
+    return String(getTagAttributeValue(tag, "style") || "");
   }
 
   function extractFirstText(html, patterns) {
@@ -86,11 +140,12 @@
   function extractDragPositions(html) {
     var positions = {};
     var source = String(html || "");
-    var regex = /data-drag-key=\"([^\"]+)\"[^>]*style=\"([^\"]*)\"/gi;
+    var regex = /<[^>]+>/gi;
     var match = regex.exec(source);
     while (match) {
-      var dragKey = String(match[1] || "").trim();
-      var styleText = String(match[2] || "");
+      var tagText = String(match[0] || "");
+      var dragKey = String(getTagAttributeValue(tagText, "data-drag-key") || "").trim();
+      var styleText = String(getTagAttributeValue(tagText, "style") || "");
       var translate = parseTranslate(styleText);
       if (dragKey && translate) {
         positions[dragKey] = translate;
@@ -133,6 +188,7 @@
 
     var heroSubtitle = extractFirstText(html, [
       /hero-subtitle-slot[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/i,
+      /<h1[^>]*>[\s\S]*?<\/h1>\s*<p[^>]*>([\s\S]*?)<\/p>/i,
       /<p[^>]*>([\s\S]*?)<\/p>/i
     ]);
     if (heroSubtitle) {
@@ -171,6 +227,33 @@
     if (fontFamilyMatch && fontFamilyMatch[1]) {
       patch.theme.fontFamily = String(fontFamilyMatch[1]);
       importedFields.push("theme.fontFamily");
+    } else {
+      var fallbackFontMatch = String(html || "").match(/family=([^\"'&\s>]+)/i);
+      if (fallbackFontMatch && fallbackFontMatch[1]) {
+        patch.theme.fontFamily = decodeURIComponent(String(fallbackFontMatch[1])).replace(/\+/g, " ").trim();
+        if (patch.theme.fontFamily) {
+          importedFields.push("theme.fontFamily");
+        }
+      }
+    }
+
+    var backgroundMatch = String(html || "").match(/<div[^>]*class=(?:\"[^\"]*home-bg[^\"]*\"|'[^']*home-bg[^']*')[^>]*style=(?:\"([^\"]*)\"|'([^']*)')/i);
+    if (backgroundMatch) {
+      var backgroundStyle = String(backgroundMatch[1] || backgroundMatch[2] || "");
+      var srcMatch = backgroundStyle.match(/background-image\s*:\s*url\((?:'|")?([^'"\)]+)(?:'|")?\)/i);
+      if (srcMatch && srcMatch[1]) {
+        patch.background = patch.background || {};
+        patch.background.src = String(srcMatch[1]);
+        importedFields.push("background.src");
+      }
+      var xMatch = backgroundStyle.match(/background-position\s*:\s*(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%/i);
+      if (xMatch) {
+        patch.background = patch.background || {};
+        patch.background.x = parseInt(xMatch[1], 10) || 0;
+        patch.background.y = parseInt(xMatch[2], 10) || 0;
+        importedFields.push("background.x");
+        importedFields.push("background.y");
+      }
     }
 
     ["nav", "heroTitle", "heroSubtitle", "cta"].forEach(function (key) {
@@ -213,11 +296,18 @@
   }
 
   function extractContactPatch(html) {
+    var rootStyle = extractRootStyle(html, "contact-root");
+    var styleMap = parseStyleDeclarations(rootStyle);
     var title = extractFirstText(html, [
+      /contact-hero[\s\S]*?<h1[^>]*>([\s\S]*?)<\/h1>/i,
       /<h1[^>]*>([\s\S]*?)<\/h1>/i,
       /<title[^>]*>([\s\S]*?)<\/title>/i
     ]);
-    var intro = extractFirstText(html, [/\<p[^>]*\>([\s\S]*?)\<\/p\>/i]);
+    var intro = extractFirstText(html, [
+      /contact-hero[\s\S]*?<h1[^>]*>[\s\S]*?<\/h1>\s*<p[^>]*>([\s\S]*?)<\/p>/i,
+      /<h1[^>]*>[\s\S]*?<\/h1>\s*<p[^>]*>([\s\S]*?)<\/p>/i,
+      /\<p[^>]*\>([\s\S]*?)\<\/p\>/i
+    ]);
     var patch = { contact: {} };
     var importedFields = [];
 
@@ -230,6 +320,65 @@
       importedFields.push("contact.intro");
     }
 
+    var submitButtonMatch = String(html || "").match(/<button[^>]*type=(?:\"submit\"|'submit')[^>]*>([\s\S]*?)<\/button>/i);
+    var submitInputMatch = String(html || "").match(/<input[^>]*type=(?:\"submit\"|'submit')[^>]*value=(?:\"([^\"]*)\"|'([^']*)')/i);
+    var submitLabel = submitButtonMatch && submitButtonMatch[1]
+      ? decodeHtml(stripTags(submitButtonMatch[1]))
+      : String((submitInputMatch && (submitInputMatch[1] || submitInputMatch[2])) || "").trim();
+    if (submitLabel) {
+      patch.contact.submitLabel = submitLabel;
+      importedFields.push("contact.submitLabel");
+    }
+
+    var subjectPrefixMatch = String(html || "").match(/<form[^>]*data-subject-prefix=(?:\"([^\"]*)\"|'([^']*)')/i);
+    var hiddenSubjectMatch = String(html || "").match(/<input[^>]*name=(?:\"_subject\"|'_subject')[^>]*value=(?:\"([^\"]*)\"|'([^']*)')/i);
+    var subjectPrefix = String(
+      (subjectPrefixMatch && (subjectPrefixMatch[1] || subjectPrefixMatch[2]))
+      || (hiddenSubjectMatch && (hiddenSubjectMatch[1] || hiddenSubjectMatch[2]))
+      || ""
+    ).trim();
+    if (subjectPrefix) {
+      patch.contact.emailSubject = String(subjectPrefix).replace(/\s*-\s*Website$/i, "").trim();
+      importedFields.push("contact.emailSubject");
+    }
+
+    var formEndpointMatch = String(html || "").match(/<form[^>]*action=(?:\"([^\"]*)\"|'([^']*)')/i);
+    var formEndpoint = String((formEndpointMatch && (formEndpointMatch[1] || formEndpointMatch[2])) || "").trim();
+    if (formEndpoint) {
+      patch.contact.formEndpoint = formEndpoint;
+      importedFields.push("contact.formEndpoint");
+    }
+
+    var recipientEmailMatch = String(html || "").match(/mailto:([^\"'\s<]+)/i);
+    if (recipientEmailMatch && recipientEmailMatch[1]) {
+      patch.contact.recipientEmail = String(recipientEmailMatch[1]);
+      importedFields.push("contact.recipientEmail");
+    }
+
+    var contactColorMap = {
+      "--contact-bg-color": "bgColor",
+      "--contact-text-color": "textColor",
+      "--contact-muted-color": "mutedColor",
+      "--contact-accent-color": "accentColor",
+      "--contact-surface-color": "surfaceColor",
+      "--contact-line-color": "lineColor",
+      "--contact-tab-text-color": "tabTextColor",
+      "--contact-tab-bg-color": "tabBgColor"
+    };
+    Object.keys(contactColorMap).forEach(function (cssVar) {
+      var value = readCssVarText(styleMap, cssVar);
+      if (!value) {
+        return;
+      }
+      patch.contact[contactColorMap[cssVar]] = value;
+      importedFields.push("contact." + contactColorMap[cssVar]);
+    });
+
+    if (/<nav[^>]*class=(?:\"[^\"]*transparent-tabs[^\"]*\"|'[^']*transparent-tabs[^']*')/i.test(String(html || ""))) {
+      patch.contact.topTabsTransparent = true;
+      importedFields.push("contact.topTabsTransparent");
+    }
+
     return {
       patch: patch,
       importedFields: importedFields,
@@ -238,11 +387,18 @@
   }
 
   function extractPrivacyPatch(html) {
+    var rootStyle = extractRootStyle(html, "privacy-root");
+    var styleMap = parseStyleDeclarations(rootStyle);
     var title = extractFirstText(html, [
+      /<section[^>]*class=(?:\"[^\"]*hero[^\"]*\"|'[^']*hero[^']*')[^>]*>[\s\S]*?<h1[^>]*>([\s\S]*?)<\/h1>/i,
       /<h1[^>]*>([\s\S]*?)<\/h1>/i,
       /<title[^>]*>([\s\S]*?)<\/title>/i
     ]);
-    var intro = extractFirstText(html, [/\<p[^>]*\>([\s\S]*?)\<\/p\>/i]);
+    var intro = extractFirstText(html, [
+      /<section[^>]*class=(?:\"[^\"]*hero[^\"]*\"|'[^']*hero[^']*')[^>]*>[\s\S]*?<h1[^>]*>[\s\S]*?<\/h1>\s*<p[^>]*>([\s\S]*?)<\/p>/i,
+      /<h1[^>]*>[\s\S]*?<\/h1>\s*<p[^>]*>([\s\S]*?)<\/p>/i,
+      /\<p[^>]*\>([\s\S]*?)\<\/p\>/i
+    ]);
     var patch = { privacy: {} };
     var importedFields = [];
 
@@ -253,6 +409,63 @@
     if (intro) {
       patch.privacy.intro = intro;
       importedFields.push("privacy.intro");
+    }
+
+    var policyMap = [
+      { key: "scopeText", label: /scope/i },
+      { key: "dataText", label: /data\s+we\s+process|data/i },
+      { key: "noCookiesText", label: /no\s+cookies/i },
+      { key: "noMarketingText", label: /no\s+marketing/i },
+      { key: "howUseText", label: /how\s+we\s+use|how\s+use/i },
+      { key: "enforcementText", label: /enforcement|compliance|governance/i }
+    ];
+    policyMap.forEach(function (entry) {
+      var re = new RegExp("<h2[^>]*>(?:[\\s\\S]*?)(?:" + entry.label.source + ")(?:[\\s\\S]*?)<\\/h2>[\\s\\S]*?<p[^>]*>([\\s\\S]*?)<\\/p>", "i");
+      var text = extractFirstText(html, [re]);
+      if (!text) {
+        return;
+      }
+      patch.privacy[entry.key] = text;
+      importedFields.push("privacy." + entry.key);
+    });
+
+    var privacyColorMap = {
+      "--privacy-bg-color": "bgColor",
+      "--privacy-text-color": "textColor",
+      "--privacy-muted-color": "mutedColor",
+      "--privacy-line-color": "lineColor",
+      "--privacy-accent-color": "accentColor",
+      "--privacy-card-color": "cardColor",
+      "--privacy-tab-text-color": "tabTextColor",
+      "--privacy-tab-bg-color": "tabBgColor"
+    };
+    Object.keys(privacyColorMap).forEach(function (cssVar) {
+      var value = readCssVarText(styleMap, cssVar);
+      if (!value) {
+        return;
+      }
+      patch.privacy[privacyColorMap[cssVar]] = value;
+      importedFields.push("privacy." + privacyColorMap[cssVar]);
+    });
+
+    var privacyNumberMap = {
+      "--privacy-top-band-height": "topBandHeight",
+      "--privacy-hero-top-padding": "heroTopPadding",
+      "--privacy-card-padding": "cardPadding",
+      "--privacy-layout-gap": "layoutGap"
+    };
+    Object.keys(privacyNumberMap).forEach(function (cssVar) {
+      var number = readCssVarNumber(styleMap, cssVar);
+      if (number === null) {
+        return;
+      }
+      patch.privacy[privacyNumberMap[cssVar]] = number;
+      importedFields.push("privacy." + privacyNumberMap[cssVar]);
+    });
+
+    if (/<nav[^>]*class=(?:\"[^\"]*transparent-tabs[^\"]*\"|'[^']*transparent-tabs[^']*')/i.test(String(html || ""))) {
+      patch.privacy.topTabsTransparent = true;
+      importedFields.push("privacy.topTabsTransparent");
     }
 
     return {
