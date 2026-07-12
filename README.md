@@ -14,8 +14,6 @@ Focused module pages:
 - `tools/configurator/settings/logos.html`
 - `tools/configurator/publish/index.html`
 
-Compatibility entry still exists at `configurator.html` and redirects to the canonical location.
-
 Run local server for testing:
 
 1. `npm install`

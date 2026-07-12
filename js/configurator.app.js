@@ -3763,7 +3763,7 @@
 
     var looksLikeProjectRoot = await verifyProjectRootDirectory(projectDirectory);
     if (!looksLikeProjectRoot) {
-      setStatus("Selected folder '" + selectedName + "' is not your site root. Debug resolve-folder: required files index.html and configurator.html were not found there.", true);
+      setStatus("Selected folder '" + selectedName + "' is not your site root. Debug resolve-folder: required file index.html was not found there.", true);
       return null;
     }
 
@@ -3899,7 +3899,6 @@
   async function verifyProjectRootDirectory(projectDirectory) {
     try {
       await projectDirectory.getFileHandle("index.html");
-      await projectDirectory.getFileHandle("configurator.html");
       return true;
     } catch (_error) {
       return false;
