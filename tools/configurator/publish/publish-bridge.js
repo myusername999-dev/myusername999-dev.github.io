@@ -38,9 +38,6 @@
     if (!String(brand.name || "").trim()) {
       errors.push("Brand name is required.");
     }
-    if (!Array.isArray(hero.buttons) || !hero.buttons.length) {
-      errors.push("At least one action button is required.");
-    }
     if (Array.isArray(hero.buttons) && hero.buttons.some(function (button) {
       return !String((button && button.label) || "").trim();
     })) {

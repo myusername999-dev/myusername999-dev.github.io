@@ -57,4 +57,10 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("function resetColorsDefaults()");
     expect(code).toContain("state.layout.cta.y = 0;");
   });
+
+  it("renders CTA row only when buttons exist", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("var ctaMarkup = buttonLinks");
+    expect(code).toContain("ctaMarkup,");
+  });
 });

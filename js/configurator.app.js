@@ -1474,12 +1474,6 @@
           var action = String(buttonControl.getAttribute("data-action") || "");
           if (action === "remove") {
             state.hero.buttons.splice(index, 1);
-            if (!state.hero.buttons.length) {
-              state.hero.buttons.push({
-                label: "Explore Products",
-                href: "products.html"
-              });
-            }
             refresh("Action button removed.");
             return;
           }
@@ -2390,9 +2384,6 @@
     if (!state.brand.name.trim()) {
       errors.push("Brand name is required.");
     }
-    if (!Array.isArray(state.hero.buttons) || !state.hero.buttons.length) {
-      errors.push("At least one action button is required.");
-    }
     if (Array.isArray(state.hero.buttons) && state.hero.buttons.some(function (button) {
       return !String(button.label || "").trim();
     })) {
@@ -2961,6 +2952,13 @@
           "</a>";
       })
       .join("");
+    var ctaMarkup = buttonLinks
+      ? [
+        "<div class=\"cta-slot\" " + dragAttr("cta", draggable) + transformAttr(config.layout.cta) + ">",
+        buttonLinks,
+        "</div>"
+      ].join("")
+      : "";
 
     var logos = ensureTwoLogos(config.brand)
       .map(function (logo, index) {
@@ -3021,9 +3019,7 @@
       "<section class=\"hero-subtitle-slot\" " + dragAttr("heroSubtitle", draggable) + " style=\"transform:translate(" + config.layout.heroSubtitle.x + "px," + config.layout.heroSubtitle.y + "px);text-align:" + escapeAttr(config.hero.subtitleAlign) + ";" + (config.hero.subtitleFontFamily ? "font-family:'" + escapeAttr(config.hero.subtitleFontFamily) + "','Segoe UI',sans-serif;" : "") + "\">",
       "<p style=\"color:" + escapeAttr(config.hero.subtitleColor) + ";\">" + escapeHtml(config.hero.subtitle) + "</p>",
       "</section>",
-      "<div class=\"cta-slot\" " + dragAttr("cta", draggable) + transformAttr(config.layout.cta) + ">",
-      buttonLinks,
-      "</div>",
+      ctaMarkup,
       homeTabSelectorMarkup,
       "</main>",
       showTabCards ? "<section class=\"generated-sections\">" + cards + "</section>" : "",
@@ -4202,7 +4198,7 @@
     state.hero.titleColor = normalizeHex(state.hero.titleColor, state.theme.textColor);
     state.hero.subtitleColor = normalizeHex(state.hero.subtitleColor, state.theme.mutedColor);
 
-    if (!Array.isArray(state.hero.buttons) || !state.hero.buttons.length) {
+    if (!Array.isArray(state.hero.buttons)) {
       var legacyLabel = String(state.hero.ctaLabel || "Button 1");
       var legacyHref = String(state.hero.ctaHref || "products.html");
       state.hero.buttons = [{
@@ -4230,39 +4226,6 @@
       .filter(function (button) {
         return button.label.length > 0;
       });
-
-    var defaultButtonSeeds = [
-      { label: "Button 1", href: "products.html" },
-      { label: "Button 2", href: "news.html" },
-      { label: "Button 3", href: "privacy.html" },
-      { label: "Button 4", href: "contact.html" }
-    ];
-    while (state.hero.buttons.length < 4) {
-      var seed = defaultButtonSeeds[state.hero.buttons.length] || {
-        label: "Button " + (state.hero.buttons.length + 1),
-        href: "#"
-      };
-      state.hero.buttons.push({
-        label: seed.label,
-        href: seed.href
-      });
-    }
-
-    if (!state.hero.buttons.length) {
-      state.hero.buttons = [{
-        label: "Button 1",
-        href: "products.html"
-      }, {
-        label: "Button 2",
-        href: "news.html"
-      }, {
-        label: "Button 3",
-        href: "privacy.html"
-      }, {
-        label: "Button 4",
-        href: "contact.html"
-      }];
-    }
 
     state.theme.headingSize = clamp(parseInt(state.theme.headingSize, 10) || 64, 32, 120);
     state.theme.bodySize = clamp(parseInt(state.theme.bodySize, 10) || 18, 12, 32);
