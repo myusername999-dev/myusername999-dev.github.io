@@ -332,6 +332,13 @@
     dom.importDraft = document.getElementById("importDraft");
     dom.saveRepoDraft = document.getElementById("saveRepoDraft");
     dom.loadRepoDraft = document.getElementById("loadRepoDraft");
+    dom.importLivePages = document.getElementById("importLivePages");
+    dom.resetVisibleCenter = document.getElementById("resetVisibleCenter");
+    dom.resetLayoutOnly = document.getElementById("resetLayoutOnly");
+    dom.resetFontsOnly = document.getElementById("resetFontsOnly");
+    dom.resetButtonsOnly = document.getElementById("resetButtonsOnly");
+    dom.resetLogosOnly = document.getElementById("resetLogosOnly");
+    dom.resetColorsOnly = document.getElementById("resetColorsOnly");
     dom.resetDraft = document.getElementById("resetDraft");
     dom.approval = document.getElementById("approval");
     dom.statusMessage = document.getElementById("statusMessage");
@@ -852,6 +859,48 @@
     dom.loadRepoDraft.addEventListener("click", function () {
       loadRepoDraft();
     });
+
+    if (dom.importLivePages) {
+      dom.importLivePages.addEventListener("click", function () {
+        importFromLivePages();
+      });
+    }
+
+    if (dom.resetVisibleCenter) {
+      dom.resetVisibleCenter.addEventListener("click", function () {
+        resetHomeToCenterVisibleDefaults();
+      });
+    }
+
+    if (dom.resetLayoutOnly) {
+      dom.resetLayoutOnly.addEventListener("click", function () {
+        resetLayoutDefaults();
+      });
+    }
+
+    if (dom.resetFontsOnly) {
+      dom.resetFontsOnly.addEventListener("click", function () {
+        resetFontsDefaults();
+      });
+    }
+
+    if (dom.resetButtonsOnly) {
+      dom.resetButtonsOnly.addEventListener("click", function () {
+        resetButtonsDefaults();
+      });
+    }
+
+    if (dom.resetLogosOnly) {
+      dom.resetLogosOnly.addEventListener("click", function () {
+        resetLogosDefaults();
+      });
+    }
+
+    if (dom.resetColorsOnly) {
+      dom.resetColorsOnly.addEventListener("click", function () {
+        resetColorsDefaults();
+      });
+    }
 
     dom.importDraft.addEventListener("change", function (event) {
       importDraft(event);
@@ -1734,6 +1783,9 @@
 
     // In mobile preview, render draggable slots from mobile layout coordinates.
     var previewConfig = deepClone(state);
+    if (window.ConfiguratorMobileBridge && typeof window.ConfiguratorMobileBridge.applyMobilePreviewLayout === "function") {
+      return window.ConfiguratorMobileBridge.applyMobilePreviewLayout(previewConfig);
+    }
     previewConfig.layout.nav = Object.assign({}, previewConfig.layout.mobileNav || { x: 0, y: 0 });
     previewConfig.layout.heroTitle = Object.assign({}, previewConfig.layout.mobileHeroTitle || { x: 0, y: 0 });
     previewConfig.layout.heroSubtitle = Object.assign({}, previewConfig.layout.mobileHeroSubtitle || { x: 0, y: 0 });
@@ -1879,6 +1931,39 @@
 
   function openPreviewWindow() {
     var previewSelection = normalizePreviewPage(state.display && state.display.previewPage, state);
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.resolvePreviewOpenPlan === "function") {
+      var openPlan = window.ConfiguratorPreviewBridge.resolvePreviewOpenPlan(previewSelection, state, {
+        isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
+        isContactDescriptor: isContactDescriptor,
+        normalizePageHref: normalizePageHref,
+        buildPrivacyPreviewHref: buildPrivacyPreviewHref,
+        buildContactPreviewHref: buildContactPreviewHref,
+        buildPublishedHtml: buildPublishedHtml,
+        buildAssociatedPublishedHtml: buildAssociatedPublishedHtml
+      });
+
+      if (openPlan.mode === "url") {
+        var directWindowFromPlan = window.open(openPlan.url, "_blank", "noopener,noreferrer");
+        if (!directWindowFromPlan) {
+          setStatus("Preview popup blocked by browser.", true);
+          return;
+        }
+        setStatus("Opened " + openPlan.label + " preview in new tab.", false);
+        return;
+      }
+
+      var previewWindowFromPlan = window.open("", "_blank", "noopener,noreferrer");
+      if (!previewWindowFromPlan) {
+        setStatus("Preview popup blocked by browser.", true);
+        return;
+      }
+      previewWindowFromPlan.document.open();
+      previewWindowFromPlan.document.write(openPlan.html || "");
+      previewWindowFromPlan.document.close();
+      setStatus("Opened " + openPlan.label + " preview in new tab.", false);
+      return;
+    }
+
     if (previewSelection.value !== "home" && (isPrivacyPolicyDescriptor(previewSelection.page) || isContactDescriptor(previewSelection.page))) {
       var pageHref = normalizePageHref(previewSelection.page && previewSelection.page.fileName)
         || (isPrivacyPolicyDescriptor(previewSelection.page) ? "privacy.html" : "contact.html");
@@ -1909,13 +1994,26 @@
   }
 
   async function handlePublish(scope) {
-    var publishScope = normalizePublishScope(scope);
+    var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
+    var hasDirectoryPicker = typeof window.showDirectoryPicker === "function";
+    var publishFlow = null;
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.resolvePublishFlowContext === "function") {
+      publishFlow = window.ConfiguratorPublishBridge.resolvePublishFlowContext(scope, previewDevice, hasDirectoryPicker);
+    }
+    var publishPlan = null;
+    if (publishFlow && publishFlow.plan) {
+      publishPlan = publishFlow.plan;
+    } else if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.getPublishExecutionPlan === "function") {
+      publishPlan = window.ConfiguratorPublishBridge.getPublishExecutionPlan(scope, previewDevice);
+    }
+    var publishScope = publishPlan ? publishPlan.scope : normalizePublishScope(scope);
     if (!dom.approval.checked) {
       setStatus("Approve the preview checkbox before publishing.", true);
       return;
     }
 
-    if (publishScope === "home" || publishScope === "all") {
+    var shouldValidate = publishPlan ? !!publishPlan.shouldValidate : shouldValidateStateForPublish(publishScope);
+    if (shouldValidate) {
       var validationErrors = validateState();
       if (validationErrors.length) {
         setStatus(validationErrors[0], true);
@@ -1924,15 +2022,18 @@
     }
 
     var publishStage = "start";
-    var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
-    var includeAssociatedPages = previewDevice !== "mobile" && publishScope === "all";
-    var publishHomePage = publishScope === "all" || publishScope === "home";
-    var publishPrivacyPage = publishScope === "all" || publishScope === "privacy";
-    var publishContactPage = publishScope === "all" || publishScope === "contact";
-    var publishAssets = publishScope === "all" || publishScope === "home";
+    var includeAssociatedPages = publishPlan ? !!publishPlan.includeAssociatedPages : shouldIncludeAssociatedPagesForPublish(previewDevice, publishScope);
+    var publishTargets = publishPlan ? publishPlan.targets : getPublishTargets(publishScope);
+    var publishHomePage = publishTargets.home;
+    var publishPrivacyPage = publishTargets.privacy;
+    var publishContactPage = publishTargets.contact;
+    var publishAssets = publishTargets.assets;
 
     try {
-      if (typeof window.showDirectoryPicker === "function") {
+      var shouldUseDirectoryTransport = publishFlow
+        ? publishFlow.transport === "filesystem"
+        : hasDirectoryPicker;
+      if (shouldUseDirectoryTransport) {
         publishStage = "resolve-folder";
         var projectDirectory = await resolveProjectDirectoryHandle();
         if (!projectDirectory) {
@@ -1955,10 +2056,6 @@
           var html = buildPublishedHtml(publishPayload.config);
           var privacyHtml = buildPrivacyPolicyPageHtml(publishPayload.config);
           var contactHtml = buildContactPageHtml(publishPayload.config);
-
-          if (publishHomePage && shouldPreserveExistingHomeOnPublish(fallbackHomeHtml)) {
-            html = fallbackHomeHtml;
-          }
 
           var savedAssetsResult = { mode: "none", count: 0 };
           if (publishAssets) {
@@ -1991,11 +2088,23 @@
           if (publishHomePage) {
             localStorage.setItem(LAST_PUBLISHED_KEY, html);
           }
-          setStatus(buildScopedPublishSuccessMessage(projectDirectory, publishScope, includeAssociatedPages, writtenAssociatedPagesCount, savedAssetsResult), false);
+          setStatus(buildPublishOutcomeStatus("filesystem-success", {
+            projectDirectoryName: String(projectDirectory.name || "selected folder"),
+            scope: publishScope,
+            includeAssociatedPages: includeAssociatedPages,
+            associatedCount: writtenAssociatedPagesCount,
+            assetSuffix: assetStatusSuffix(savedAssetsResult)
+          }), false);
           return;
         } catch (writeError) {
-          if (writeError && writeError.name === "AbortError") {
-            setStatus("Publish canceled at step: " + publishStage + ". Click Publish again and allow folder write access.", true);
+          var writeErrorInfo = window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.classifyPublishError === "function"
+            ? window.ConfiguratorPublishBridge.classifyPublishError(writeError)
+            : { kind: (writeError && writeError.name === "AbortError") ? "abort" : "failure", reason: String(writeError && writeError.message || "") };
+          if (writeErrorInfo.kind === "abort") {
+            var abortStatus = window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.buildPublishAbortStatus === "function"
+              ? window.ConfiguratorPublishBridge.buildPublishAbortStatus(publishStage)
+              : "Publish canceled at step: " + publishStage + ". Click Publish again and allow folder write access.";
+            setStatus(abortStatus, true);
             return;
           }
           throw writeError;
@@ -2024,21 +2133,51 @@
       if (publishHomePage) {
         localStorage.setItem(LAST_PUBLISHED_KEY, html);
       }
-      setStatus(buildScopedDownloadMessage(publishScope, includeAssociatedPages, downloadedAssociatedPagesCount, noFsAssetsResult), false);
+      setStatus(buildPublishOutcomeStatus("download-success", {
+        scope: publishScope,
+        includeAssociatedPages: includeAssociatedPages,
+        associatedCount: downloadedAssociatedPagesCount,
+        assetSuffix: assetStatusSuffix(noFsAssetsResult)
+      }), false);
       return;
     } catch (error) {
-      if (error && error.name === "AbortError") {
-        var abortReason = error && error.message ? String(error.message) : "AbortError";
+      var publishErrorInfo = window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.classifyPublishError === "function"
+        ? window.ConfiguratorPublishBridge.classifyPublishError(error)
+        : { kind: (error && error.name === "AbortError") ? "abort" : "failure", reason: String(error && error.message || "Unknown write error") };
+      var publishErrorPolicy = window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.resolvePublishErrorPolicy === "function"
+        ? window.ConfiguratorPublishBridge.resolvePublishErrorPolicy(publishErrorInfo, publishStage)
+        : null;
+
+      if (publishErrorPolicy && publishErrorPolicy.action === "fallback-download") {
         var abortedPublishPayload = preparePublishPayload(state);
         var abortedHtml = buildPublishedHtml(abortedPublishPayload.config);
-        await publishByDownloadFallback(abortedPublishPayload, abortedHtml, includeAssociatedPages, "Abort at " + publishStage + " (" + abortReason + ")", publishScope);
+        await publishByDownloadFallback(
+          abortedPublishPayload,
+          abortedHtml,
+          includeAssociatedPages,
+          String(publishErrorPolicy.fallbackCause || "Abort at " + publishStage + " (AbortError)"),
+          publishScope
+        );
+        return;
+      }
+
+      if (!publishErrorPolicy && publishErrorInfo.kind === "abort") {
+        var abortReason = publishErrorInfo.reason || "AbortError";
+        var fallbackPublishPayload = preparePublishPayload(state);
+        var fallbackHtml = buildPublishedHtml(fallbackPublishPayload.config);
+        await publishByDownloadFallback(fallbackPublishPayload, fallbackHtml, includeAssociatedPages, "Abort at " + publishStage + " (" + abortReason + ")", publishScope);
         return;
       }
 
       rememberedProjectDirectory = null;
       await clearRememberedProjectDirectory();
-      var reason = error && error.message ? String(error.message) : "Unknown write error";
-      setStatus("Direct folder publish failed at step: " + publishStage + ". " + reason + ". Re-select your project root folder and try again.", true);
+      var reason = publishErrorInfo.reason || "Unknown write error";
+      var failureStatus = publishErrorPolicy && publishErrorPolicy.action === "status-failure"
+        ? String(publishErrorPolicy.message || "Direct folder publish failed at step: " + publishStage + ". " + reason + ". Re-select your project root folder and try again.")
+        : (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.buildPublishFailureStatus === "function"
+          ? window.ConfiguratorPublishBridge.buildPublishFailureStatus(publishStage, reason)
+          : "Direct folder publish failed at step: " + publishStage + ". " + reason + ". Re-select your project root folder and try again.");
+      setStatus(failureStatus, true);
     }
   }
 
@@ -2053,6 +2192,9 @@
   }
 
   function shouldPreserveExistingHomeOnPublish(fallbackHomeHtml) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.shouldPreserveExistingHomeOnPublish === "function") {
+      return window.ConfiguratorPublishBridge.shouldPreserveExistingHomeOnPublish(hasUserEditsSinceLoad, fallbackHomeHtml);
+    }
     if (hasUserEditsSinceLoad) {
       return false;
     }
@@ -2065,10 +2207,11 @@
 
   async function publishByDownloadFallback(publishPayload, html, includeAssociatedPages, cause, scope) {
     var publishScope = normalizePublishScope(scope);
-    var publishHomePage = publishScope === "all" || publishScope === "home";
-    var publishPrivacyPage = publishScope === "all" || publishScope === "privacy";
-    var publishContactPage = publishScope === "all" || publishScope === "contact";
-    var publishAssets = publishScope === "all" || publishScope === "home";
+    var publishTargets = getPublishTargets(publishScope);
+    var publishHomePage = publishTargets.home;
+    var publishPrivacyPage = publishTargets.privacy;
+    var publishContactPage = publishTargets.contact;
+    var publishAssets = publishTargets.assets;
 
     if (publishHomePage) {
       downloadFile("index.html", html, "text/html");
@@ -2088,10 +2231,19 @@
       localStorage.setItem(LAST_PUBLISHED_KEY, html);
     }
 
-    setStatus("Folder write unavailable (" + cause + "). " + buildScopedDownloadSummary(publishScope, includeAssociatedPages, associatedCount) + assetStatusSuffix(assetsResult), false);
+    setStatus(buildPublishOutcomeStatus("download-fallback", {
+      scope: publishScope,
+      includeAssociatedPages: includeAssociatedPages,
+      associatedCount: associatedCount,
+      cause: cause,
+      assetSuffix: assetStatusSuffix(assetsResult)
+    }), false);
   }
 
   function normalizePublishScope(scope) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.normalizePublishScope === "function") {
+      return window.ConfiguratorPublishBridge.normalizePublishScope(scope);
+    }
     var candidate = String(scope || "all").toLowerCase();
     if (candidate === "home" || candidate === "privacy" || candidate === "contact" || candidate === "all") {
       return candidate;
@@ -2099,7 +2251,46 @@
     return "all";
   }
 
+  function getPublishTargets(scope) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.getPublishTargets === "function") {
+      return window.ConfiguratorPublishBridge.getPublishTargets(scope);
+    }
+    var publishScope = normalizePublishScope(scope);
+    return {
+      home: publishScope === "all" || publishScope === "home",
+      privacy: publishScope === "all" || publishScope === "privacy",
+      contact: publishScope === "all" || publishScope === "contact",
+      assets: publishScope === "all" || publishScope === "home"
+    };
+  }
+
+  function shouldValidateStateForPublish(scope) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.shouldValidateState === "function") {
+      return window.ConfiguratorPublishBridge.shouldValidateState(scope);
+    }
+    var publishScope = normalizePublishScope(scope);
+    return publishScope === "home" || publishScope === "all";
+  }
+
+  function shouldIncludeAssociatedPagesForPublish(previewDevice, scope) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.shouldIncludeAssociatedPages === "function") {
+      return window.ConfiguratorPublishBridge.shouldIncludeAssociatedPages(previewDevice, scope);
+    }
+    var normalizedDevice = normalizePreviewDevice(previewDevice);
+    var publishScope = normalizePublishScope(scope);
+    return normalizedDevice !== "mobile" && publishScope === "all";
+  }
+
   function buildScopedPublishSuccessMessage(projectDirectory, scope, includeAssociatedPages, associatedCount, assetsResult) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.buildScopedPublishSuccessMessage === "function") {
+      return window.ConfiguratorPublishBridge.buildScopedPublishSuccessMessage(
+        String(projectDirectory.name || "selected folder"),
+        scope,
+        includeAssociatedPages,
+        associatedCount,
+        assetStatusSuffix(assetsResult)
+      );
+    }
     var location = String(projectDirectory.name || "selected folder");
     var base = "Publish complete in " + location + ". ";
     if (scope === "privacy") {
@@ -2118,6 +2309,9 @@
   }
 
   function buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.buildScopedDownloadSummary === "function") {
+      return window.ConfiguratorPublishBridge.buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount);
+    }
     if (scope === "privacy") {
       return "Downloaded privacy.html.";
     }
@@ -2134,10 +2328,64 @@
   }
 
   function buildScopedDownloadMessage(scope, includeAssociatedPages, associatedCount, assetsResult) {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.buildScopedDownloadMessage === "function") {
+      return window.ConfiguratorPublishBridge.buildScopedDownloadMessage(
+        scope,
+        includeAssociatedPages,
+        associatedCount,
+        assetStatusSuffix(assetsResult)
+      );
+    }
     return "Browser folder-write API unavailable. " + buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount) + assetStatusSuffix(assetsResult);
   }
 
+  function buildPublishOutcomeStatus(mode, details) {
+    var info = details || {};
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.resolvePublishOutcomeStatus === "function") {
+      return window.ConfiguratorPublishBridge.resolvePublishOutcomeStatus(mode, info);
+    }
+
+    if (mode === "filesystem-success") {
+      var location = String(info.projectDirectoryName || "selected folder");
+      var scope = normalizePublishScope(info.scope);
+      var includeAssociatedPages = !!info.includeAssociatedPages;
+      var associatedCount = parseInt(info.associatedCount, 10) || 0;
+      var assetSuffix = String(info.assetSuffix || "");
+      var base = "Publish complete in " + location + ". ";
+      if (scope === "privacy") {
+        return base + "Saved privacy.html.";
+      }
+      if (scope === "contact") {
+        return base + "Saved contact.html.";
+      }
+      if (scope === "home") {
+        return base + "Saved index.html." + assetSuffix;
+      }
+      if (includeAssociatedPages) {
+        return base + "Saved index.html, privacy.html, contact.html, and " + associatedCount + " associated page(s)." + assetSuffix;
+      }
+      return base + "Saved index.html, privacy.html, and contact.html." + assetSuffix;
+    }
+
+    if (mode === "download-success") {
+      return "Browser folder-write API unavailable. "
+        + buildScopedDownloadSummary(info.scope, !!info.includeAssociatedPages, parseInt(info.associatedCount, 10) || 0)
+        + String(info.assetSuffix || "");
+    }
+
+    if (mode === "download-fallback") {
+      return "Folder write unavailable (" + String(info.cause || "unknown reason") + "). "
+        + buildScopedDownloadSummary(info.scope, !!info.includeAssociatedPages, parseInt(info.associatedCount, 10) || 0)
+        + String(info.assetSuffix || "");
+    }
+
+    return "Publish status unavailable.";
+  }
+
   function validateState() {
+    if (window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.validateStateFromConfig === "function") {
+      return window.ConfiguratorPublishBridge.validateStateFromConfig(state);
+    }
     var errors = [];
     if (!state.brand.name.trim()) {
       errors.push("Brand name is required.");
@@ -2175,16 +2423,22 @@
 
   async function saveRepoDraft() {
     var scriptContent = buildRepoDraftScript(state);
+    var savePlan = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.resolveDraftSavePlan === "function"
+      ? window.ConfiguratorDraftBridge.resolveDraftSavePlan(!!rememberedProjectDirectory, typeof window.showDirectoryPicker === "function")
+      : {
+        transport: rememberedProjectDirectory || typeof window.showDirectoryPicker === "function" ? "filesystem" : "download",
+        shouldResolveDirectory: !rememberedProjectDirectory && typeof window.showDirectoryPicker === "function"
+      };
 
     try {
-      if (!rememberedProjectDirectory && typeof window.showDirectoryPicker === "function") {
+      if (savePlan.shouldResolveDirectory) {
         var chosenDirectory = await resolveProjectDirectoryHandle();
         if (chosenDirectory) {
           rememberedProjectDirectory = chosenDirectory;
         }
       }
 
-      if (rememberedProjectDirectory && typeof rememberedProjectDirectory.getDirectoryHandle === "function") {
+      if (savePlan.transport === "filesystem" && rememberedProjectDirectory && typeof rememberedProjectDirectory.getDirectoryHandle === "function") {
         var projectDirectory = rememberedProjectDirectory;
         var jsDirectory = await projectDirectory.getDirectoryHandle("js", { create: true });
         var draftHandle = await jsDirectory.getFileHandle("configurator.draft.js", { create: true });
@@ -2193,40 +2447,64 @@
         await writable.close();
 
         window[REPO_DRAFT_GLOBAL_KEY] = deepClone(state);
-        setStatus("Draft saved to " + REPO_DRAFT_FILE_PATH + ". Commit and push this file to reuse the same draft on another PC.", false);
+        var filesystemSaveStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftSaveStatus === "function"
+          ? window.ConfiguratorDraftBridge.buildDraftSaveStatus("filesystem-success", REPO_DRAFT_FILE_PATH)
+          : "Draft saved to " + REPO_DRAFT_FILE_PATH + ". Commit and push this file to reuse the same draft on another PC.";
+        setStatus(filesystemSaveStatus, false);
         return;
       }
 
       downloadFile("configurator.draft.js", scriptContent, "application/javascript");
-      setStatus("Draft downloaded as configurator.draft.js. Put it in js/ (overwrite existing) and commit.", false);
+      var downloadSaveStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftSaveStatus === "function"
+        ? window.ConfiguratorDraftBridge.buildDraftSaveStatus("download-success", REPO_DRAFT_FILE_PATH)
+        : "Draft downloaded as configurator.draft.js. Put it in js/ (overwrite existing) and commit.";
+      setStatus(downloadSaveStatus, false);
     } catch (error) {
-      if (error && error.name === "AbortError") {
+      var draftSaveError = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.classifyDraftSaveError === "function"
+        ? window.ConfiguratorDraftBridge.classifyDraftSaveError(error)
+        : { kind: (error && error.name === "AbortError") ? "abort" : "failure" };
+      if (draftSaveError.kind === "abort") {
         downloadFile("configurator.draft.js", scriptContent, "application/javascript");
-        setStatus("Folder selection canceled. Draft downloaded as configurator.draft.js instead.", false);
+        var abortSaveStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftSaveStatus === "function"
+          ? window.ConfiguratorDraftBridge.buildDraftSaveStatus("download-abort", REPO_DRAFT_FILE_PATH)
+          : "Folder selection canceled. Draft downloaded as configurator.draft.js instead.";
+        setStatus(abortSaveStatus, false);
         return;
       }
 
       rememberedProjectDirectory = null;
       await clearRememberedProjectDirectory();
       downloadFile("configurator.draft.js", scriptContent, "application/javascript");
-      setStatus("Direct folder save was unavailable. Draft downloaded as configurator.draft.js. Put it in js/ and commit.", false);
+      var failureSaveStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftSaveStatus === "function"
+        ? window.ConfiguratorDraftBridge.buildDraftSaveStatus("download-failure", REPO_DRAFT_FILE_PATH)
+        : "Direct folder save was unavailable. Draft downloaded as configurator.draft.js. Put it in js/ and commit.";
+      setStatus(failureSaveStatus, false);
     }
   }
 
   function loadRepoDraft() {
     var repoDraft = getRepoDraft();
     if (!repoDraft) {
-      setStatus("No repo draft found in " + REPO_DRAFT_FILE_PATH + ". Save one first.", true);
+      var missingDraftStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftLoadStatus === "function"
+        ? window.ConfiguratorDraftBridge.buildDraftLoadStatus("missing", REPO_DRAFT_FILE_PATH)
+        : "No repo draft found in " + REPO_DRAFT_FILE_PATH + ". Save one first.";
+      setStatus(missingDraftStatus, true);
       return;
     }
 
     state = mergeConfig(defaultConfig, repoDraft);
     sanitizeState();
-    refresh("Loaded draft from " + REPO_DRAFT_FILE_PATH + ".");
+    var loadedDraftStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftLoadStatus === "function"
+      ? window.ConfiguratorDraftBridge.buildDraftLoadStatus("success", REPO_DRAFT_FILE_PATH)
+      : "Loaded draft from " + REPO_DRAFT_FILE_PATH + ".";
+    refresh(loadedDraftStatus);
     dom.approval.checked = false;
   }
 
   function buildRepoDraftScript(draftState) {
+    if (window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildRepoDraftScript === "function") {
+      return window.ConfiguratorDraftBridge.buildRepoDraftScript(REPO_DRAFT_GLOBAL_KEY, draftState);
+    }
     return [
       "// Auto-generated by Homepage Configurator.",
       "// Commit this file to keep draft settings synced across devices.",
@@ -2236,6 +2514,9 @@
   }
 
   function getRepoDraft() {
+    if (window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.getRepoDraftCandidate === "function") {
+      return window.ConfiguratorDraftBridge.getRepoDraftCandidate(window, REPO_DRAFT_GLOBAL_KEY);
+    }
     var candidate = window[REPO_DRAFT_GLOBAL_KEY];
     if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
       return null;
@@ -2257,13 +2538,224 @@
         var incoming = JSON.parse(String(loadEvent.target.result || "{}"));
         state = mergeConfig(defaultConfig, incoming);
         sanitizeState();
-        refresh("Draft imported.");
+        var importSuccessStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftImportStatus === "function"
+          ? window.ConfiguratorDraftBridge.buildDraftImportStatus(true)
+          : "Draft imported.";
+        refresh(importSuccessStatus);
       } catch (_error) {
-        setStatus("Import failed: invalid JSON.", true);
+        var importFailureStatus = window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.buildDraftImportStatus === "function"
+          ? window.ConfiguratorDraftBridge.buildDraftImportStatus(false)
+          : "Import failed: invalid JSON.";
+        setStatus(importFailureStatus, true);
       }
       dom.importDraft.value = "";
     };
     reader.readAsText(file);
+  }
+
+  async function importFromLivePages() {
+    if (!window.ConfiguratorLiveImporter || typeof window.ConfiguratorLiveImporter.importFromLivePages !== "function") {
+      setStatus("Live importer is unavailable.", true);
+      return;
+    }
+
+    setStatus("Importing from current live pages...", false);
+
+    try {
+      var result = await window.ConfiguratorLiveImporter.importFromLivePages();
+      var mergedState = mergeConfig(state, result && result.patch ? result.patch : {});
+      state = mergeConfig(defaultConfig, mergedState);
+      sanitizeState();
+      var visibilityClamp = clampImportedCtaOffsetsToVisibleArea();
+
+      var report = result && result.report ? result.report : { importedFieldsCount: 0, warningsCount: 0 };
+      var importedCount = parseInt(report.importedFieldsCount, 10) || 0;
+      var warningsCount = parseInt(report.warningsCount, 10) || 0;
+      var statusHints = result && result.diagnostics && Array.isArray(result.diagnostics.statusHints)
+        ? result.diagnostics.statusHints.filter(function (item) {
+          return String(item || "").trim().length > 0;
+        })
+        : [];
+      if (visibilityClamp.notes.length) {
+        statusHints = statusHints.concat(visibilityClamp.notes);
+      }
+      var noteCount = statusHints.length;
+      var remainingWarnings = Math.max(0, warningsCount - noteCount);
+      var statusMessage = String(result && result.message ? result.message : "Live import completed.")
+        + " Imported fields: " + importedCount + "."
+        + (noteCount ? " Notes: " + noteCount + "." : "")
+        + (remainingWarnings ? " Warnings: " + remainingWarnings + "." : "")
+        + (statusHints.length ? " " + statusHints.join(" ") : "");
+
+      refresh(statusMessage);
+      dom.approval.checked = false;
+    } catch (error) {
+      var errorMessage = "Live import failed: " + String(error && error.message || "unknown error") + ".";
+      setStatus(errorMessage, true);
+    }
+  }
+
+  function clampImportedCtaOffsetsToVisibleArea() {
+    var notes = [];
+    if (!state || !state.layout) {
+      return { notes: notes };
+    }
+
+    function clampCtaAxis(target, axis, min, max) {
+      if (!target || typeof target !== "object") {
+        return false;
+      }
+      var current = parseInt(target[axis], 10);
+      if (Number.isNaN(current)) {
+        current = 0;
+      }
+      var bounded = clamp(current, min, max);
+      target[axis] = bounded;
+      return bounded !== current;
+    }
+
+    var desktopAdjusted = false;
+    if (state.layout.cta) {
+      desktopAdjusted = clampCtaAxis(state.layout.cta, "x", -120, 120) || desktopAdjusted;
+      desktopAdjusted = clampCtaAxis(state.layout.cta, "y", -220, 80) || desktopAdjusted;
+    }
+
+    var mobileAdjusted = false;
+    if (state.layout.mobileCta) {
+      mobileAdjusted = clampCtaAxis(state.layout.mobileCta, "x", -80, 80) || mobileAdjusted;
+      mobileAdjusted = clampCtaAxis(state.layout.mobileCta, "y", -140, 160) || mobileAdjusted;
+    }
+
+    if (desktopAdjusted) {
+      notes.push("HOME CTA desktop position was clamped to a safe visible range.");
+    }
+    if (mobileAdjusted) {
+      notes.push("HOME CTA mobile position was clamped to a safe visible range.");
+    }
+
+    return { notes: notes };
+  }
+
+  function resetHomeToCenterVisibleDefaults() {
+    resetLayoutDefaults({ includeMobile: true, forceCenterVisible: true });
+    state.display.previewPage = "home";
+    state.display.pageMode = "home";
+    state.display.previewDevice = "desktop";
+    state.display.mobileHeroCenter = true;
+    refresh("HOME layout reset to centered visible defaults.");
+    dom.approval.checked = false;
+  }
+
+  function resetLayoutDefaults(options) {
+    var defaults = deepClone(defaultConfig);
+    var includeMobile = !(options && options.includeMobile === false);
+    var forceCenterVisible = !!(options && options.forceCenterVisible);
+
+    state.layout.nav = deepClone(defaults.layout.nav);
+    state.layout.hero = deepClone(defaults.layout.hero);
+    state.layout.heroTitle = deepClone(defaults.layout.heroTitle);
+    state.layout.heroSubtitle = deepClone(defaults.layout.heroSubtitle);
+    state.layout.cta = deepClone(defaults.layout.cta);
+    state.background.x = defaults.background.x;
+    state.background.y = defaults.background.y;
+    state.background.transparency = defaults.background.transparency;
+
+    if (includeMobile) {
+      state.layout.mobileNav = deepClone(defaults.layout.mobileNav);
+      state.layout.mobileHeroTitle = deepClone(defaults.layout.mobileHeroTitle);
+      state.layout.mobileHeroSubtitle = deepClone(defaults.layout.mobileHeroSubtitle);
+      state.layout.mobileCta = deepClone(defaults.layout.mobileCta);
+    }
+
+    if (forceCenterVisible) {
+      state.layout.cta.x = 0;
+      state.layout.cta.y = 0;
+      state.layout.nav.x = 0;
+      state.layout.nav.y = 0;
+      state.layout.heroTitle.x = 0;
+      state.layout.heroTitle.y = 0;
+      state.layout.heroSubtitle.x = 0;
+      state.layout.heroSubtitle.y = 0;
+      state.layout.mobileCta.x = 0;
+      state.layout.mobileCta.y = 0;
+      state.layout.mobileNav.x = 0;
+      state.layout.mobileNav.y = 0;
+      state.layout.mobileHeroTitle.x = 0;
+      state.layout.mobileHeroTitle.y = 0;
+      state.layout.mobileHeroSubtitle.x = 0;
+      state.layout.mobileHeroSubtitle.y = 0;
+    }
+
+    if (!forceCenterVisible) {
+      refresh("Layout reset to defaults.");
+      dom.approval.checked = false;
+    }
+  }
+
+  function resetFontsDefaults() {
+    var defaults = deepClone(defaultConfig);
+    state.theme.fontFamily = defaults.theme.fontFamily;
+    state.theme.headingSize = defaults.theme.headingSize;
+    state.theme.bodySize = defaults.theme.bodySize;
+    state.theme.buttonTextSize = defaults.theme.buttonTextSize;
+    state.theme.mobileHeadingSize = defaults.theme.headingSize;
+    state.theme.mobileBodySize = defaults.theme.bodySize;
+    state.hero.titleFontFamily = defaults.hero.titleFontFamily;
+    state.hero.subtitleFontFamily = defaults.hero.subtitleFontFamily;
+    state.hero.titleAlign = defaults.hero.titleAlign;
+    state.hero.subtitleAlign = defaults.hero.subtitleAlign;
+    refresh("Fonts and typography reset to defaults.");
+    dom.approval.checked = false;
+  }
+
+  function resetButtonsDefaults() {
+    var defaults = deepClone(defaultConfig);
+    state.hero.buttons = deepClone(defaults.hero.buttons);
+    state.display.ctaTextOnly = defaults.display.ctaTextOnly;
+    state.theme.buttonTextSize = defaults.theme.buttonTextSize;
+    state.theme.buttonTextColor = defaults.theme.buttonTextColor;
+    state.layout.cta = deepClone(defaults.layout.cta);
+    state.layout.mobileCta = deepClone(defaults.layout.mobileCta);
+    refresh("Buttons reset to defaults.");
+    dom.approval.checked = false;
+  }
+
+  function resetLogosDefaults() {
+    var defaults = deepClone(defaultConfig);
+    state.brand.logos = deepClone(defaults.brand.logos);
+    state.brand.logoSrc = defaults.brand.logoSrc;
+    state.brand.logoFileName = defaults.brand.logoFileName;
+    state.layout.logo = deepClone(defaults.layout.logo);
+    if (dom.logo1Input) {
+      dom.logo1Input.value = "";
+    }
+    if (dom.logo2Input) {
+      dom.logo2Input.value = "";
+    }
+    refresh("Logos reset to defaults.");
+    dom.approval.checked = false;
+  }
+
+  function resetColorsDefaults() {
+    var defaults = deepClone(defaultConfig);
+    state.theme.bgColor = defaults.theme.bgColor;
+    state.theme.textColor = defaults.theme.textColor;
+    state.theme.accentColor = defaults.theme.accentColor;
+    state.theme.mutedColor = defaults.theme.mutedColor;
+    state.theme.surfaceColor = defaults.theme.surfaceColor;
+    state.theme.buttonTextColor = defaults.theme.buttonTextColor;
+    state.hero.titleColor = defaults.hero.titleColor;
+    state.hero.subtitleColor = defaults.hero.subtitleColor;
+    state.display.tabTextColor = defaults.display.tabTextColor;
+    state.display.tabBgColor = defaults.display.tabBgColor;
+    state.privacy.bgColor = defaults.privacy.bgColor;
+    state.privacy.textColor = defaults.privacy.textColor;
+    state.privacy.mutedColor = defaults.privacy.mutedColor;
+    state.privacy.lineColor = defaults.privacy.lineColor;
+    state.privacy.accentColor = defaults.privacy.accentColor;
+    state.privacy.cardColor = defaults.privacy.cardColor;
+    refresh("Colors reset to defaults.");
+    dom.approval.checked = false;
   }
 
   function buildPublishedHtml(config) {
@@ -2294,6 +2786,59 @@
   }
 
   function buildHomeMarkup(config, draggable) {
+        function parseHexColor(hex) {
+          var value = String(hex || "").trim().replace(/^#/, "");
+          if (value.length === 3) {
+            value = value.split("").map(function (part) { return part + part; }).join("");
+          }
+          if (!/^[0-9a-f]{6}$/i.test(value)) {
+            return null;
+          }
+          return {
+            r: parseInt(value.slice(0, 2), 16),
+            g: parseInt(value.slice(2, 4), 16),
+            b: parseInt(value.slice(4, 6), 16)
+          };
+        }
+
+        function relativeLuminance(hex) {
+          var rgb = parseHexColor(hex);
+          if (!rgb) {
+            return 0;
+          }
+          function channel(c) {
+            var ratio = c / 255;
+            return ratio <= 0.03928 ? ratio / 12.92 : Math.pow((ratio + 0.055) / 1.055, 2.4);
+          }
+          var r = channel(rgb.r);
+          var g = channel(rgb.g);
+          var b = channel(rgb.b);
+          return (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+        }
+
+        function contrastRatio(hexA, hexB) {
+          var l1 = relativeLuminance(hexA);
+          var l2 = relativeLuminance(hexB);
+          var high = Math.max(l1, l2);
+          var low = Math.min(l1, l2);
+          return (high + 0.05) / (low + 0.05);
+        }
+
+        function resolveVisibleCtaTextColor() {
+          var desired = normalizeHex(config.theme.buttonTextColor, "#ffffff");
+          var background = normalizeHex(config.theme.bgColor, "#f2f7f3");
+          var hasBackgroundImage = !!(config.background && String(config.background.src || "").trim());
+          if (desired.toLowerCase() === "#ffffff" && hasBackgroundImage) {
+            return desired;
+          }
+          if (contrastRatio(desired, background) >= 2.8) {
+            return desired;
+          }
+          return normalizeHex(config.theme.textColor, "#102822");
+        }
+
+        var visibleCtaTextColor = resolveVisibleCtaTextColor();
+
     var footerMarkup = draggable
       ? ""
       : "<footer class=\"site-footer-fixed\">&copy;VINATECH 2026. All rights reserved.</footer>";
@@ -2304,27 +2849,42 @@
     var showHomeTabSelector = tabMode === "top-and-home";
     var showTabCards = tabMode === "top-and-home";
 
+    function resolvePreviewSiteHref(hrefValue) {
+      var href = String(hrefValue || "").trim();
+      if (!draggable) {
+        return href;
+      }
+      if (!href || href === "#" || href.charAt(0) === "#") {
+        return href;
+      }
+      if (/^(?:[a-z]+:|\/|\.\.\/)/i.test(href)) {
+        return href;
+      }
+      return "../../" + href;
+    }
+
     function resolveTabHref(tab, id) {
       var label = String((tab && tab.label) || "").trim().toLowerCase();
       var sectionTitle = String((tab && tab.sectionTitle) || "").trim().toLowerCase();
       if (label === "home") {
-        return "index.html";
+        return resolvePreviewSiteHref("index.html");
       }
       if (label === "news") {
-        return "news.html";
+        return resolvePreviewSiteHref("news.html");
       }
       if (label.indexOf("contact") >= 0 || sectionTitle.indexOf("contact") >= 0) {
-        return "contact.html";
+        return resolvePreviewSiteHref("contact.html");
       }
       if (label.indexOf("privacy") >= 0 || sectionTitle.indexOf("privacy") >= 0) {
-        return "privacy.html";
+        return resolvePreviewSiteHref("privacy.html");
       }
       var linkedPage = normalizePageHref(tab && tab.pageHref);
-      return linkedPage || (showTabCards ? "#" + id : "#");
+      return linkedPage ? resolvePreviewSiteHref(linkedPage) : (showTabCards ? "#" + id : "#");
     }
 
-    var bgImage = config.background.src
-      ? "style=\"background-image:url('" + escapeAttr(config.background.src) + "');background-size:115% 115%;background-position:" +
+    var backgroundPreviewSrc = resolvePreviewAssetPath(config.background.src, draggable);
+    var bgImage = backgroundPreviewSrc
+      ? "style=\"background-image:url('" + escapeAttr(backgroundPreviewSrc) + "');background-size:115% 115%;background-position:" +
         config.background.x +
         "% " +
         config.background.y +
@@ -2363,12 +2923,13 @@
       .map(function (tab) {
         var id = slugify(tab.sectionId || tab.label || "section");
         var cardStyle = "background:" + escapeAttr(tab.sectionBackgroundColor || config.theme.surfaceColor) + ";";
-        if (tab.sectionBackgroundSrc) {
+        var sectionBgSrc = resolvePreviewAssetPath(tab.sectionBackgroundSrc, draggable);
+        if (sectionBgSrc) {
           var tabBgTransparency = normalizeTabImageTransparency(tab.sectionBackgroundTransparency, 36) / 100;
           var tabBgTopAlpha = tabBgTransparency.toFixed(2);
           var tabBgBottomAlpha = Math.min(0.95, tabBgTransparency + 0.12).toFixed(2);
           cardStyle += "background-image:linear-gradient(180deg, rgba(255,255,255," + tabBgTopAlpha + "), rgba(255,255,255," + tabBgBottomAlpha + ")),url('" +
-            escapeAttr(tab.sectionBackgroundSrc) + "');background-size:cover;background-position:center;";
+            escapeAttr(sectionBgSrc) + "');background-size:cover;background-position:center;";
         }
         var titleStyle = "color:" + escapeAttr(tab.sectionTitleColor || config.theme.textColor) + ";" +
           (tab.sectionFontFamily ? "font-family:'" + escapeAttr(tab.sectionFontFamily) + "','Segoe UI',sans-serif;" : "");
@@ -2388,11 +2949,12 @@
     var buttonLinks = config.hero.buttons
       .map(function (button) {
         var href = String(button.href || "#").trim() || "#";
+        href = resolvePreviewSiteHref(href);
         var previewAttrs = draggable ? " target=\"_blank\" rel=\"noreferrer\"" : "";
         var buttonStyle = "background:" + escapeAttr(config.theme.accentColor) + ";color:" +
           escapeAttr(config.theme.buttonTextColor) + ";font-size:var(--preview-button-size);";
         if (ctaTextOnly) {
-          buttonStyle += "background:transparent;border-color:transparent;box-shadow:none;";
+          buttonStyle += "background:transparent;border-color:transparent;box-shadow:none;color:" + escapeAttr(visibleCtaTextColor) + ";";
         }
         return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + buttonStyle + "\">" +
           escapeHtml(button.label) +
@@ -2403,8 +2965,9 @@
     var logos = ensureTwoLogos(config.brand)
       .map(function (logo, index) {
         var label = index === 0 ? config.brand.name : "Logo 2";
-        var inner = logo.src
-          ? "<img src=\"" + escapeAttr(logo.src) + "\" alt=\"" + escapeAttr(label) + "\">"
+        var logoSrc = resolvePreviewAssetPath(logo.src, draggable);
+        var inner = logoSrc
+          ? "<img src=\"" + escapeAttr(logoSrc) + "\" alt=\"" + escapeAttr(label) + "\">"
           : "<span class=\"logo-fallback\">" + escapeHtml(label) + "</span>";
         return "<div class=\"logo-slot\" " + logoDragAttr(index, draggable) + logoStyleAttr(logo) + ">" + inner + "</div>";
       })
@@ -2607,6 +3170,12 @@
   }
 
   function getAssociatedTabPages(config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.getAssociatedTabPages === "function") {
+      return window.ConfiguratorPreviewBridge.getAssociatedTabPages(config, {
+        isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
+        buildAssociatedTabPageHtml: buildAssociatedTabPageHtml
+      });
+    }
     var descriptors = getAssociatedPageDescriptors(config);
     return descriptors
       .filter(function (descriptor) {
@@ -2621,6 +3190,9 @@
   }
 
   function getAssociatedPageDescriptors(config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.getAssociatedPageDescriptors === "function") {
+      return window.ConfiguratorPreviewBridge.getAssociatedPageDescriptors(config);
+    }
     var pagesByFile = {};
 
     function addPageFromHref(href, titleFallback, subtitleFallback) {
@@ -2666,6 +3238,17 @@
   }
 
   function buildAssociatedTabPageHtml(tab, config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.buildAssociatedTabPageHtml === "function") {
+      return window.ConfiguratorPreviewBridge.buildAssociatedTabPageHtml(tab, config, {
+        isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
+        isContactDescriptor: isContactDescriptor,
+        buildPrivacyPolicyPageHtml: buildPrivacyPolicyPageHtml,
+        buildContactPageHtml: buildContactPageHtml,
+        buildAssociatedPageMarkup: buildAssociatedPageMarkup,
+        getAllFontsHref: getAllFontsHref,
+        escapeHtml: escapeHtml
+      });
+    }
     if (isPrivacyPolicyDescriptor(tab)) {
       return buildPrivacyPolicyPageHtml(config);
     }
@@ -2701,6 +3284,18 @@
   }
 
   function buildAssociatedPageMarkup(tab, config, draggable) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.buildAssociatedPageMarkup === "function") {
+      return window.ConfiguratorPreviewBridge.buildAssociatedPageMarkup(tab, config, draggable, {
+        isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
+        isContactDescriptor: isContactDescriptor,
+        normalizePageHref: normalizePageHref,
+        buildExternalFilePreviewMarkup: buildExternalFilePreviewMarkup,
+        buildPrivacyPreviewHref: buildPrivacyPreviewHref,
+        buildContactPreviewHref: buildContactPreviewHref,
+        deepClone: deepClone,
+        buildHomeMarkup: buildHomeMarkup
+      });
+    }
     if (isPrivacyPolicyDescriptor(tab)) {
       var privacyHref = normalizePageHref(tab && tab.fileName) || "privacy.html";
       return buildExternalFilePreviewMarkup(buildPrivacyPreviewHref(privacyHref, config));
@@ -2717,6 +3312,17 @@
   }
 
   function buildAssociatedPublishedHtml(tab, config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.buildAssociatedPublishedHtml === "function") {
+      return window.ConfiguratorPreviewBridge.buildAssociatedPublishedHtml(tab, config, {
+        isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
+        isContactDescriptor: isContactDescriptor,
+        buildPrivacyPolicyPageHtml: buildPrivacyPolicyPageHtml,
+        buildContactPageHtml: buildContactPageHtml,
+        buildAssociatedPageMarkup: buildAssociatedPageMarkup,
+        getAllFontsHref: getAllFontsHref,
+        escapeHtml: escapeHtml
+      });
+    }
     if (isPrivacyPolicyDescriptor(tab)) {
       return buildPrivacyPolicyPageHtml(config);
     }
@@ -2756,6 +3362,27 @@
     }
 
     var previousPreviewPage = state.display && state.display.previewPage;
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.refreshPreviewPageOptions === "function") {
+      var refreshed = window.ConfiguratorPreviewBridge.refreshPreviewPageOptions(previousPreviewPage, state, {
+        getPreviewPageOptions: getPreviewPageOptions,
+        normalizePreviewPageValue: function (value, options) {
+          if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizePreviewPageValue === "function") {
+            return window.ConfiguratorStateBridge.normalizePreviewPageValue(value, options);
+          }
+          return window.ConfiguratorPreviewBridge.normalizePreviewPageValue(value, options);
+        },
+        escapeAttr: escapeAttr,
+        escapeHtml: escapeHtml
+      });
+      dom.previewPage.innerHTML = refreshed.optionsHtml;
+      state.display.previewPage = refreshed.selectedValue;
+      dom.previewPage.value = state.display.previewPage;
+      if (refreshed.changed) {
+        saveState();
+      }
+      return;
+    }
+
     var options = getPreviewPageOptions(state);
     dom.previewPage.innerHTML = options
       .map(function (option) {
@@ -2771,6 +3398,12 @@
   }
 
   function getPreviewPageOptions(config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.getPreviewPageOptions === "function") {
+      return window.ConfiguratorPreviewBridge.getPreviewPageOptions(config, {
+        getAssociatedPageDescriptors: getAssociatedPageDescriptors,
+        isFixedPageFileName: isFixedPageFileName
+      });
+    }
     var options = [{
       value: "home",
       label: "HOME (index.html)",
@@ -2817,7 +3450,27 @@
   }
 
   function normalizePreviewPage(value, config) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.resolvePreviewSelection === "function") {
+      return window.ConfiguratorPreviewBridge.resolvePreviewSelection(value, config, {
+        getPreviewPageOptions: getPreviewPageOptions,
+        normalizePreviewPageValue: function (candidateValue, options) {
+          if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizePreviewPageValue === "function") {
+            return window.ConfiguratorStateBridge.normalizePreviewPageValue(candidateValue, options);
+          }
+          return window.ConfiguratorPreviewBridge.normalizePreviewPageValue(candidateValue, options);
+        },
+        selectPreviewPage: selectPreviewPage
+      });
+    }
     var options = getPreviewPageOptions(config);
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.normalizePreviewPage === "function") {
+      return window.ConfiguratorPreviewBridge.normalizePreviewPage(value, options, {
+        normalizePreviewPageValue: function (candidateValue) {
+          return normalizePreviewPageValue(candidateValue, config);
+        },
+        selectPreviewPage: selectPreviewPage
+      });
+    }
     var selectedValue = normalizePreviewPageValue(value, config);
     for (var index = 0; index < options.length; index += 1) {
       if (options[index].value === selectedValue) {
@@ -2827,19 +3480,42 @@
     return options[0];
   }
 
+  function selectPreviewPage(options, selectedValue) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.selectPreviewPage === "function") {
+      return window.ConfiguratorPreviewBridge.selectPreviewPage(options, selectedValue);
+    }
+    var list = Array.isArray(options) ? options : [];
+    var target = String(selectedValue || "");
+    for (var index = 0; index < list.length; index += 1) {
+      if (String(list[index].value || "") === target) {
+        return list[index];
+      }
+    }
+    return list[0] || { value: "home", label: "HOME", page: null };
+  }
+
   function isPrivacyPolicyDescriptor(tab) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.isPrivacyPolicyDescriptor === "function") {
+      return window.ConfiguratorPreviewBridge.isPrivacyPolicyDescriptor(tab);
+    }
     var fileName = String((tab && tab.fileName) || (tab && tab.pageHref) || "").toLowerCase();
     var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "").toLowerCase();
     return fileName === "privacy.html" || title.indexOf("privacy") >= 0;
   }
 
   function isContactDescriptor(tab) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.isContactDescriptor === "function") {
+      return window.ConfiguratorPreviewBridge.isContactDescriptor(tab);
+    }
     var fileName = String((tab && tab.fileName) || (tab && tab.pageHref) || "").toLowerCase();
     var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "").toLowerCase();
     return fileName === "contact.html" || title === "contact" || title.indexOf("contact") === 0;
   }
 
   function isFixedPageFileName(fileName) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.isFixedPageFileName === "function") {
+      return window.ConfiguratorPreviewBridge.isFixedPageFileName(fileName);
+    }
     var normalized = String(fileName || "").toLowerCase();
     return normalized === "privacy.html" || normalized === "contact.html";
   }
@@ -3073,7 +3749,6 @@
       projectDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
     } catch (pickerError) {
       if (pickerError && pickerError.name === "AbortError") {
-        setStatus("Debug resolve-folder: folder picker was canceled or blocked before selection. If no picker appeared, run configurator in a top-level tab on http://localhost and try again.", true);
         return null;
       }
       throw pickerError;
@@ -3777,6 +4452,9 @@
   }
 
   function shouldPreferRepoDraft(localCandidate, repoCandidate) {
+    if (window.ConfiguratorDraftBridge && typeof window.ConfiguratorDraftBridge.shouldPreferRepoDraft === "function") {
+      return window.ConfiguratorDraftBridge.shouldPreferRepoDraft(localCandidate, repoCandidate);
+    }
     var localBrand = (localCandidate && localCandidate.brand) || {};
     var repoBrand = (repoCandidate && repoCandidate.brand) || {};
 
@@ -3936,6 +4614,9 @@
   }
 
   function normalizePageHref(value) {
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.normalizePageHref === "function") {
+      return window.ConfiguratorPreviewBridge.normalizePageHref(value);
+    }
     var href = String(value || "").trim();
     if (!href) {
       return "";
@@ -3969,11 +4650,23 @@
     return input + separator + encodedKey + "=" + encodedValue + hash;
   }
 
+  function resolvePreviewPageHref(fileHref) {
+    var href = String(fileHref || "").trim();
+    if (!href) {
+      return href;
+    }
+    if (/^(?:[a-z]+:|\/|\.\.\/)/i.test(href)) {
+      return href;
+    }
+    return "../../" + href;
+  }
+
   function buildPrivacyPreviewHref(fileHref, config) {
     var display = (config && config.display) || {};
     var privacy = (config && config.privacy) || {};
     var previewDevice = normalizePreviewDevice(config && config.display && config.display.previewDevice);
-    var href = addQueryParam(fileHref, "configuratorPreview", "1");
+    var href = resolvePreviewPageHref(fileHref);
+    href = addQueryParam(href, "configuratorPreview", "1");
     href = addQueryParam(href, "pdevice", previewDevice);
     href = addQueryParam(href, "pbg", normalizeHex(privacy.bgColor, "#f8fbfa"));
     href = addQueryParam(href, "ptxt", normalizeHex(privacy.textColor, "#18322b"));
@@ -3997,7 +4690,8 @@
     var privacy = (config && config.privacy) || {};
     var contact = (config && config.contact) || {};
     var previewDevice = normalizePreviewDevice(config && config.display && config.display.previewDevice);
-    var href = addQueryParam(fileHref, "configuratorPreview", "1");
+    var href = resolvePreviewPageHref(fileHref);
+    href = addQueryParam(href, "configuratorPreview", "1");
     href = addQueryParam(href, "pdevice", previewDevice);
     href = addQueryParam(href, "ctitle", String(contact.title || ""));
     href = addQueryParam(href, "cintro", String(contact.intro || ""));
@@ -4034,6 +4728,9 @@
   }
 
   function normalizeTextAlign(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeTextAlign === "function") {
+      return window.ConfiguratorStateBridge.normalizeTextAlign(value);
+    }
     var candidate = String(value || "left").toLowerCase();
     if (candidate !== "left" && candidate !== "center" && candidate !== "right") {
       return "left";
@@ -4042,11 +4739,34 @@
   }
 
   function normalizeImageSrc(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeImageSrc === "function") {
+      return window.ConfiguratorStateBridge.normalizeImageSrc(value);
+    }
     var src = String(value || "").trim();
     return src;
   }
 
+  function resolvePreviewAssetPath(src, draggable) {
+    var value = String(src || "").trim();
+    if (!value) {
+      return "";
+    }
+    if (!draggable) {
+      return value;
+    }
+    if (/^(?:https?:|data:|blob:|\/|\.\.\/)/i.test(value)) {
+      return value;
+    }
+    if (/^images\//i.test(value)) {
+      return "../../" + value;
+    }
+    return value;
+  }
+
   function sanitizeFileName(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.sanitizeFileName === "function") {
+      return window.ConfiguratorStateBridge.sanitizeFileName(value);
+    }
     var name = String(value || "").trim();
     if (!name) {
       return "";
@@ -4055,6 +4775,9 @@
   }
 
   function createDefaultLogo(index) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.createDefaultLogo === "function") {
+      return window.ConfiguratorStateBridge.createDefaultLogo(index);
+    }
     return {
       src: "",
       fileName: "",
@@ -4067,10 +4790,16 @@
   }
 
   function createDefaultLogos() {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.createDefaultLogos === "function") {
+      return window.ConfiguratorStateBridge.createDefaultLogos();
+    }
     return [createDefaultLogo(0), createDefaultLogo(1)];
   }
 
   function normalizeRotation(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeRotation === "function") {
+      return window.ConfiguratorStateBridge.normalizeRotation(value);
+    }
     var parsed = parseInt(value, 10);
     if (Number.isNaN(parsed)) {
       parsed = 0;
@@ -4079,6 +4808,9 @@
   }
 
   function normalizeBrandLogos(value, legacyPrimary) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeBrandLogos === "function") {
+      return window.ConfiguratorStateBridge.normalizeBrandLogos(value, legacyPrimary);
+    }
     var defaults = createDefaultLogos();
     var legacy = legacyPrimary || {};
     var source = Array.isArray(value) ? value.slice(0, 2) : [];
@@ -4111,6 +4843,9 @@
   }
 
   function ensureTwoLogos(brand) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.ensureTwoLogos === "function") {
+      return window.ConfiguratorStateBridge.ensureTwoLogos(brand);
+    }
     var legacy = {
       src: brand.logoSrc,
       fileName: brand.logoFileName,
@@ -4154,6 +4889,9 @@
   }
 
   function normalizeContactFieldType(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeContactFieldType === "function") {
+      return window.ConfiguratorStateBridge.normalizeContactFieldType(value);
+    }
     var candidate = String(value || "text").toLowerCase();
     if (candidate === "email" || candidate === "textarea" || candidate === "checkbox") {
       return candidate;
@@ -4162,6 +4900,9 @@
   }
 
   function normalizeContactFields(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeContactFields === "function") {
+      return window.ConfiguratorStateBridge.normalizeContactFields(value);
+    }
     var source = Array.isArray(value) ? value : createDefaultContactFields();
     var fields = source
       .map(function (field, index) {
@@ -4198,6 +4939,9 @@
   }
 
   function normalizeGalleryImages(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeGalleryImages === "function") {
+      return window.ConfiguratorStateBridge.normalizeGalleryImages(value);
+    }
     var items = Array.isArray(value) ? value.slice(0, 4) : [];
     while (items.length < 4) {
       items.push({ src: "", fileName: "" });
@@ -4215,22 +4959,20 @@
   }
 
   function normalizeGalleryLayout(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeGalleryLayout === "function") {
+      return window.ConfiguratorStateBridge.normalizeGalleryLayout(value);
+    }
     var candidate = String(value || "").trim().toLowerCase();
     if (candidate === "vertical" || candidate === "split" || candidate === "horizontal") {
-      return candidate;
-    }
-
-    function normalizeTextAlign(value) {
-      var candidate = String(value || "left").toLowerCase();
-      if (candidate !== "left" && candidate !== "center" && candidate !== "right") {
-        return "left";
-      }
       return candidate;
     }
     return "horizontal";
   }
 
   function normalizeTabMode(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeTabMode === "function") {
+      return window.ConfiguratorStateBridge.normalizeTabMode(value);
+    }
     var mode = String(value || "").trim().toLowerCase();
     if (mode === "top-only" || mode === "top-and-home") {
       return mode;
@@ -4239,6 +4981,9 @@
   }
 
   function normalizePageMode(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizePageMode === "function") {
+      return window.ConfiguratorStateBridge.normalizePageMode(value);
+    }
     var mode = String(value || "home").trim().toLowerCase();
     if (mode === "privacy" || mode === "contact") {
       return mode;
@@ -4247,10 +4992,21 @@
   }
 
   function normalizePreviewDevice(value) {
+    if (window.ConfiguratorMobileBridge && typeof window.ConfiguratorMobileBridge.normalizePreviewDevice === "function") {
+      return window.ConfiguratorMobileBridge.normalizePreviewDevice(value);
+    }
     return String(value || "desktop").trim().toLowerCase() === "mobile" ? "mobile" : "desktop";
   }
 
   function normalizePreviewPageValue(value, config) {
+    var options = getPreviewPageOptions(config || state);
+    if (window.ConfiguratorPreviewBridge && typeof window.ConfiguratorPreviewBridge.normalizePreviewPageValue === "function") {
+      return window.ConfiguratorPreviewBridge.normalizePreviewPageValue(value, options);
+    }
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizePreviewPageValue === "function") {
+      return window.ConfiguratorStateBridge.normalizePreviewPageValue(value, options);
+    }
+
     var candidate = String(value || "home").trim();
     if (!candidate || candidate === "home") {
       return "home";
@@ -4260,7 +5016,6 @@
       return "home";
     }
 
-    var options = getPreviewPageOptions(config || state);
     for (var index = 0; index < options.length; index += 1) {
       if (options[index].value === candidate) {
         return candidate;
@@ -4271,6 +5026,9 @@
   }
 
   function normalizeTabImageTransparency(value, fallbackValue) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeTabImageTransparency === "function") {
+      return window.ConfiguratorStateBridge.normalizeTabImageTransparency(value, fallbackValue);
+    }
     var parsed = parseInt(value, 10);
     if (Number.isNaN(parsed)) {
       return clamp(fallbackValue, 0, 95);
@@ -4376,6 +5134,9 @@
   }
 
   function clamp(value, min, max) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.clamp === "function") {
+      return window.ConfiguratorStateBridge.clamp(value, min, max);
+    }
     return Math.max(min, Math.min(max, value));
   }
 
@@ -4389,6 +5150,9 @@
   }
 
   function normalizeHex(value, fallback) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeHex === "function") {
+      return window.ConfiguratorStateBridge.normalizeHex(value, fallback);
+    }
     var raw = String(value || "").trim();
     if (/^#[0-9a-fA-F]{6}$/.test(raw)) {
       return raw;
