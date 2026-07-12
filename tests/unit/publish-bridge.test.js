@@ -62,6 +62,17 @@ describe("publish bridge", () => {
     expect(bridge.validateStateFromConfig(invalid).length).toBeGreaterThan(0);
   });
 
+  it("allows publish when all action buttons are removed", () => {
+    const bridge = loadBridge();
+    const noButtons = {
+      brand: { name: "VinATech" },
+      hero: { buttons: [] },
+      tabs: [{ sectionId: "home" }]
+    };
+
+    expect(bridge.validateStateFromConfig(noButtons)).toEqual([]);
+  });
+
   it("does not preserve existing home fallback to keep publish aligned with preview", () => {
     const bridge = loadBridge();
     expect(bridge.shouldPreserveExistingHomeOnPublish(false, '<div class="home-root"></div>')).toBe(false);
