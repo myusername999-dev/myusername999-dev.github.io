@@ -66,14 +66,7 @@
   }
 
   function shouldPreserveExistingHomeOnPublish(hasUserEditsSinceLoad, fallbackHomeHtml) {
-    if (hasUserEditsSinceLoad) {
-      return false;
-    }
-    var html = String(fallbackHomeHtml || "");
-    if (!html) {
-      return false;
-    }
-    return html.indexOf('class="home-root"') >= 0;
+    return false;
   }
 
   function shouldValidateState(scope) {
@@ -172,7 +165,7 @@
     }
 
     if (mode === "download-fallback") {
-      return "Folder write unavailable (" + cause + "). "
+      return "Publish completed via download fallback (" + cause + "). "
         + buildScopedDownloadSummary(scope, includeAssociatedPages, associatedCount)
         + assetSuffix;
     }

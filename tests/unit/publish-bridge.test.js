@@ -62,9 +62,9 @@ describe("publish bridge", () => {
     expect(bridge.validateStateFromConfig(invalid).length).toBeGreaterThan(0);
   });
 
-  it("preserves existing home only when there are no edits and fallback has home root", () => {
+  it("does not preserve existing home fallback to keep publish aligned with preview", () => {
     const bridge = loadBridge();
-    expect(bridge.shouldPreserveExistingHomeOnPublish(false, '<div class="home-root"></div>')).toBe(true);
+    expect(bridge.shouldPreserveExistingHomeOnPublish(false, '<div class="home-root"></div>')).toBe(false);
     expect(bridge.shouldPreserveExistingHomeOnPublish(true, '<div class="home-root"></div>')).toBe(false);
     expect(bridge.shouldPreserveExistingHomeOnPublish(false, '<div></div>')).toBe(false);
   });
@@ -139,7 +139,7 @@ describe("publish bridge", () => {
       assetSuffix: " No new assets copied."
     });
 
-    expect(message).toContain("Folder write unavailable (Abort at write-index).");
+    expect(message).toContain("Publish completed via download fallback (Abort at write-index).");
     expect(message).toContain("Downloaded index.html.");
     expect(message).toContain("No new assets copied.");
   });

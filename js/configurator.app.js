@@ -2057,10 +2057,6 @@
           var privacyHtml = buildPrivacyPolicyPageHtml(publishPayload.config);
           var contactHtml = buildContactPageHtml(publishPayload.config);
 
-          if (publishHomePage && shouldPreserveExistingHomeOnPublish(fallbackHomeHtml)) {
-            html = fallbackHomeHtml;
-          }
-
           var savedAssetsResult = { mode: "none", count: 0 };
           if (publishAssets) {
             publishStage = "write-assets";
@@ -3753,7 +3749,6 @@
       projectDirectory = await window.showDirectoryPicker({ mode: "readwrite" });
     } catch (pickerError) {
       if (pickerError && pickerError.name === "AbortError") {
-        setStatus("Debug resolve-folder: folder picker was canceled or blocked before selection. If no picker appeared, run configurator in a top-level tab on http://localhost and try again.", true);
         return null;
       }
       throw pickerError;

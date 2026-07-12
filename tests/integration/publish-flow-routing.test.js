@@ -48,7 +48,7 @@ describe("publish flow routing", () => {
       assetSuffix: " No new assets copied."
     });
 
-    expect(status).toContain("Folder write unavailable (Folder picker blocked/canceled).");
+    expect(status).toContain("Publish completed via download fallback (Folder picker blocked/canceled).");
     expect(status).toContain("Downloaded index.html.");
   });
 });
