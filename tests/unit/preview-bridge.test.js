@@ -183,6 +183,40 @@ describe("preview bridge", () => {
     expect(baseConfig.hero.subtitle).toBe("Base");
   });
 
+  it("builds under-construction markup branch for selected non-fixed pages", () => {
+    const bridge = loadBridge();
+
+    const markup = bridge.buildAssociatedPageMarkup(
+      { fileName: "news.html", sectionTitle: "News" },
+      { underConstruction: { enabled: true, pages: ["news.html"] } },
+      true,
+      {
+        shouldUseUnderConstructionPage: () => true,
+        buildUnderConstructionPageMarkup: (tab, _config, draggable) => `${tab.fileName}|${draggable}`,
+        deepClone: (value) => JSON.parse(JSON.stringify(value)),
+        buildHomeMarkup: () => "home"
+      }
+    );
+
+    expect(markup).toBe("news.html|true");
+  });
+
+  it("builds full under-construction HTML shell for associated tab pages", () => {
+    const bridge = loadBridge();
+    const html = bridge.buildAssociatedTabPageHtml(
+      { fileName: "solutions.html", sectionTitle: "Solutions" },
+      { brand: { name: "VinATech" } },
+      {
+        shouldUseUnderConstructionPage: () => true,
+        buildUnderConstructionPageMarkup: () => "<main>UC</main>",
+        escapeHtml: (value) => String(value)
+      }
+    );
+
+    expect(html).toContain("<title>Solutions - VinATech</title>");
+    expect(html).toContain("<main>UC</main>");
+  });
+
   it("builds published html using the shared associated page shell", () => {
     const bridge = loadBridge();
     const html = bridge.buildAssociatedPublishedHtml(
@@ -247,6 +281,25 @@ describe("preview bridge", () => {
       "page:products.html"
     ]);
     expect(options[2].label).toBe("Contact (contact.html)");
+  });
+
+  it("includes under-construction selected pages in preview options", () => {
+    const bridge = loadBridge();
+    const options = bridge.getPreviewPageOptions(
+      {
+        underConstruction: {
+          pages: ["future-page", "custom-report.html", "privacy.html"]
+        }
+      },
+      {
+        getAssociatedPageDescriptors: () => []
+      }
+    );
+
+    const values = options.map((option) => option.value);
+    expect(values).toContain("page:future-page.html");
+    expect(values).toContain("page:custom-report.html");
+    expect(values.filter((value) => value === "page:privacy.html")).toHaveLength(1);
   });
 
   it("normalizes preview page value against available options", () => {

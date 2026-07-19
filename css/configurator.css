@@ -235,6 +235,10 @@ button.danger {
   margin-top: 8px;
 }
 
+.actions .action-row.page-mode-hidden {
+  display: none;
+}
+
 .import-btn {
   position: relative;
   display: inline-flex;
@@ -255,6 +259,43 @@ button.danger {
 }
 
 .approval input {
+  margin: 0;
+}
+
+.under-construction-pages {
+  margin-top: 10px;
+  border: 1px dashed #c7d3cc;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+#underConstructionPagesEditor {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.under-construction-add-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.under-construction-add-row input {
+  margin-top: 0;
+}
+
+.under-construction-page-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 0;
+  font-size: .83rem;
+}
+
+.under-construction-page-item input {
   margin: 0;
 }
 
@@ -341,6 +382,21 @@ button.danger {
   justify-content: center;
   padding: 14px;
   background: linear-gradient(180deg, #f7f9f8 0%, #edf2ef 100%);
+}
+
+.preview-viewport.preview-under-construction {
+  background: #000;
+  overflow: hidden;
+}
+
+.preview-viewport.preview-mobile.preview-under-construction {
+  display: block;
+  padding: 0;
+  background: #000;
+}
+
+.preview-viewport.preview-under-construction .under-construction-root {
+  min-height: 70vh;
 }
 
 .preview-viewport.preview-mobile .home-root {

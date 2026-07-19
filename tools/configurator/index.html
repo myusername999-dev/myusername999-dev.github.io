@@ -26,9 +26,10 @@
             <option value="home">Home</option>
             <option value="privacy">Privacy</option>
             <option value="contact">Contact</option>
+            <option value="under-construction">Under Construction</option>
           </select>
         </label>
-        <p class="hint">Switch between homepage, privacy, and contact page controls.</p>
+        <p class="hint">Switch between homepage, privacy, contact, and under-construction controls.</p>
       </section>
 
       <div id="homeControls">
@@ -331,37 +332,67 @@
         </section>
       </div>
 
+      <div id="underConstructionControls" class="page-mode-hidden">
+        <section id="panel-under-construction" class="panel">
+          <h2>Under Construction</h2>
+          <p class="hint">Configure temporary pages for manual targets. HOME, PRIVACY, and CONTACT are excluded from replacement.</p>
+          <label class="check-row"><input id="underConstructionEnabled" type="checkbox"> Enable under-construction pages</label>
+          <label class="check-row"><input id="underConstructionUseSameImage" type="checkbox"> Use the same image for mobile</label>
+          <div class="upload-group">
+            <label>Desktop Image<input id="underConstructionDesktopImageInput" type="file" accept="image/*"></label>
+            <p class="hint">Current desktop image: <span id="underConstructionDesktopImagePath">images/under-construction.png</span></p>
+            <button id="clearUnderConstructionDesktopImage" type="button" class="ghost">Reset Desktop Image</button>
+          </div>
+          <div class="upload-group">
+            <label>Mobile Image<input id="underConstructionMobileImageInput" type="file" accept="image/*"></label>
+            <p class="hint">Current mobile image: <span id="underConstructionMobileImagePath">images/under-construction.png</span></p>
+            <button id="clearUnderConstructionMobileImage" type="button" class="ghost">Reset Mobile Image</button>
+          </div>
+          <div class="under-construction-pages">
+            <p class="hint">Select pages to publish in under-construction mode.</p>
+            <div class="under-construction-add-row">
+              <input id="underConstructionPageName" type="text" placeholder="new-page or new-page.html">
+              <button id="addUnderConstructionPage" type="button">Add Page</button>
+            </div>
+            <div id="underConstructionPagesEditor"></div>
+          </div>
+        </section>
+      </div>
+
       <section id="panel-publish" class="panel actions">
         <label class="approval"><input id="approval" type="checkbox"> I approve this preview for publish</label>
-        <div class="action-row">
+        <div id="publishPrimaryActions" class="action-row">
+          <button id="publishUnderConstruction" type="button" class="primary page-mode-hidden">Publish</button>
+        </div>
+        <div id="publishStandardActions" class="action-row">
           <button id="previewHome" type="button">Preview HOME</button>
           <button id="publishHomeOnly" type="button">Publish HOME only</button>
           <button id="publishPrivacyOnly" type="button">Publish PRIVACY only</button>
           <button id="publishContactOnly" type="button">Publish CONTACT only</button>
           <button id="publishHome" type="button" class="primary">Publish ALL pages</button>
         </div>
-        <div class="action-row">
+        <div id="publishDraftActions" class="action-row">
           <button id="exportDraft" type="button" class="ghost">Export Draft JSON</button>
           <label class="import-btn ghost">Import Draft JSON<input id="importDraft" type="file" accept="application/json"></label>
         </div>
-        <div class="action-row">
+        <div id="publishRepoDraftActions" class="action-row">
           <button id="saveRepoDraft" type="button" class="ghost">Save Draft to Repo File</button>
           <button id="loadRepoDraft" type="button" class="ghost">Load Draft from Repo File</button>
         </div>
-        <div class="action-row">
+        <div id="publishImportActions" class="action-row">
           <button id="importLivePages" type="button" class="ghost">Initialize Draft from Live Pages</button>
         </div>
-        <div class="action-row">
+        <div id="publishResetActionsA" class="action-row">
           <button id="resetVisibleCenter" type="button" class="ghost">Reset HOME to Center Visible</button>
           <button id="resetLayoutOnly" type="button" class="ghost">Reset Layout</button>
           <button id="resetFontsOnly" type="button" class="ghost">Reset Fonts</button>
         </div>
-        <div class="action-row">
+        <div id="publishResetActionsB" class="action-row">
           <button id="resetButtonsOnly" type="button" class="ghost">Reset Buttons</button>
           <button id="resetLogosOnly" type="button" class="ghost">Reset Logos</button>
           <button id="resetColorsOnly" type="button" class="ghost">Reset Colors</button>
         </div>
-        <button id="resetDraft" type="button" class="danger">Reset Draft</button>
+        <button id="resetDraft" type="button" class="danger" data-publish-advanced="true">Reset Draft</button>
         <p id="statusMessage" class="status" aria-live="polite"></p>
       </section>
     </aside>

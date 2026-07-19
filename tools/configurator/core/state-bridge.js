@@ -31,7 +31,7 @@
 
   function normalizePageMode(value) {
     var mode = String(value || "home").trim().toLowerCase();
-    if (mode === "privacy" || mode === "contact") {
+    if (mode === "privacy" || mode === "contact" || mode === "under-construction") {
       return mode;
     }
     return "home";
@@ -220,6 +220,78 @@
     return "home";
   }
 
+  function normalizeUnderConstructionPageFileName(value, normalizePageHref) {
+    var normalizeHref = typeof normalizePageHref === "function"
+      ? normalizePageHref
+      : function (candidate) {
+          var href = String(candidate || "").trim();
+          if (!href || /^(https?:|mailto:|tel:|#)/i.test(href)) {
+            return "";
+          }
+          href = href.replace(/\\+/g, "/");
+          if (!/\.html?$/i.test(href)) {
+            href += ".html";
+          }
+          return href;
+        };
+
+    var href = normalizeHref(value);
+    if (!href || /^(https?:|mailto:|tel:|#)/i.test(href)) {
+      return "";
+    }
+    href = href.split("?")[0].split("#")[0].trim().toLowerCase();
+    if (!href || href.indexOf("/") >= 0 || href === "index.html") {
+      return "";
+    }
+    return href;
+  }
+
+  function normalizeUnderConstructionConfig(value, options) {
+    var source = value || {};
+    var opts = options || {};
+    var defaultImage = String(opts.defaultImage || "images/under-construction.png");
+    var fixedPages = Array.isArray(opts.fixedPages) ? opts.fixedPages : ["index.html", "privacy.html", "contact.html"];
+    var normalizePageHref = typeof opts.normalizePageHref === "function" ? opts.normalizePageHref : null;
+
+    var fixedLookup = {};
+    fixedPages.forEach(function (item) {
+      fixedLookup[String(item || "").toLowerCase()] = true;
+    });
+
+    var desktopImageSrc = normalizeImageSrc(source.desktopImageSrc || defaultImage) || defaultImage;
+    var desktopImageFileName = sanitizeFileName(source.desktopImageFileName || "under-construction.png") || "under-construction.png";
+    var useSameImageForMobile = typeof source.useSameImageForMobile === "boolean" ? source.useSameImageForMobile : true;
+    var mobileImageSrc = useSameImageForMobile
+      ? desktopImageSrc
+      : (normalizeImageSrc(source.mobileImageSrc || desktopImageSrc) || desktopImageSrc);
+    var mobileImageFileName = useSameImageForMobile
+      ? desktopImageFileName
+      : (sanitizeFileName(source.mobileImageFileName || desktopImageFileName) || desktopImageFileName);
+
+    var seenPages = {};
+    var pages = (Array.isArray(source.pages) ? source.pages : ["news.html"])
+      .map(function (page) {
+        return normalizeUnderConstructionPageFileName(page, normalizePageHref);
+      })
+      .filter(function (page) {
+        if (!page || fixedLookup[page] || seenPages[page]) {
+          return false;
+        }
+        seenPages[page] = true;
+        return true;
+      });
+
+    return {
+      enabled: !!source.enabled,
+      useSameImageForMobile: useSameImageForMobile,
+      desktopImageSrc: desktopImageSrc,
+      desktopImageFileName: desktopImageFileName,
+      mobileImageSrc: mobileImageSrc,
+      mobileImageFileName: mobileImageFileName,
+      pages: pages
+    };
+  }
+
   window.ConfiguratorStateBridge = {
     clamp: clamp,
     normalizeHex: normalizeHex,
@@ -238,6 +310,7 @@
     createDefaultLogos: createDefaultLogos,
     normalizeBrandLogos: normalizeBrandLogos,
     ensureTwoLogos: ensureTwoLogos,
-    normalizeGalleryImages: normalizeGalleryImages
+    normalizeGalleryImages: normalizeGalleryImages,
+    normalizeUnderConstructionConfig: normalizeUnderConstructionConfig
   };
 })();

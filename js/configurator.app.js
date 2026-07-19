@@ -8,6 +8,19 @@
   var FS_HANDLE_DB_NAME = "vinatech-configurator-fs";
   var FS_HANDLE_STORE_NAME = "handles";
   var FS_HANDLE_KEY = "project-root";
+  var UNDER_CONSTRUCTION_DEFAULT_IMAGE = "images/under-construction.png";
+  var UNDER_CONSTRUCTION_FIXED_PAGES = {
+    "index.html": true,
+    "privacy.html": true,
+    "contact.html": true
+  };
+  var COMMON_UNDER_CONSTRUCTION_PAGES = [
+    "news.html",
+    "solutions.html",
+    "about.html",
+    "products.html",
+    "support.html"
+  ];
   var FONT_FAMILIES = [
     "Sora",
     "Space Grotesk",
@@ -133,6 +146,15 @@
       recipientEmail: "support@vinatech.it.com",
       fields: createDefaultContactFields()
     },
+    underConstruction: {
+      enabled: false,
+      useSameImageForMobile: true,
+      desktopImageSrc: UNDER_CONSTRUCTION_DEFAULT_IMAGE,
+      desktopImageFileName: "under-construction.png",
+      mobileImageSrc: UNDER_CONSTRUCTION_DEFAULT_IMAGE,
+      mobileImageFileName: "under-construction.png",
+      pages: ["news.html"]
+    },
     tabs: [
       {
         label: "About",
@@ -231,6 +253,7 @@
     renderButtonsEditor();
     renderTabsEditor();
     renderContactFieldsEditor();
+    renderUnderConstructionPagesEditor();
     renderPreview();
     setStatus("Draft loaded. Make edits and review in preview.", false);
   }
@@ -240,6 +263,7 @@
     dom.homeControls = document.getElementById("homeControls");
     dom.privacyControls = document.getElementById("privacyControls");
     dom.contactControls = document.getElementById("contactControls");
+    dom.underConstructionControls = document.getElementById("underConstructionControls");
 
     dom.brandName = document.getElementById("brandName");
     dom.heroTitle = document.getElementById("heroTitle");
@@ -324,6 +348,7 @@
     dom.publishHomeOnly = document.getElementById("publishHomeOnly");
     dom.publishPrivacyOnly = document.getElementById("publishPrivacyOnly");
     dom.publishContactOnly = document.getElementById("publishContactOnly");
+    dom.publishUnderConstruction = document.getElementById("publishUnderConstruction");
     dom.previewPage = document.getElementById("previewPage");
     dom.previewMobileToggle = document.getElementById("previewMobileToggle");
     dom.previewDevice = document.getElementById("previewDevice");
@@ -343,6 +368,12 @@
     dom.approval = document.getElementById("approval");
     dom.statusMessage = document.getElementById("statusMessage");
     dom.previewViewport = document.getElementById("previewViewport");
+    dom.publishStandardActions = document.getElementById("publishStandardActions");
+    dom.publishDraftActions = document.getElementById("publishDraftActions");
+    dom.publishRepoDraftActions = document.getElementById("publishRepoDraftActions");
+    dom.publishImportActions = document.getElementById("publishImportActions");
+    dom.publishResetActionsA = document.getElementById("publishResetActionsA");
+    dom.publishResetActionsB = document.getElementById("publishResetActionsB");
 
     dom.privacyTitle = document.getElementById("privacyTitle");
     dom.privacyIntro = document.getElementById("privacyIntro");
@@ -378,6 +409,18 @@
     dom.contactFormEndpoint = document.getElementById("contactFormEndpoint");
     dom.contactFieldsEditor = document.getElementById("contactFieldsEditor");
     dom.addContactField = document.getElementById("addContactField");
+
+    dom.underConstructionEnabled = document.getElementById("underConstructionEnabled");
+    dom.underConstructionUseSameImage = document.getElementById("underConstructionUseSameImage");
+    dom.underConstructionDesktopImageInput = document.getElementById("underConstructionDesktopImageInput");
+    dom.underConstructionMobileImageInput = document.getElementById("underConstructionMobileImageInput");
+    dom.clearUnderConstructionDesktopImage = document.getElementById("clearUnderConstructionDesktopImage");
+    dom.clearUnderConstructionMobileImage = document.getElementById("clearUnderConstructionMobileImage");
+    dom.underConstructionDesktopImagePath = document.getElementById("underConstructionDesktopImagePath");
+    dom.underConstructionMobileImagePath = document.getElementById("underConstructionMobileImagePath");
+    dom.underConstructionPagesEditor = document.getElementById("underConstructionPagesEditor");
+    dom.underConstructionPageName = document.getElementById("underConstructionPageName");
+    dom.addUnderConstructionPage = document.getElementById("addUnderConstructionPage");
   }
 
   function bindCoreInputs() {
@@ -387,6 +430,8 @@
         state.display.previewPage = "page:privacy.html";
       } else if (state.display.pageMode === "contact") {
         state.display.previewPage = "page:contact.html";
+      } else if (state.display.pageMode === "under-construction") {
+        state.display.previewPage = resolveUnderConstructionPreviewPage(state);
       } else {
         state.display.previewPage = "home";
       }
@@ -491,6 +536,8 @@
           state.display.pageMode = "privacy";
         } else if (state.display.previewPage === "page:contact.html") {
           state.display.pageMode = "contact";
+        } else if (isUnderConstructionPreviewPage(state.display.previewPage, state)) {
+          state.display.pageMode = "under-construction";
         } else {
           state.display.pageMode = "home";
         }
@@ -520,6 +567,76 @@
     bindText(dom.contactFormEndpoint, function (value) {
       state.contact.formEndpoint = String(value || "");
     });
+
+    if (dom.underConstructionEnabled) {
+      dom.underConstructionEnabled.addEventListener("change", function () {
+        state.underConstruction.enabled = !!dom.underConstructionEnabled.checked;
+        saveAndPreview();
+      });
+    }
+
+    if (dom.underConstructionUseSameImage) {
+      dom.underConstructionUseSameImage.addEventListener("change", function () {
+        state.underConstruction.useSameImageForMobile = !!dom.underConstructionUseSameImage.checked;
+        if (state.underConstruction.useSameImageForMobile) {
+          state.underConstruction.mobileImageSrc = state.underConstruction.desktopImageSrc;
+          state.underConstruction.mobileImageFileName = state.underConstruction.desktopImageFileName;
+        }
+        applyUnderConstructionControlState();
+        refresh("Under-construction image mode updated.");
+      });
+    }
+
+    if (dom.underConstructionDesktopImageInput) {
+      dom.underConstructionDesktopImageInput.addEventListener("change", function (event) {
+        handleImageUpload(event, function (asset) {
+          state.underConstruction.desktopImageSrc = asset.src;
+          state.underConstruction.desktopImageFileName = asset.fileName;
+          if (state.underConstruction.useSameImageForMobile) {
+            state.underConstruction.mobileImageSrc = asset.src;
+            state.underConstruction.mobileImageFileName = asset.fileName;
+          }
+        });
+      });
+    }
+
+    if (dom.underConstructionMobileImageInput) {
+      dom.underConstructionMobileImageInput.addEventListener("change", function (event) {
+        handleImageUpload(event, function (asset) {
+          state.underConstruction.mobileImageSrc = asset.src;
+          state.underConstruction.mobileImageFileName = asset.fileName;
+          state.underConstruction.useSameImageForMobile = false;
+        });
+        applyUnderConstructionControlState();
+      });
+    }
+
+    if (dom.clearUnderConstructionDesktopImage) {
+      dom.clearUnderConstructionDesktopImage.addEventListener("click", function () {
+        state.underConstruction.desktopImageSrc = UNDER_CONSTRUCTION_DEFAULT_IMAGE;
+        state.underConstruction.desktopImageFileName = "under-construction.png";
+        if (state.underConstruction.useSameImageForMobile) {
+          state.underConstruction.mobileImageSrc = UNDER_CONSTRUCTION_DEFAULT_IMAGE;
+          state.underConstruction.mobileImageFileName = "under-construction.png";
+        }
+        if (dom.underConstructionDesktopImageInput) {
+          dom.underConstructionDesktopImageInput.value = "";
+        }
+        refresh("Under-construction desktop image reset.");
+      });
+    }
+
+    if (dom.clearUnderConstructionMobileImage) {
+      dom.clearUnderConstructionMobileImage.addEventListener("click", function () {
+        state.underConstruction.useSameImageForMobile = false;
+        state.underConstruction.mobileImageSrc = UNDER_CONSTRUCTION_DEFAULT_IMAGE;
+        state.underConstruction.mobileImageFileName = "under-construction.png";
+        if (dom.underConstructionMobileImageInput) {
+          dom.underConstructionMobileImageInput.value = "";
+        }
+        refresh("Under-construction mobile image reset.");
+      });
+    }
 
     bindText(dom.privacyTitle, function (value) {
       state.privacy.title = String(value || "");
@@ -848,6 +965,27 @@
       handlePublish("all");
     });
 
+    if (dom.publishUnderConstruction) {
+      dom.publishUnderConstruction.addEventListener("click", function () {
+        handleUnderConstructionPublish();
+      });
+    }
+
+    if (dom.addUnderConstructionPage) {
+      dom.addUnderConstructionPage.addEventListener("click", function () {
+        addCustomUnderConstructionPage();
+      });
+    }
+
+    if (dom.underConstructionPageName) {
+      dom.underConstructionPageName.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addCustomUnderConstructionPage();
+        }
+      });
+    }
+
     dom.exportDraft.addEventListener("click", function () {
       exportDraft();
     });
@@ -1078,6 +1216,7 @@
     renderButtonsEditor();
     renderTabsEditor();
     renderContactFieldsEditor();
+    renderUnderConstructionPagesEditor();
     schedulePreviewRender();
     if (message) {
       setStatus(message, false);
@@ -1418,11 +1557,27 @@
       dom.contactFormEndpoint.value = state.contact.formEndpoint;
     }
 
+    if (dom.underConstructionEnabled) {
+      dom.underConstructionEnabled.checked = !!state.underConstruction.enabled;
+    }
+    if (dom.underConstructionUseSameImage) {
+      dom.underConstructionUseSameImage.checked = !!state.underConstruction.useSameImageForMobile;
+    }
+    if (dom.underConstructionDesktopImagePath) {
+      dom.underConstructionDesktopImagePath.textContent = state.underConstruction.desktopImageFileName || state.underConstruction.desktopImageSrc || "not set";
+    }
+    if (dom.underConstructionMobileImagePath) {
+      dom.underConstructionMobileImagePath.textContent = state.underConstruction.mobileImageFileName || state.underConstruction.mobileImageSrc || "not set";
+    }
+    applyUnderConstructionControlState();
+    renderUnderConstructionPagesEditor();
+
     applyPageModeUI();
   }
 
   function applyPageModeUI() {
     var mode = normalizePageMode(state.display && state.display.pageMode);
+    var isUnderConstructionMode = mode === "under-construction";
     if (dom.homeControls) {
       dom.homeControls.classList.toggle("page-mode-hidden", mode !== "home");
     }
@@ -1432,6 +1587,37 @@
     if (dom.contactControls) {
       dom.contactControls.classList.toggle("page-mode-hidden", mode !== "contact");
     }
+    if (dom.underConstructionControls) {
+      dom.underConstructionControls.classList.toggle("page-mode-hidden", mode !== "under-construction");
+    }
+    applyPublishModeUI(isUnderConstructionMode);
+  }
+
+  function applyPublishModeUI(isUnderConstructionMode) {
+    var simpleControls = [dom.publishUnderConstruction];
+    var advancedControls = [
+      dom.publishStandardActions,
+      dom.publishDraftActions,
+      dom.publishRepoDraftActions,
+      dom.publishImportActions,
+      dom.publishResetActionsA,
+      dom.publishResetActionsB,
+      dom.resetDraft
+    ];
+
+    simpleControls.forEach(function (element) {
+      if (!element) {
+        return;
+      }
+      element.classList.toggle("page-mode-hidden", !isUnderConstructionMode);
+    });
+
+    advancedControls.forEach(function (element) {
+      if (!element) {
+        return;
+      }
+      element.classList.toggle("page-mode-hidden", isUnderConstructionMode);
+    });
   }
 
   function renderButtonsEditor() {
@@ -1745,19 +1931,104 @@
     });
   }
 
+  function renderUnderConstructionPagesEditor() {
+    if (!dom.underConstructionPagesEditor) {
+      return;
+    }
+
+    var selectedPages = Array.isArray(state.underConstruction.pages) ? state.underConstruction.pages : [];
+    var candidates = getUnderConstructionPageCandidates(state);
+
+    if (!candidates.length) {
+      dom.underConstructionPagesEditor.innerHTML = "<p class=\"hint\">No eligible associated pages yet. Add tab/button links like news.html or solutions.html first.</p>";
+      return;
+    }
+
+    dom.underConstructionPagesEditor.innerHTML = candidates
+      .map(function (candidate) {
+        var checked = selectedPages.indexOf(candidate.fileName) >= 0 ? " checked" : "";
+        return "<label class=\"under-construction-page-item\"><input type=\"checkbox\" value=\"" + escapeAttr(candidate.fileName) + "\"" + checked + ">" + escapeHtml(candidate.label) + "</label>";
+      })
+      .join("");
+
+    var checkboxes = dom.underConstructionPagesEditor.querySelectorAll("input[type='checkbox']");
+    checkboxes.forEach(function (checkbox) {
+      checkbox.addEventListener("change", function () {
+        var pageFileName = String(checkbox.value || "").trim().toLowerCase();
+        var set = {};
+        var currentPages = Array.isArray(state.underConstruction.pages) ? state.underConstruction.pages : [];
+        currentPages.forEach(function (item) {
+          set[item] = true;
+        });
+        if (checkbox.checked) {
+          set[pageFileName] = true;
+        } else {
+          delete set[pageFileName];
+        }
+        state.underConstruction.pages = Object.keys(set);
+        saveAndPreview();
+      });
+    });
+  }
+
+  function addCustomUnderConstructionPage() {
+    if (!dom.underConstructionPageName) {
+      return;
+    }
+    var input = String(dom.underConstructionPageName.value || "").trim();
+    var normalizedPage = normalizeUnderConstructionPageFileName(input);
+    if (!normalizedPage) {
+      setStatus("Enter a valid page name like news or news.html.", true);
+      return;
+    }
+    if (UNDER_CONSTRUCTION_FIXED_PAGES[normalizedPage]) {
+      setStatus("HOME, PRIVACY, and CONTACT pages cannot be added here.", true);
+      return;
+    }
+
+    var pages = Array.isArray(state.underConstruction.pages) ? state.underConstruction.pages.slice() : [];
+    if (pages.indexOf(normalizedPage) < 0) {
+      pages.push(normalizedPage);
+    }
+    state.underConstruction.pages = pages;
+    state.underConstruction.enabled = true;
+    state.display.previewPage = "page:" + normalizedPage;
+    state.display.pageMode = "under-construction";
+    dom.underConstructionPageName.value = "";
+    refresh("Added " + normalizedPage + " to under-construction pages.");
+  }
+
+  function applyUnderConstructionControlState() {
+    var useSame = !!(state && state.underConstruction && state.underConstruction.useSameImageForMobile);
+    if (dom.underConstructionMobileImageInput) {
+      dom.underConstructionMobileImageInput.disabled = useSame;
+    }
+    if (dom.clearUnderConstructionMobileImage) {
+      dom.clearUnderConstructionMobileImage.disabled = useSame;
+    }
+  }
+
   function renderPreview() {
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     var previewSelection = normalizePreviewPage(state.display && state.display.previewPage, state);
     var previewConfig = getPreviewConfig(previewDevice);
+    var isUnderConstructionPreview = (
+      normalizePageMode(state.display && state.display.pageMode) === "under-construction"
+      && previewSelection.page
+      && !isFixedPageFileName(previewSelection.page.fileName)
+    );
 
     if (previewSelection.value === "home") {
       dom.previewViewport.innerHTML = buildHomeMarkup(previewConfig, true);
+    } else if (isUnderConstructionPreview) {
+      dom.previewViewport.innerHTML = buildUnderConstructionPageMarkup(previewSelection.page, previewConfig, true);
     } else {
       dom.previewViewport.innerHTML = buildAssociatedPageMarkup(previewSelection.page, previewConfig, true);
     }
 
     dom.previewViewport.classList.toggle("preview-mobile", previewDevice === "mobile");
     dom.previewViewport.classList.toggle("preview-mobile-center-hero", previewDevice === "mobile" && !!(state.display && state.display.mobileHeroCenter));
+    dom.previewViewport.classList.toggle("preview-under-construction", !!isUnderConstructionPreview);
 
     if (previewDevice === "mobile") {
       var homeTabSelector = dom.previewViewport.querySelector(".home-tab-selector");
@@ -2172,6 +2443,155 @@
           ? window.ConfiguratorPublishBridge.buildPublishFailureStatus(publishStage, reason)
           : "Direct folder publish failed at step: " + publishStage + ". " + reason + ". Re-select your project root folder and try again.");
       setStatus(failureStatus, true);
+    }
+  }
+
+  function getUnderConstructionPublishPages(config) {
+    var sourceConfig = config || {};
+    var uc = normalizeUnderConstructionConfig(sourceConfig.underConstruction);
+    var descriptors = getAssociatedPageDescriptors(sourceConfig);
+    var descriptorByFile = {};
+    descriptors.forEach(function (descriptor) {
+      var fileName = normalizeUnderConstructionPageFileName(descriptor && descriptor.fileName);
+      if (!fileName) {
+        return;
+      }
+      descriptorByFile[fileName] = descriptor;
+    });
+
+    var pages = [];
+    uc.pages.forEach(function (fileName) {
+      var normalizedFileName = normalizeUnderConstructionPageFileName(fileName);
+      if (!normalizedFileName || UNDER_CONSTRUCTION_FIXED_PAGES[normalizedFileName]) {
+        return;
+      }
+      var descriptor = descriptorByFile[normalizedFileName] || {
+        fileName: normalizedFileName,
+        sectionTitle: normalizedFileName.replace(/\.html?$/i, ""),
+        sectionText: "This page is under construction.",
+        label: normalizedFileName
+      };
+      pages.push({
+        fileName: normalizedFileName,
+        html: buildAssociatedPublishedHtml(descriptor, sourceConfig)
+      });
+    });
+
+    return pages;
+  }
+
+  async function writeUnderConstructionPages(projectDirectory, config) {
+    var pages = getUnderConstructionPublishPages(config);
+    for (var i = 0; i < pages.length; i += 1) {
+      var page = pages[i];
+      var pageHandle = await projectDirectory.getFileHandle(page.fileName, { create: true });
+      var writable = await pageHandle.createWritable();
+      await writable.write(page.html);
+      await writable.close();
+    }
+    return pages.length;
+  }
+
+  function downloadUnderConstructionPages(config) {
+    var pages = getUnderConstructionPublishPages(config);
+    pages.forEach(function (page) {
+      downloadFile(page.fileName, page.html, "text/html");
+    });
+    return pages.length;
+  }
+
+  async function handleUnderConstructionPublish() {
+    if (!dom.approval.checked) {
+      setStatus("Approve the preview checkbox before publishing.", true);
+      return;
+    }
+
+    var hasDirectoryPicker = typeof window.showDirectoryPicker === "function";
+    var publishStage = "start";
+
+    try {
+      var publishPayload = preparePublishPayload(state);
+      var underConstructionPages = getUnderConstructionPublishPages(publishPayload.config);
+      if (!underConstructionPages.length) {
+        setStatus("No under-construction pages selected to publish.", true);
+        return;
+      }
+
+      if (hasDirectoryPicker) {
+        publishStage = "resolve-folder";
+        var projectDirectory = await resolveProjectDirectoryHandle();
+        if (!projectDirectory) {
+          var downloadedCount = downloadUnderConstructionPages(publishPayload.config);
+          var canceledAssetsResult = await persistPublishAssets(publishPayload.assets);
+          setStatus(
+            "Folder write unavailable (Folder picker blocked/canceled). Downloaded "
+            + downloadedCount
+            + " under-construction page(s)."
+            + assetStatusSuffix(canceledAssetsResult),
+            false
+          );
+          return;
+        }
+
+        publishStage = "write-assets";
+        var savedAssetsResult = await persistPublishAssets(publishPayload.assets, projectDirectory);
+
+        publishStage = "write-under-construction-pages";
+        var writtenCount = await writeUnderConstructionPages(projectDirectory, publishPayload.config);
+
+        publishStage = "completed";
+        setStatus(
+          "Publish complete in "
+          + String(projectDirectory.name || "selected folder")
+          + ". Saved "
+          + writtenCount
+          + " under-construction page(s)."
+          + assetStatusSuffix(savedAssetsResult),
+          false
+        );
+        return;
+      }
+
+      var downloadCount = downloadUnderConstructionPages(publishPayload.config);
+      var assetsResult = await persistPublishAssets(publishPayload.assets);
+      setStatus(
+        "Browser folder-write API unavailable. Downloaded "
+        + downloadCount
+        + " under-construction page(s)."
+        + assetStatusSuffix(assetsResult),
+        false
+      );
+    } catch (error) {
+      var publishErrorInfo = window.ConfiguratorPublishBridge && typeof window.ConfiguratorPublishBridge.classifyPublishError === "function"
+        ? window.ConfiguratorPublishBridge.classifyPublishError(error)
+        : { kind: (error && error.name === "AbortError") ? "abort" : "failure", reason: String(error && error.message || "Unknown write error") };
+
+      if (publishErrorInfo.kind === "abort") {
+        var fallbackPayload = preparePublishPayload(state);
+        var fallbackCount = downloadUnderConstructionPages(fallbackPayload.config);
+        var fallbackAssetsResult = await persistPublishAssets(fallbackPayload.assets);
+        setStatus(
+          "Folder write unavailable (Abort at "
+          + publishStage
+          + "). Downloaded "
+          + fallbackCount
+          + " under-construction page(s)."
+          + assetStatusSuffix(fallbackAssetsResult),
+          false
+        );
+        return;
+      }
+
+      rememberedProjectDirectory = null;
+      await clearRememberedProjectDirectory();
+      setStatus(
+        "Under-construction publish failed at step: "
+        + publishStage
+        + ". "
+        + (publishErrorInfo.reason || "Unknown write error")
+        + ". Re-select your project root folder and try again.",
+        true
+      );
     }
   }
 
@@ -3125,6 +3545,23 @@
       });
     });
 
+    publishConfig.underConstruction = normalizeUnderConstructionConfig(publishConfig.underConstruction);
+    var desktopUcAsset = stageAsset(
+      publishConfig.underConstruction.desktopImageSrc,
+      publishConfig.underConstruction.desktopImageFileName,
+      "under-construction-desktop"
+    );
+    publishConfig.underConstruction.desktopImageSrc = desktopUcAsset.src;
+    publishConfig.underConstruction.desktopImageFileName = desktopUcAsset.fileName;
+
+    var mobileUcAsset = stageAsset(
+      publishConfig.underConstruction.mobileImageSrc,
+      publishConfig.underConstruction.mobileImageFileName,
+      "under-construction-mobile"
+    );
+    publishConfig.underConstruction.mobileImageSrc = mobileUcAsset.src;
+    publishConfig.underConstruction.mobileImageFileName = mobileUcAsset.fileName;
+
     return {
       config: publishConfig,
       assets: assets
@@ -3238,6 +3675,8 @@
       return window.ConfiguratorPreviewBridge.buildAssociatedTabPageHtml(tab, config, {
         isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
         isContactDescriptor: isContactDescriptor,
+        shouldUseUnderConstructionPage: shouldUseUnderConstructionPage,
+        buildUnderConstructionPageMarkup: buildUnderConstructionPageMarkup,
         buildPrivacyPolicyPageHtml: buildPrivacyPolicyPageHtml,
         buildContactPageHtml: buildContactPageHtml,
         buildAssociatedPageMarkup: buildAssociatedPageMarkup,
@@ -3284,6 +3723,8 @@
       return window.ConfiguratorPreviewBridge.buildAssociatedPageMarkup(tab, config, draggable, {
         isPrivacyPolicyDescriptor: isPrivacyPolicyDescriptor,
         isContactDescriptor: isContactDescriptor,
+        shouldUseUnderConstructionPage: shouldUseUnderConstructionPage,
+        buildUnderConstructionPageMarkup: buildUnderConstructionPageMarkup,
         normalizePageHref: normalizePageHref,
         buildExternalFilePreviewMarkup: buildExternalFilePreviewMarkup,
         buildPrivacyPreviewHref: buildPrivacyPreviewHref,
@@ -3301,10 +3742,53 @@
       return buildExternalFilePreviewMarkup(buildContactPreviewHref(contactHref, config));
     }
 
+    if (shouldUseUnderConstructionPage(tab, config)) {
+      return buildUnderConstructionPageMarkup(tab, config, draggable);
+    }
+
     var pageConfig = deepClone(config);
     pageConfig.hero.title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
     pageConfig.hero.subtitle = String((tab && tab.sectionText) || "This page is under construction.");
     return buildHomeMarkup(pageConfig, draggable);
+  }
+
+  function shouldUseUnderConstructionPage(tab, config) {
+    var uc = (config && config.underConstruction) || {};
+    if (!uc.enabled) {
+      return false;
+    }
+
+    var fileName = normalizeUnderConstructionPageFileName((tab && tab.fileName) || (tab && tab.pageHref));
+    if (!fileName || UNDER_CONSTRUCTION_FIXED_PAGES[fileName]) {
+      return false;
+    }
+
+    var pages = Array.isArray(uc.pages) ? uc.pages : [];
+    return pages.indexOf(fileName) >= 0;
+  }
+
+  function buildUnderConstructionPageMarkup(tab, config, draggable) {
+    var uc = normalizeUnderConstructionConfig((config && config.underConstruction) || {});
+    var pageTitle = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
+    var desktopImageSrc = resolvePreviewAssetPath(uc.desktopImageSrc, draggable);
+    var mobileImageSrc = resolvePreviewAssetPath(uc.mobileImageSrc, draggable);
+    var preferredMobileImageSrc = mobileImageSrc || desktopImageSrc;
+    var imageAlt = pageTitle + " under construction";
+
+    return [
+      "<style>",
+      ".under-construction-root{position:relative;min-height:100dvh;height:100%;width:100%;overflow:hidden;background:#000}",
+      ".under-construction-picture{position:absolute;inset:0;margin:0}",
+      ".under-construction-picture img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border:0;box-shadow:none}",
+      ".under-construction-root::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.05)}",
+      "</style>",
+      "<div class=\"under-construction-root\">",
+      "<picture class=\"under-construction-picture\">",
+      "<img id=\"uc-image\" src=\"" + escapeAttr(desktopImageSrc) + "\" alt=\"" + escapeAttr(imageAlt) + "\">",
+      "</picture>",
+      "<script>(function(){var img=document.getElementById('uc-image');if(!img){return;}var desktop='" + escapeJsString(desktopImageSrc) + "';var mobile='" + escapeJsString(preferredMobileImageSrc) + "';function applySource(){var useMobile=window.matchMedia('(max-width: 760px)').matches;var nextSrc=useMobile?mobile:desktop;img.src=nextSrc||desktop;}img.addEventListener('error',function(){if(img.src!==desktop){img.src=desktop;}});applySource();window.addEventListener('resize',applySource);})();</script>",
+      "</div>"
+    ].join("");
   }
 
   function buildAssociatedPublishedHtml(tab, config) {
@@ -3324,6 +3808,24 @@
     }
     if (isContactDescriptor(tab)) {
       return buildContactPageHtml(config);
+    }
+    if (shouldUseUnderConstructionPage(tab, config)) {
+      var underConstructionTitle = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
+      var underConstructionSite = String((config && config.brand && config.brand.name) || "VinATech");
+      return [
+        "<!doctype html>",
+        "<html lang=\"en\">",
+        "<head>",
+        "  <meta charset=\"utf-8\">",
+        "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+        "  <title>" + escapeHtml(underConstructionTitle) + " - " + escapeHtml(underConstructionSite) + "</title>",
+        "  <style>html,body{margin:0;padding:0;height:100%;width:100%;background:#000;overflow:hidden}</style>",
+        "</head>",
+        "<body>",
+        buildUnderConstructionPageMarkup(tab, config, false),
+        "</body>",
+        "</html>"
+      ].join("\n");
     }
 
     var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
@@ -4312,6 +4814,8 @@
     state.contact.formEndpoint = String(state.contact.formEndpoint || "https://formspree.io/f/mrevdeyn").trim();
     state.contact.fields = normalizeContactFields(state.contact.fields);
 
+    state.underConstruction = normalizeUnderConstructionConfig(state.underConstruction);
+
     var backgroundX = parseInt(state.background.x, 10);
     var backgroundY = parseInt(state.background.y, 10);
     var backgroundTransparency = parseInt(state.background.transparency, 10);
@@ -4477,6 +4981,7 @@
     merged.display = Object.assign({}, merged.display, incoming.display || {});
     merged.privacy = Object.assign({}, merged.privacy, incoming.privacy || {});
     merged.contact = Object.assign({}, merged.contact, incoming.contact || {});
+    merged.underConstruction = Object.assign({}, merged.underConstruction, incoming.underConstruction || {});
 
     var incomingLayout = incoming.layout || {};
     merged.layout = {
@@ -4591,6 +5096,111 @@
       href += ".html";
     }
     return href;
+  }
+
+  function normalizeUnderConstructionPageFileName(value) {
+    var href = normalizePageHref(value);
+    if (!href || /^(https?:|mailto:|tel:|#)/i.test(href)) {
+      return "";
+    }
+    href = href.split("?")[0].split("#")[0].trim().toLowerCase();
+    if (!href || href.indexOf("/") >= 0 || href === "index.html") {
+      return "";
+    }
+    return href;
+  }
+
+  function normalizeUnderConstructionConfig(value) {
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeUnderConstructionConfig === "function") {
+      return window.ConfiguratorStateBridge.normalizeUnderConstructionConfig(value, {
+        defaultImage: UNDER_CONSTRUCTION_DEFAULT_IMAGE,
+        fixedPages: Object.keys(UNDER_CONSTRUCTION_FIXED_PAGES),
+        normalizePageHref: normalizePageHref
+      });
+    }
+
+    var source = value || {};
+    var desktopImageSrc = normalizeImageSrc(source.desktopImageSrc || UNDER_CONSTRUCTION_DEFAULT_IMAGE) || UNDER_CONSTRUCTION_DEFAULT_IMAGE;
+    var desktopImageFileName = sanitizeFileName(source.desktopImageFileName || "under-construction.png") || "under-construction.png";
+    var useSameImageForMobile = typeof source.useSameImageForMobile === "boolean" ? source.useSameImageForMobile : true;
+    var mobileImageSrc = useSameImageForMobile
+      ? desktopImageSrc
+      : (normalizeImageSrc(source.mobileImageSrc || desktopImageSrc) || desktopImageSrc);
+    var mobileImageFileName = useSameImageForMobile
+      ? desktopImageFileName
+      : (sanitizeFileName(source.mobileImageFileName || desktopImageFileName) || desktopImageFileName);
+
+    var pages = Array.isArray(source.pages) ? source.pages : ["news.html"];
+    var seenPages = {};
+    pages = pages
+      .map(function (page) {
+        return normalizeUnderConstructionPageFileName(page);
+      })
+      .filter(function (page) {
+        if (!page || UNDER_CONSTRUCTION_FIXED_PAGES[page] || seenPages[page]) {
+          return false;
+        }
+        seenPages[page] = true;
+        return true;
+      });
+
+    return {
+      enabled: !!source.enabled,
+      useSameImageForMobile: useSameImageForMobile,
+      desktopImageSrc: desktopImageSrc,
+      desktopImageFileName: desktopImageFileName,
+      mobileImageSrc: mobileImageSrc,
+      mobileImageFileName: mobileImageFileName,
+      pages: pages
+    };
+  }
+
+  function getUnderConstructionPageCandidates(config) {
+    var list = [];
+    var seen = {};
+
+    function addCandidate(pageFileName) {
+      var normalized = normalizeUnderConstructionPageFileName(pageFileName);
+      if (!normalized || UNDER_CONSTRUCTION_FIXED_PAGES[normalized] || seen[normalized]) {
+        return;
+      }
+      seen[normalized] = true;
+      var baseLabel = normalized.replace(/\.html?$/i, "");
+      list.push({
+        fileName: normalized,
+        label: baseLabel
+      });
+    }
+
+    COMMON_UNDER_CONSTRUCTION_PAGES.forEach(addCandidate);
+
+    var ucPages = (config && config.underConstruction && Array.isArray(config.underConstruction.pages))
+      ? config.underConstruction.pages
+      : [];
+    ucPages.forEach(addCandidate);
+
+    var descriptors = getAssociatedPageDescriptors(config || state);
+    descriptors.forEach(function (descriptor) {
+      addCandidate(descriptor && descriptor.fileName);
+    });
+
+    return list.sort(function (left, right) {
+      return left.label.localeCompare(right.label);
+    });
+  }
+
+  function resolvePreviewSiteHref(hrefValue, draggable) {
+    var href = String(hrefValue || "").trim();
+    if (!draggable) {
+      return href;
+    }
+    if (!href || href === "#" || href.charAt(0) === "#") {
+      return href;
+    }
+    if (/^(?:[a-z]+:|\/|\.\.\/)/i.test(href)) {
+      return href;
+    }
+    return "../../" + href;
   }
 
   function addQueryParam(href, key, value) {
@@ -4947,10 +5557,42 @@
       return window.ConfiguratorStateBridge.normalizePageMode(value);
     }
     var mode = String(value || "home").trim().toLowerCase();
-    if (mode === "privacy" || mode === "contact") {
+    if (mode === "privacy" || mode === "contact" || mode === "under-construction") {
       return mode;
     }
     return "home";
+  }
+
+  function resolveUnderConstructionPreviewPage(config) {
+    var uc = (config && config.underConstruction) || {};
+    var pages = Array.isArray(uc.pages) ? uc.pages : [];
+    for (var index = 0; index < pages.length; index += 1) {
+      var normalizedPage = normalizeUnderConstructionPageFileName(pages[index]);
+      if (normalizedPage) {
+        return "page:" + normalizedPage;
+      }
+    }
+
+    var candidates = getUnderConstructionPageCandidates(config || state);
+    if (candidates.length) {
+      return "page:" + candidates[0].fileName;
+    }
+
+    return "home";
+  }
+
+  function isUnderConstructionPreviewPage(previewValue, config) {
+    var value = String(previewValue || "").trim().toLowerCase();
+    if (!/^page:/i.test(value)) {
+      return false;
+    }
+    var fileName = value.replace(/^page:/i, "");
+    if (!fileName || UNDER_CONSTRUCTION_FIXED_PAGES[fileName]) {
+      return false;
+    }
+    var uc = (config && config.underConstruction) || {};
+    var pages = Array.isArray(uc.pages) ? uc.pages : [];
+    return pages.indexOf(fileName) >= 0;
   }
 
   function normalizePreviewDevice(value) {
@@ -5133,5 +5775,14 @@
 
   function escapeAttr(value) {
     return escapeHtml(value).replace(/`/g, "");
+  }
+
+  function escapeJsString(value) {
+    return String(value)
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'")
+      .replace(/\r/g, "\\r")
+      .replace(/\n/g, "\\n")
+      .replace(/<\//g, "<\\/");
   }
 })();
