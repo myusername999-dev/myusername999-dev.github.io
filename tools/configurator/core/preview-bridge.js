@@ -125,6 +125,12 @@
     var isContactDescriptorFn = typeof deps.isContactDescriptor === "function"
       ? deps.isContactDescriptor
       : isContactDescriptor;
+    var shouldUseUnderConstructionPage = typeof deps.shouldUseUnderConstructionPage === "function"
+      ? deps.shouldUseUnderConstructionPage
+      : function () { return false; };
+    var buildUnderConstructionPageMarkup = typeof deps.buildUnderConstructionPageMarkup === "function"
+      ? deps.buildUnderConstructionPageMarkup
+      : null;
     var buildPrivacyHtml = typeof deps.buildPrivacyPolicyPageHtml === "function"
       ? deps.buildPrivacyPolicyPageHtml
       : null;
@@ -146,6 +152,24 @@
     }
     if (isContactDescriptorFn(tab) && buildContactHtml) {
       return buildContactHtml(config);
+    }
+    if (shouldUseUnderConstructionPage(tab, config) && buildUnderConstructionPageMarkup) {
+      var titleFallback = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
+      var siteFallback = String((config && config.brand && config.brand.name) || "VinATech");
+      return [
+        "<!doctype html>",
+        "<html lang=\"en\">",
+        "<head>",
+        "  <meta charset=\"utf-8\">",
+        "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+        "  <title>" + escapeHtml(titleFallback) + " - " + escapeHtml(siteFallback) + "</title>",
+        "  <style>html,body{margin:0;padding:0;height:100%;width:100%;background:#000;overflow:hidden}</style>",
+        "</head>",
+        "<body>",
+        buildUnderConstructionPageMarkup(tab, config, false),
+        "</body>",
+        "</html>"
+      ].join("\n");
     }
 
     var title = String((tab && tab.sectionTitle) || (tab && tab.label) || "Page");
@@ -183,6 +207,12 @@
     var isContactDescriptorFn = typeof deps.isContactDescriptor === "function"
       ? deps.isContactDescriptor
       : isContactDescriptor;
+    var shouldUseUnderConstructionPage = typeof deps.shouldUseUnderConstructionPage === "function"
+      ? deps.shouldUseUnderConstructionPage
+      : function () { return false; };
+    var buildUnderConstructionPageMarkup = typeof deps.buildUnderConstructionPageMarkup === "function"
+      ? deps.buildUnderConstructionPageMarkup
+      : null;
     var normalizeHref = typeof deps.normalizePageHref === "function"
       ? deps.normalizePageHref
       : normalizePageHref;
@@ -209,6 +239,10 @@
     if (isContactDescriptorFn(tab)) {
       var contactHref = normalizeHref(tab && tab.fileName) || "contact.html";
       return buildExternalMarkup(buildContactPreviewHref(contactHref, config));
+    }
+
+    if (shouldUseUnderConstructionPage(tab, config) && buildUnderConstructionPageMarkup) {
+      return buildUnderConstructionPageMarkup(tab, config, draggable);
     }
 
     var pageConfig = deepClone(config);
@@ -274,6 +308,42 @@
         value: "page:" + descriptor.fileName,
         label: String((descriptor.sectionTitle || descriptor.label || "Page")) + " (" + descriptor.fileName + ")",
         page: descriptor
+      });
+    });
+
+    var underConstruction = sourceConfig.underConstruction || {};
+    var selectedPages = Array.isArray(underConstruction.pages) ? underConstruction.pages : [];
+    selectedPages.forEach(function (pageName) {
+      var normalized = normalizePageHref(pageName);
+      if (!normalized || isFixedFile(normalized)) {
+        return;
+      }
+      var value = "page:" + normalized;
+      var exists = options.some(function (option) {
+        return option && option.value === value;
+      });
+      if (exists) {
+        return;
+      }
+
+      var base = String(normalized).replace(/\.html?$/i, "");
+      var label = base
+        .split(/[-_\s]+/)
+        .filter(Boolean)
+        .map(function (part) {
+          return part.charAt(0).toUpperCase() + part.slice(1);
+        })
+        .join(" ") || "Page";
+
+      options.push({
+        value: value,
+        label: label + " (" + normalized + ")",
+        page: {
+          fileName: normalized,
+          sectionTitle: label,
+          sectionText: "This page is under construction.",
+          label: label
+        }
       });
     });
 

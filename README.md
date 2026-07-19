@@ -30,12 +30,15 @@ Use the configurator to design the homepage before publishing:
 6. Manage tabs and linked section blocks, including per-tab font, colors, background image, tab image transparency controls, and up to 4 gallery images with selectable layout.
 7. Click **Preview HOME** for a full-page preview.
 8. Approve and click **Publish to index.html**.
+9. Configure **Under Construction** pages for non-fixed associated pages using manual selection and separate desktop/mobile images when needed.
 
 Publish behavior:
 
 - Publish requires selecting the project root folder (the one containing `index.html`).
 - Uploaded images are copied into `images/` in that selected project folder.
 - If folder selection/write is canceled or blocked, it downloads `index.html` and all image files so you can move the images into `images/` manually.
+- Under-construction substitution applies only to manually selected non-fixed associated pages.
+- Fixed pages `index.html`, `privacy.html`, and `contact.html` stay on their existing generation paths.
 
 ## Directory Policy
 
@@ -49,6 +52,7 @@ Publish behavior:
 
 - Run all tests: `npm test`
 - Watch mode: `npm run test:watch`
+- Under-construction tests live in unit bridge/runtime suites under `tests/unit/` and publish routing coverage under `tests/integration/`.
 
 ## Migration Notes
 

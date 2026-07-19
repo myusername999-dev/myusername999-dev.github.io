@@ -15,6 +15,7 @@ describe("state bridge", () => {
   it("normalizes page mode", () => {
     const bridge = loadBridge();
     expect(bridge.normalizePageMode("privacy")).toBe("privacy");
+    expect(bridge.normalizePageMode("under-construction")).toBe("under-construction");
     expect(bridge.normalizePageMode("bad")).toBe("home");
   });
 
@@ -89,5 +90,53 @@ describe("state bridge", () => {
     const gallery = bridge.normalizeGalleryImages([{ src: "a", fileName: "a.png" }]);
     expect(gallery.length).toBe(4);
     expect(gallery[0].src).toBe("a");
+  });
+
+  it("normalizes under-construction settings with fixed page filtering", () => {
+    const bridge = loadBridge();
+    const config = bridge.normalizeUnderConstructionConfig(
+      {
+        enabled: 1,
+        useSameImageForMobile: false,
+        desktopImageSrc: " images/under-construction.png ",
+        desktopImageFileName: "under:desktop.png",
+        mobileImageSrc: "images/mobile-uc.png",
+        mobileImageFileName: "mobile:uc.png",
+        pages: ["news", "privacy.html", "NEWS.html", "folder/about.html", "solutions"]
+      },
+      {
+        fixedPages: ["index.html", "privacy.html", "contact.html"]
+      }
+    );
+
+    expect(config.enabled).toBe(true);
+    expect(config.desktopImageFileName).toBe("under-desktop.png");
+    expect(config.mobileImageFileName).toBe("mobile-uc.png");
+    expect(config.pages).toEqual(["news.html", "solutions.html"]);
+  });
+
+  it("defaults mobile image to desktop when same-image mode is enabled", () => {
+    const bridge = loadBridge();
+    const config = bridge.normalizeUnderConstructionConfig({
+      enabled: true,
+      useSameImageForMobile: true,
+      desktopImageSrc: "images/desktop-uc.png",
+      desktopImageFileName: "desktop-uc.png",
+      mobileImageSrc: "images/custom-mobile.png",
+      mobileImageFileName: "custom-mobile.png",
+      pages: []
+    });
+
+    expect(config.mobileImageSrc).toBe("images/desktop-uc.png");
+    expect(config.mobileImageFileName).toBe("desktop-uc.png");
+  });
+
+  it("normalizes user-added custom page names", () => {
+    const bridge = loadBridge();
+    const config = bridge.normalizeUnderConstructionConfig({
+      pages: ["new page", "new-page", "contact", "my_future_page"]
+    });
+
+    expect(config.pages).toEqual(["new page.html", "new-page.html", "my_future_page.html"]);
   });
 });

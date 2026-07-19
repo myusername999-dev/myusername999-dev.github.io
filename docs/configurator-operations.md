@@ -56,6 +56,23 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - Load Draft from Repo File
    - Initialize Draft from Live Pages (HOME/CONTACT/PRIVACY)
 
+### 6.2 Under-construction page workflow
+1. Use the **Under Construction** panel in `tools/configurator/index.html` to configure temporary associated pages.
+2. Fixed pages are intentionally excluded from substitution:
+   - `index.html`
+   - `privacy.html`
+   - `contact.html`
+3. Select target pages manually from the panel list (for example `news.html`, `solutions.html`, `about.html`).
+4. Configure desktop image and mobile image independently:
+   - Desktop image applies to desktop layout.
+   - Mobile image applies on mobile view (`max-width: 760px`).
+   - Optional fallback: use desktop image for mobile when same-image mode is enabled.
+5. Publish behavior:
+   - **Publish ALL pages** generates selected non-fixed pages in under-construction mode.
+   - HOME/PRIVACY/CONTACT publish behavior remains unchanged.
+6. Draft persistence:
+   - Under-construction settings are saved with the same draft flow (local storage, export/import JSON, and repo draft file).
+
 ### 6.1 Initialize from live pages
 1. Use `Initialize Draft from Live Pages` before editing when you want to start from current published content.
 2. Import currently reads:
@@ -95,6 +112,11 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - partial fetch failure fallback
    - unresolved-fields diagnostics emission
    - mobile override preservation when mobile coordinates are absent
+6. Under-construction feature coverage should include:
+   - state normalization and legacy default migration
+   - fixed-page exclusion (`index.html`, `privacy.html`, `contact.html`)
+   - desktop/mobile image fallback behavior
+   - associated-page generation branch behavior for selected pages
 
 ### 7.2 Import failure triage
 1. Parser failure indicators:

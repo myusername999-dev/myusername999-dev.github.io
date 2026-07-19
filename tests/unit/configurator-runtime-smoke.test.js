@@ -63,4 +63,16 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("var ctaMarkup = buttonLinks");
     expect(code).toContain("ctaMarkup,");
   });
+
+  it("wires under-construction controls and generation branch", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("UNDER_CONSTRUCTION_DEFAULT_IMAGE");
+    expect(code).toContain("function renderUnderConstructionPagesEditor()");
+    expect(code).toContain("function addCustomUnderConstructionPage()");
+    expect(code).toContain("function normalizeUnderConstructionConfig(value)");
+    expect(code).toContain("function shouldUseUnderConstructionPage(tab, config)");
+    expect(code).toContain("function buildUnderConstructionPageMarkup(tab, config, draggable)");
+    expect(code).toContain("under-construction-picture");
+    expect(code).toContain("handleUnderConstructionPublish()");
+  });
 });
