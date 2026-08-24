@@ -584,6 +584,7 @@
         if (dom.previewMobileToggle) {
           dom.previewMobileToggle.checked = state.display.previewDevice === "mobile";
         }
+        syncInputsFromState();
         saveAndPreview();
       });
     }
@@ -594,6 +595,7 @@
         if (dom.previewDevice) {
           dom.previewDevice.value = state.display.previewDevice;
         }
+        syncInputsFromState();
         saveAndPreview();
       });
     }
@@ -777,27 +779,51 @@
     });
 
     bindText(dom.bgColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().bgColor = value;
+        return;
+      }
       state.theme.bgColor = value;
     }, "input");
     bindText(dom.textColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().textColor = value;
+        return;
+      }
       var previous = state.theme.textColor;
       state.theme.textColor = value;
       syncThemeLinkedTabColors("textColor", previous, value);
     }, "input");
     bindText(dom.accentColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().accentColor = value;
+        return;
+      }
       state.theme.accentColor = value;
     }, "input");
     bindText(dom.mutedColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().mutedColor = value;
+        return;
+      }
       var previous = state.theme.mutedColor;
       state.theme.mutedColor = value;
       syncThemeLinkedTabColors("mutedColor", previous, value);
     }, "input");
     bindText(dom.surfaceColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().surfaceColor = value;
+        return;
+      }
       var previous = state.theme.surfaceColor;
       state.theme.surfaceColor = value;
       syncThemeLinkedTabColors("surfaceColor", previous, value);
     }, "input");
     bindText(dom.buttonTextColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().buttonTextColor = value;
+        return;
+      }
       state.theme.buttonTextColor = value;
     }, "input");
 
@@ -1460,23 +1486,26 @@
       dom.buttonTextSizeValue.textContent = state.theme.buttonTextSize + "px";
     }
 
+    var themeForColorControls = normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile"
+      ? getMobileTheme()
+      : state.theme;
     if (dom.bgColor) {
-      dom.bgColor.value = normalizeHex(state.theme.bgColor, "#f2f7f3");
+      dom.bgColor.value = normalizeHex(themeForColorControls.bgColor, "#f2f7f3");
     }
     if (dom.textColor) {
-      dom.textColor.value = normalizeHex(state.theme.textColor, "#102822");
+      dom.textColor.value = normalizeHex(themeForColorControls.textColor, "#102822");
     }
     if (dom.accentColor) {
-      dom.accentColor.value = normalizeHex(state.theme.accentColor, "#0f7b6c");
+      dom.accentColor.value = normalizeHex(themeForColorControls.accentColor, "#0f7b6c");
     }
     if (dom.mutedColor) {
-      dom.mutedColor.value = normalizeHex(state.theme.mutedColor, "#4f6962");
+      dom.mutedColor.value = normalizeHex(themeForColorControls.mutedColor, "#4f6962");
     }
     if (dom.surfaceColor) {
-      dom.surfaceColor.value = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
+      dom.surfaceColor.value = normalizeHex(themeForColorControls.surfaceColor, "#e5f0ea");
     }
     if (dom.buttonTextColor) {
-      dom.buttonTextColor.value = normalizeHex(state.theme.buttonTextColor, "#ffffff");
+      dom.buttonTextColor.value = normalizeHex(themeForColorControls.buttonTextColor, "#ffffff");
     }
     if (dom.heroTitleColor) {
       dom.heroTitleColor.value = normalizeHex(state.hero.titleColor, state.theme.textColor);
@@ -2274,6 +2303,7 @@
     }
 
     enablePreviewHamburger();
+    enablePreviewNavigation();
     enableDragging();
   }
 
@@ -2308,6 +2338,32 @@
     });
   }
 
+  function enablePreviewNavigation() {
+    var links = dom.previewViewport.querySelectorAll(".home-nav a");
+    links.forEach(function (link) {
+      link.addEventListener("click", function (event) {
+        var href = String(link.getAttribute("href") || "").split(/[?#]/)[0];
+        var fileName = href.slice(href.lastIndexOf("/") + 1);
+        if (!fileName || fileName === "index.html") {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        state.display.previewPage = normalizePreviewPageValue("page:" + fileName, state);
+        state.display.pageMode = state.display.previewPage === "page:privacy.html"
+          ? "privacy"
+          : state.display.previewPage === "page:contact.html"
+            ? "contact"
+            : "home";
+        if (dom.previewPage) {
+          dom.previewPage.value = state.display.previewPage;
+        }
+        applyPageModeUI();
+        saveAndPreview();
+      });
+    });
+  }
+
   function enableDragging() {
     var dragNodes = dom.previewViewport.querySelectorAll("[data-drag-key]");
     dragNodes.forEach(function (node) {
@@ -2320,6 +2376,9 @@
       }, true);
 
       node.addEventListener("pointerdown", function (event) {
+        if (event.target.closest("a")) {
+          return;
+        }
         event.preventDefault();
         var dragKey = String(node.getAttribute("data-drag-key") || "");
         var startPosition = getDragPosition(dragKey);

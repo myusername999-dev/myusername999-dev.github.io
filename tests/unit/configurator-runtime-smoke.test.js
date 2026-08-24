@@ -96,6 +96,11 @@ describe("configurator runtime smoke", () => {
     expect(configuratorCss).toContain(".preview-viewport.preview-mobile .hero-content-desktop");
     expect(configuratorCss).toContain(".preview-viewport.preview-mobile .hero-subtitle-slot p");
     expect(configuratorCss).toContain("font-size: var(--mobile-body-size) !important;");
+    expect(configuratorCss).toContain(".preview-viewport.preview-mobile .home-nav a");
+    expect(configuratorCss).toContain("color: var(--mobile-text);");
+    expect(configuratorCss).toContain("background: var(--mobile-surface);");
+    expect(mobileCss).toContain(".home-nav a {");
+    expect(mobileCss).toContain("color: var(--mobile-text, var(--preview-text));");
   });
 
   it("keeps mobile overrides when drafts are merged", () => {
@@ -147,6 +152,26 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain('if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {');
     expect(code).toContain("ensureMobileTheme().bodySize = normalized;");
     expect(code).toContain("var bodySizeForControls = normalizePreviewDevice(state.display && state.display.previewDevice) === \"mobile\"");
+  });
+
+  it("routes Colors panel changes to mobile overrides when Mobile is selected", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("ensureMobileTheme().textColor = value;");
+    expect(code).toContain("ensureMobileTheme().surfaceColor = value;");
+    expect(code).toContain("var themeForColorControls = normalizePreviewDevice(state.display && state.display.previewDevice) === \"mobile\"");
+    expect(code).toContain("syncInputsFromState();");
+  });
+
+  it("anchors the mobile menu beside its close button and keeps its links interactive", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    const configuratorCss = readFileSync(resolve("css/configurator.css"), "utf8");
+    const mobileCss = readFileSync(resolve("css/mobile/home.css"), "utf8");
+    expect(code).toContain("function enablePreviewNavigation()");
+    expect(code).toContain('state.display.previewPage = normalizePreviewPageValue("page:" + fileName, state);');
+    expect(code).toContain('if (event.target.closest("a")) {');
+    expect(configuratorCss).toContain("top: 16px;");
+    expect(configuratorCss).toContain("right: 68px;");
+    expect(mobileCss).toContain("right: 68px;");
   });
 
   it("keeps mobile CSS safe for published pages without generated mobile variables", () => {
