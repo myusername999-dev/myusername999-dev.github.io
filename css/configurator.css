@@ -687,6 +687,25 @@ button.danger {
   color: var(--preview-muted);
 }
 
+.preview-viewport .hero-title-slot .hero-content-mobile,
+.preview-viewport .hero-subtitle-slot .hero-content-mobile,
+.preview-viewport .cta-slot a.hero-content-mobile {
+  display: none !important;
+}
+
+.preview-viewport.preview-mobile .hero-content-desktop {
+  display: none !important;
+}
+
+.preview-viewport.preview-mobile .hero-title-slot .hero-content-mobile,
+.preview-viewport.preview-mobile .hero-subtitle-slot .hero-content-mobile {
+  display: block !important;
+}
+
+.preview-viewport.preview-mobile .cta-slot a.hero-content-mobile {
+  display: inline-flex !important;
+}
+
 .cta-slot {
   margin-top: 28px;
   display: flex;

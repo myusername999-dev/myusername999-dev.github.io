@@ -88,7 +88,12 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("hero-content-mobile");
     expect(mobileCss).toContain(".hero-content-desktop");
     expect(mobileCss).toContain(".cta-slot a.hero-content-mobile");
-    expect(readFileSync(resolve("css/components/home/hero-cta.css"), "utf8")).toContain(".cta-slot a.hero-content-mobile");
+    const baseCss = readFileSync(resolve("css/components/home/hero-cta.css"), "utf8");
+    const configuratorCss = readFileSync(resolve("css/configurator.css"), "utf8");
+    expect(baseCss).toContain(".cta-slot a.hero-content-mobile");
+    expect(baseCss).toContain(".hero-title-slot .hero-content-mobile");
+    expect(configuratorCss).toContain(".preview-viewport .hero-title-slot .hero-content-mobile");
+    expect(configuratorCss).toContain(".preview-viewport.preview-mobile .hero-content-desktop");
   });
 
   it("keeps mobile overrides when drafts are merged", () => {

@@ -3,7 +3,8 @@
       display: none !important;
     }
 
-    .hero-content-mobile {
+    .hero-title-slot .hero-content-mobile,
+    .hero-subtitle-slot .hero-content-mobile {
       display: block;
     }
 
