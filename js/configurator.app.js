@@ -102,12 +102,17 @@
       mobileHeroSubtitle: { x: 0, y: 0 },
       mobileCta: { x: 0, y: 0 }
     },
+    mobile: {
+      layout: {},
+      brand: { logos: [] }
+    },
     display: {
       pageMode: "home",
       tabMode: "top-and-home",
       topTabsTransparent: false,
       tabTextColor: "#102822",
       tabBgColor: "#e5f0ea",
+      buttonsDisabled: false,
       ctaTextOnly: false,
       previewPage: "home",
       previewDevice: "desktop",
@@ -294,6 +299,24 @@
     dom.mobileHeadingSizeValue = document.getElementById("mobileHeadingSizeValue");
     dom.mobileBodySize = document.getElementById("mobileBodySize");
     dom.mobileBodySizeValue = document.getElementById("mobileBodySizeValue");
+    dom.mobileButtonTextSize = document.getElementById("mobileButtonTextSize");
+    dom.mobileButtonTextSizeValue = document.getElementById("mobileButtonTextSizeValue");
+    dom.mobileButtonPaddingY = document.getElementById("mobileButtonPaddingY");
+    dom.mobileButtonPaddingYValue = document.getElementById("mobileButtonPaddingYValue");
+    dom.mobileButtonPaddingX = document.getElementById("mobileButtonPaddingX");
+    dom.mobileButtonPaddingXValue = document.getElementById("mobileButtonPaddingXValue");
+    dom.mobileButtonGap = document.getElementById("mobileButtonGap");
+    dom.mobileButtonGapValue = document.getElementById("mobileButtonGapValue");
+    dom.mobileButtonWidth = document.getElementById("mobileButtonWidth");
+    dom.mobileBgColor = document.getElementById("mobileBgColor");
+    dom.mobileTextColor = document.getElementById("mobileTextColor");
+    dom.mobileAccentColor = document.getElementById("mobileAccentColor");
+    dom.mobileMutedColor = document.getElementById("mobileMutedColor");
+    dom.mobileSurfaceColor = document.getElementById("mobileSurfaceColor");
+    dom.mobileButtonTextColor = document.getElementById("mobileButtonTextColor");
+    dom.mobileHeroTitleContent = document.getElementById("mobileHeroTitleContent");
+    dom.mobileHeroSubtitleContent = document.getElementById("mobileHeroSubtitleContent");
+    dom.mobileButtonsEditor = document.getElementById("mobileButtonsEditor");
     dom.mobileHeroCenter = document.getElementById("mobileHeroCenter");
 
     dom.bgColor = document.getElementById("bgColor");
@@ -337,7 +360,12 @@
     dom.tabsEditor = document.getElementById("tabsEditor");
     dom.buttonsEditor = document.getElementById("buttonsEditor");
     dom.addButton = document.getElementById("addButton");
+    dom.buttonsDisabled = document.getElementById("buttonsDisabled");
     dom.ctaTextOnly = document.getElementById("ctaTextOnly");
+    dom.ctaBackgroundColor = document.getElementById("ctaBackgroundColor");
+    dom.ctaLabelColor = document.getElementById("ctaLabelColor");
+    dom.buttonCtaX = document.getElementById("buttonCtaX");
+    dom.buttonCtaY = document.getElementById("buttonCtaY");
     dom.addTab = document.getElementById("addTab");
     dom.tabDisplayMode = document.getElementById("tabDisplayMode");
     dom.topTabsTransparent = document.getElementById("topTabsTransparent");
@@ -348,6 +376,7 @@
     dom.publishHomeOnly = document.getElementById("publishHomeOnly");
     dom.publishPrivacyOnly = document.getElementById("publishPrivacyOnly");
     dom.publishContactOnly = document.getElementById("publishContactOnly");
+    dom.changePublishFolder = document.getElementById("changePublishFolder");
     dom.publishUnderConstruction = document.getElementById("publishUnderConstruction");
     dom.previewPage = document.getElementById("previewPage");
     dom.previewMobileToggle = document.getElementById("previewMobileToggle");
@@ -483,7 +512,12 @@
       state.theme.headingSize = clamp(value, 32, 120);
     });
     bindNumber(dom.bodySize, function (value) {
-      state.theme.bodySize = clamp(value, 12, 32);
+      var normalized = clamp(value, 12, 32);
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().bodySize = normalized;
+        return;
+      }
+      state.theme.bodySize = normalized;
     });
     bindNumber(dom.buttonTextSize, function (value) {
       state.theme.buttonTextSize = clamp(value, 12, 32);
@@ -497,10 +531,52 @@
       });
     }
     bindNumber(dom.mobileHeadingSize, function (value) {
-      state.theme.mobileHeadingSize = clamp(value, 28, 120);
+      var normalized = clamp(value, 28, 120);
+      ensureMobileTheme().headingSize = normalized;
     });
     bindNumber(dom.mobileBodySize, function (value) {
-      state.theme.mobileBodySize = clamp(value, 12, 40);
+      var normalized = clamp(value, 12, 40);
+      ensureMobileTheme().bodySize = normalized;
+    });
+    bindNumber(dom.mobileButtonTextSize, function (value) {
+      var normalized = clamp(value, 12, 40);
+      ensureMobileTheme().buttonTextSize = normalized;
+    });
+    bindNumber(dom.mobileButtonPaddingY, function (value) {
+      ensureMobileButtons().paddingY = clamp(value, 0, 40);
+    });
+    bindNumber(dom.mobileButtonPaddingX, function (value) {
+      ensureMobileButtons().paddingX = clamp(value, 0, 64);
+    });
+    bindNumber(dom.mobileButtonGap, function (value) {
+      ensureMobileButtons().gap = clamp(value, 0, 40);
+    });
+    bindText(dom.mobileButtonWidth, function (value) {
+      ensureMobileButtons().width = value === "full" ? "full" : "auto";
+    }, "change");
+    bindText(dom.mobileBgColor, function (value) {
+      ensureMobileTheme().bgColor = normalizeHex(value, state.theme.bgColor);
+    }, "input");
+    bindText(dom.mobileTextColor, function (value) {
+      ensureMobileTheme().textColor = normalizeHex(value, state.theme.textColor);
+    }, "input");
+    bindText(dom.mobileAccentColor, function (value) {
+      ensureMobileTheme().accentColor = normalizeHex(value, state.theme.accentColor);
+    }, "input");
+    bindText(dom.mobileMutedColor, function (value) {
+      ensureMobileTheme().mutedColor = normalizeHex(value, state.theme.mutedColor);
+    }, "input");
+    bindText(dom.mobileSurfaceColor, function (value) {
+      ensureMobileTheme().surfaceColor = normalizeHex(value, state.theme.surfaceColor);
+    }, "input");
+    bindText(dom.mobileButtonTextColor, function (value) {
+      ensureMobileTheme().buttonTextColor = normalizeHex(value, state.theme.buttonTextColor);
+    }, "input");
+    bindText(dom.mobileHeroTitleContent, function (value) {
+      ensureMobileHero().title = value;
+    });
+    bindText(dom.mobileHeroSubtitleContent, function (value) {
+      ensureMobileHero().subtitle = value;
     });
     if (dom.mobileHeroCenter) {
       dom.mobileHeroCenter.addEventListener("change", function () {
@@ -515,6 +591,7 @@
         if (dom.previewMobileToggle) {
           dom.previewMobileToggle.checked = state.display.previewDevice === "mobile";
         }
+        syncInputsFromState();
         saveAndPreview();
       });
     }
@@ -525,6 +602,7 @@
         if (dom.previewDevice) {
           dom.previewDevice.value = state.display.previewDevice;
         }
+        syncInputsFromState();
         saveAndPreview();
       });
     }
@@ -708,35 +786,73 @@
     });
 
     bindText(dom.bgColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().bgColor = value;
+        return;
+      }
       state.theme.bgColor = value;
     }, "input");
     bindText(dom.textColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().textColor = value;
+        return;
+      }
       var previous = state.theme.textColor;
       state.theme.textColor = value;
       syncThemeLinkedTabColors("textColor", previous, value);
     }, "input");
     bindText(dom.accentColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().accentColor = value;
+        return;
+      }
       state.theme.accentColor = value;
     }, "input");
     bindText(dom.mutedColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().mutedColor = value;
+        return;
+      }
       var previous = state.theme.mutedColor;
       state.theme.mutedColor = value;
       syncThemeLinkedTabColors("mutedColor", previous, value);
     }, "input");
     bindText(dom.surfaceColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().surfaceColor = value;
+        return;
+      }
       var previous = state.theme.surfaceColor;
       state.theme.surfaceColor = value;
       syncThemeLinkedTabColors("surfaceColor", previous, value);
     }, "input");
     bindText(dom.buttonTextColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().buttonTextColor = value;
+        return;
+      }
+      state.theme.buttonTextColor = value;
+    }, "input");
+    bindText(dom.ctaBackgroundColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().accentColor = value;
+        return;
+      }
+      state.theme.accentColor = value;
+    }, "input");
+    bindText(dom.ctaLabelColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().buttonTextColor = value;
+        return;
+      }
       state.theme.buttonTextColor = value;
     }, "input");
 
     bindNumber(dom.logo1X, function (value) {
-      state.brand.logos[0].x = value;
+      setLogoPosition(0, value, getEditableLogo(0).y);
     });
     bindNumber(dom.logo1Y, function (value) {
-      state.brand.logos[0].y = value;
+      setLogoPosition(0, getEditableLogo(0).x, value);
     });
     bindNumber(dom.logo1Size, function (value) {
       setLogoSize(0, value, true);
@@ -748,10 +864,10 @@
       state.brand.logos[0].transparency = clamp(value, 0, 95);
     });
     bindNumber(dom.logo2X, function (value) {
-      state.brand.logos[1].x = value;
+      setLogoPosition(1, value, getEditableLogo(1).y);
     });
     bindNumber(dom.logo2Y, function (value) {
-      state.brand.logos[1].y = value;
+      setLogoPosition(1, getEditableLogo(1).x, value);
     });
     bindNumber(dom.logo2Size, function (value) {
       setLogoSize(1, value, true);
@@ -786,6 +902,14 @@
     bindNumber(dom.ctaY, function (value) {
       state.layout.cta.y = value;
     });
+    bindNumber(dom.buttonCtaX, function (value) {
+      var position = getDragPosition("cta");
+      setDragPosition("cta", value, position.y);
+    });
+    bindNumber(dom.buttonCtaY, function (value) {
+      var position = getDragPosition("cta");
+      setDragPosition("cta", position.x, value);
+    });
     bindNumber(dom.bgX, function (value) {
       state.background.x = clamp(value, 0, 100);
     });
@@ -797,28 +921,28 @@
     });
 
     bindNumber(dom.mobileNavX, function (value) {
-      state.layout.mobileNav.x = value;
+      ensureMobileLayout().nav = Object.assign({}, getMobileLayout("nav"), { x: value });
     });
     bindNumber(dom.mobileNavY, function (value) {
-      state.layout.mobileNav.y = value;
+      ensureMobileLayout().nav = Object.assign({}, getMobileLayout("nav"), { y: value });
     });
     bindNumber(dom.mobileHeroTitleX, function (value) {
-      state.layout.mobileHeroTitle.x = value;
+      ensureMobileLayout().heroTitle = Object.assign({}, getMobileLayout("heroTitle"), { x: value });
     });
     bindNumber(dom.mobileHeroTitleY, function (value) {
-      state.layout.mobileHeroTitle.y = value;
+      ensureMobileLayout().heroTitle = Object.assign({}, getMobileLayout("heroTitle"), { y: value });
     });
     bindNumber(dom.mobileHeroSubtitleX, function (value) {
-      state.layout.mobileHeroSubtitle.x = value;
+      ensureMobileLayout().heroSubtitle = Object.assign({}, getMobileLayout("heroSubtitle"), { x: value });
     });
     bindNumber(dom.mobileHeroSubtitleY, function (value) {
-      state.layout.mobileHeroSubtitle.y = value;
+      ensureMobileLayout().heroSubtitle = Object.assign({}, getMobileLayout("heroSubtitle"), { y: value });
     });
     bindNumber(dom.mobileCtaX, function (value) {
-      state.layout.mobileCta.x = value;
+      ensureMobileLayout().cta = Object.assign({}, getMobileLayout("cta"), { x: value });
     });
     bindNumber(dom.mobileCtaY, function (value) {
-      state.layout.mobileCta.y = value;
+      ensureMobileLayout().cta = Object.assign({}, getMobileLayout("cta"), { y: value });
     });
 
     bindText(dom.tabDisplayMode, function (value) {
@@ -837,6 +961,13 @@
       state.display.topTabsTransparent = !!dom.topTabsTransparent.checked;
       refresh();
     });
+
+    if (dom.buttonsDisabled) {
+      dom.buttonsDisabled.addEventListener("change", function () {
+        state.display.buttonsDisabled = !!dom.buttonsDisabled.checked;
+        refresh();
+      });
+    }
 
     dom.ctaTextOnly.addEventListener("change", function () {
       state.display.ctaTextOnly = !!dom.ctaTextOnly.checked;
@@ -944,6 +1075,14 @@
     if (dom.publishContactOnly) {
       dom.publishContactOnly.addEventListener("click", function () {
         handlePublish("contact");
+      });
+    }
+
+    if (dom.changePublishFolder) {
+      dom.changePublishFolder.addEventListener("click", async function () {
+        rememberedProjectDirectory = null;
+        await clearRememberedProjectDirectory();
+        setStatus("Publish folder cleared. Your next publish will ask you to select the project root containing index.html.", false);
       });
     }
 
@@ -1111,6 +1250,22 @@
       dom.mobileBodySizeValue.textContent = value + "px";
       return;
     }
+    if (element === dom.mobileButtonTextSize && dom.mobileButtonTextSizeValue) {
+      dom.mobileButtonTextSizeValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.mobileButtonPaddingY && dom.mobileButtonPaddingYValue) {
+      dom.mobileButtonPaddingYValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.mobileButtonPaddingX && dom.mobileButtonPaddingXValue) {
+      dom.mobileButtonPaddingXValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.mobileButtonGap && dom.mobileButtonGapValue) {
+      dom.mobileButtonGapValue.textContent = value + "px";
+      return;
+    }
     if (element === dom.bgTransparency && dom.bgTransparencyValue) {
       dom.bgTransparencyValue.textContent = value + "%";
       return;
@@ -1256,6 +1411,66 @@
     }, 80);
   }
 
+  function getMobileTheme() {
+    return Object.assign({}, state.theme, state.mobile && state.mobile.theme ? state.mobile.theme : {});
+  }
+
+  function getMobileButtons() {
+    return Object.assign({
+      paddingY: 12,
+      paddingX: 18,
+      gap: 10,
+      width: "auto"
+    }, state.mobile && state.mobile.buttons ? state.mobile.buttons : {});
+  }
+
+  function getMobileLayout(key) {
+    var overrides = state.mobile && state.mobile.layout;
+    var legacyKeys = {
+      nav: "mobileNav",
+      heroTitle: "mobileHeroTitle",
+      heroSubtitle: "mobileHeroSubtitle",
+      cta: "mobileCta"
+    };
+    return Object.assign({}, state.layout[legacyKeys[key]] || state.layout[key] || { x: 0, y: 0 }, overrides && overrides[key] ? overrides[key] : {});
+  }
+
+  function ensureMobileTheme() {
+    state.mobile = state.mobile || {};
+    state.mobile.theme = state.mobile.theme || {};
+    return state.mobile.theme;
+  }
+
+  function ensureMobileButtons() {
+    state.mobile = state.mobile || {};
+    state.mobile.buttons = state.mobile.buttons || {};
+    return state.mobile.buttons;
+  }
+
+  function ensureMobileLayout() {
+    state.mobile = state.mobile || {};
+    state.mobile.layout = state.mobile.layout || {};
+    return state.mobile.layout;
+  }
+
+  function getMobileHero() {
+    var overrides = state.mobile && state.mobile.hero ? state.mobile.hero : {};
+    var mobileButtons = Array.isArray(overrides.buttons) ? overrides.buttons : [];
+    return {
+      title: Object.prototype.hasOwnProperty.call(overrides, "title") ? overrides.title : state.hero.title,
+      subtitle: Object.prototype.hasOwnProperty.call(overrides, "subtitle") ? overrides.subtitle : state.hero.subtitle,
+      buttons: state.hero.buttons.map(function (button, index) {
+        return Object.assign({}, button, mobileButtons[index] || {});
+      })
+    };
+  }
+
+  function ensureMobileHero() {
+    state.mobile = state.mobile || {};
+    state.mobile.hero = state.mobile.hero || {};
+    return state.mobile.hero;
+  }
+
   function syncInputsFromState() {
     if (dom.pageMode) {
       dom.pageMode.value = normalizePageMode(state.display && state.display.pageMode);
@@ -1269,6 +1484,13 @@
     }
     if (dom.heroSubtitle) {
       dom.heroSubtitle.value = state.hero.subtitle;
+    }
+    var mobileHeroForControls = getMobileHero();
+    if (dom.mobileHeroTitleContent) {
+      dom.mobileHeroTitleContent.value = mobileHeroForControls.title;
+    }
+    if (dom.mobileHeroSubtitleContent) {
+      dom.mobileHeroSubtitleContent.value = mobileHeroForControls.subtitle;
     }
 
     if (dom.fontFamily) {
@@ -1289,8 +1511,11 @@
     if (dom.headingSize) {
       dom.headingSize.value = String(state.theme.headingSize);
     }
+    var bodySizeForControls = normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile"
+      ? getMobileTheme().bodySize
+      : state.theme.bodySize;
     if (dom.bodySize) {
-      dom.bodySize.value = String(state.theme.bodySize);
+      dom.bodySize.value = String(bodySizeForControls);
     }
     if (dom.buttonTextSize) {
       dom.buttonTextSize.value = String(state.theme.buttonTextSize);
@@ -1299,29 +1524,45 @@
       dom.headingSizeValue.textContent = state.theme.headingSize + "px";
     }
     if (dom.bodySizeValue) {
-      dom.bodySizeValue.textContent = state.theme.bodySize + "px";
+      dom.bodySizeValue.textContent = bodySizeForControls + "px";
     }
     if (dom.buttonTextSizeValue) {
       dom.buttonTextSizeValue.textContent = state.theme.buttonTextSize + "px";
     }
 
+    var themeForColorControls = normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile"
+      ? getMobileTheme()
+      : state.theme;
     if (dom.bgColor) {
-      dom.bgColor.value = normalizeHex(state.theme.bgColor, "#f2f7f3");
+      dom.bgColor.value = normalizeHex(themeForColorControls.bgColor, "#f2f7f3");
     }
     if (dom.textColor) {
-      dom.textColor.value = normalizeHex(state.theme.textColor, "#102822");
+      dom.textColor.value = normalizeHex(themeForColorControls.textColor, "#102822");
     }
     if (dom.accentColor) {
-      dom.accentColor.value = normalizeHex(state.theme.accentColor, "#0f7b6c");
+      dom.accentColor.value = normalizeHex(themeForColorControls.accentColor, "#0f7b6c");
     }
     if (dom.mutedColor) {
-      dom.mutedColor.value = normalizeHex(state.theme.mutedColor, "#4f6962");
+      dom.mutedColor.value = normalizeHex(themeForColorControls.mutedColor, "#4f6962");
     }
     if (dom.surfaceColor) {
-      dom.surfaceColor.value = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
+      dom.surfaceColor.value = normalizeHex(themeForColorControls.surfaceColor, "#e5f0ea");
     }
     if (dom.buttonTextColor) {
-      dom.buttonTextColor.value = normalizeHex(state.theme.buttonTextColor, "#ffffff");
+      dom.buttonTextColor.value = normalizeHex(themeForColorControls.buttonTextColor, "#ffffff");
+    }
+    if (dom.ctaBackgroundColor) {
+      dom.ctaBackgroundColor.value = normalizeHex(themeForColorControls.accentColor, "#0f7b6c");
+    }
+    if (dom.ctaLabelColor) {
+      dom.ctaLabelColor.value = normalizeHex(themeForColorControls.buttonTextColor, "#ffffff");
+    }
+    var ctaPositionForControls = getDragPosition("cta");
+    if (dom.buttonCtaX && ctaPositionForControls) {
+      dom.buttonCtaX.value = String(ctaPositionForControls.x);
+    }
+    if (dom.buttonCtaY && ctaPositionForControls) {
+      dom.buttonCtaY.value = String(ctaPositionForControls.y);
     }
     if (dom.heroTitleColor) {
       dom.heroTitleColor.value = normalizeHex(state.hero.titleColor, state.theme.textColor);
@@ -1331,13 +1572,13 @@
     }
 
     if (dom.logo1X) {
-      dom.logo1X.value = String(state.brand.logos[0].x);
+      dom.logo1X.value = String(getEditableLogo(0).x);
     }
     if (dom.logo1Y) {
-      dom.logo1Y.value = String(state.brand.logos[0].y);
+      dom.logo1Y.value = String(getEditableLogo(0).y);
     }
     if (dom.logo1Size) {
-      dom.logo1Size.value = String(state.brand.logos[0].size);
+      dom.logo1Size.value = String(getEditableLogo(0).size);
     }
     if (dom.logo1Rotation) {
       dom.logo1Rotation.value = String(state.brand.logos[0].rotation);
@@ -1346,13 +1587,13 @@
       dom.logo1Transparency.value = String(state.brand.logos[0].transparency);
     }
     if (dom.logo2X) {
-      dom.logo2X.value = String(state.brand.logos[1].x);
+      dom.logo2X.value = String(getEditableLogo(1).x);
     }
     if (dom.logo2Y) {
-      dom.logo2Y.value = String(state.brand.logos[1].y);
+      dom.logo2Y.value = String(getEditableLogo(1).y);
     }
     if (dom.logo2Size) {
-      dom.logo2Size.value = String(state.brand.logos[1].size);
+      dom.logo2Size.value = String(getEditableLogo(1).size);
     }
     if (dom.logo2Rotation) {
       dom.logo2Rotation.value = String(state.brand.logos[1].rotation);
@@ -1397,44 +1638,91 @@
       dom.bgTransparencyValue.textContent = state.background.transparency + "%";
     }
     if (dom.mobileNavX) {
-      dom.mobileNavX.value = String((state.layout.mobileNav && state.layout.mobileNav.x) || 0);
+      dom.mobileNavX.value = String(getMobileLayout("nav").x);
     }
     if (dom.mobileNavY) {
-      dom.mobileNavY.value = String((state.layout.mobileNav && state.layout.mobileNav.y) || 0);
+      dom.mobileNavY.value = String(getMobileLayout("nav").y);
     }
     if (dom.mobileHeroTitleX) {
-      dom.mobileHeroTitleX.value = String((state.layout.mobileHeroTitle && state.layout.mobileHeroTitle.x) || 0);
+      dom.mobileHeroTitleX.value = String(getMobileLayout("heroTitle").x);
     }
     if (dom.mobileHeroTitleY) {
-      dom.mobileHeroTitleY.value = String((state.layout.mobileHeroTitle && state.layout.mobileHeroTitle.y) || 0);
+      dom.mobileHeroTitleY.value = String(getMobileLayout("heroTitle").y);
     }
     if (dom.mobileHeroSubtitleX) {
-      dom.mobileHeroSubtitleX.value = String((state.layout.mobileHeroSubtitle && state.layout.mobileHeroSubtitle.x) || 0);
+      dom.mobileHeroSubtitleX.value = String(getMobileLayout("heroSubtitle").x);
     }
     if (dom.mobileHeroSubtitleY) {
-      dom.mobileHeroSubtitleY.value = String((state.layout.mobileHeroSubtitle && state.layout.mobileHeroSubtitle.y) || 0);
+      dom.mobileHeroSubtitleY.value = String(getMobileLayout("heroSubtitle").y);
     }
     if (dom.mobileCtaX) {
-      dom.mobileCtaX.value = String((state.layout.mobileCta && state.layout.mobileCta.x) || 0);
+      dom.mobileCtaX.value = String(getMobileLayout("cta").x);
     }
     if (dom.mobileCtaY) {
-      dom.mobileCtaY.value = String((state.layout.mobileCta && state.layout.mobileCta.y) || 0);
+      dom.mobileCtaY.value = String(getMobileLayout("cta").y);
     }
     // Mobile overrides UI
     if (dom.mobileOverridesEnabled) {
       dom.mobileOverridesEnabled.checked = !!state.display.mobileOverrides;
     }
+    var mobileThemeForControls = getMobileTheme();
+    var mobileButtonsForControls = getMobileButtons();
     if (dom.mobileHeadingSize) {
-      dom.mobileHeadingSize.value = String(state.theme.mobileHeadingSize || state.theme.headingSize || 48);
+      dom.mobileHeadingSize.value = String(mobileThemeForControls.headingSize);
     }
     if (dom.mobileHeadingSizeValue) {
-      dom.mobileHeadingSizeValue.textContent = String(state.theme.mobileHeadingSize || state.theme.headingSize || 48) + "px";
+      dom.mobileHeadingSizeValue.textContent = String(mobileThemeForControls.headingSize) + "px";
     }
     if (dom.mobileBodySize) {
-      dom.mobileBodySize.value = String(state.theme.mobileBodySize || state.theme.bodySize || 16);
+      dom.mobileBodySize.value = String(mobileThemeForControls.bodySize);
     }
     if (dom.mobileBodySizeValue) {
-      dom.mobileBodySizeValue.textContent = String(state.theme.mobileBodySize || state.theme.bodySize || 16) + "px";
+      dom.mobileBodySizeValue.textContent = String(mobileThemeForControls.bodySize) + "px";
+    }
+    if (dom.mobileButtonTextSize) {
+      dom.mobileButtonTextSize.value = String(mobileThemeForControls.buttonTextSize);
+    }
+    if (dom.mobileButtonTextSizeValue) {
+      dom.mobileButtonTextSizeValue.textContent = String(mobileThemeForControls.buttonTextSize) + "px";
+    }
+    if (dom.mobileButtonPaddingY) {
+      dom.mobileButtonPaddingY.value = String(mobileButtonsForControls.paddingY);
+    }
+    if (dom.mobileButtonPaddingYValue) {
+      dom.mobileButtonPaddingYValue.textContent = String(mobileButtonsForControls.paddingY) + "px";
+    }
+    if (dom.mobileButtonPaddingX) {
+      dom.mobileButtonPaddingX.value = String(mobileButtonsForControls.paddingX);
+    }
+    if (dom.mobileButtonPaddingXValue) {
+      dom.mobileButtonPaddingXValue.textContent = String(mobileButtonsForControls.paddingX) + "px";
+    }
+    if (dom.mobileButtonGap) {
+      dom.mobileButtonGap.value = String(mobileButtonsForControls.gap);
+    }
+    if (dom.mobileButtonGapValue) {
+      dom.mobileButtonGapValue.textContent = String(mobileButtonsForControls.gap) + "px";
+    }
+    if (dom.mobileButtonWidth) {
+      dom.mobileButtonWidth.value = mobileButtonsForControls.width;
+    }
+    if (dom.mobileBgColor) {
+      dom.mobileBgColor.value = mobileThemeForControls.bgColor;
+    }
+    if (dom.mobileTextColor) {
+      dom.mobileTextColor.value = mobileThemeForControls.textColor;
+    }
+    if (dom.mobileAccentColor) {
+      dom.mobileAccentColor.value = mobileThemeForControls.accentColor;
+    }
+    if (dom.mobileMutedColor) {
+      dom.mobileMutedColor.value = mobileThemeForControls.mutedColor;
+    }
+    if (dom.mobileSurfaceColor) {
+      dom.mobileSurfaceColor.value = mobileThemeForControls.surfaceColor;
+    }
+    if (dom.mobileButtonTextColor) {
+      dom.mobileButtonTextColor.value = mobileThemeForControls.buttonTextColor;
     }
     if (dom.mobileHeroCenter) {
       dom.mobileHeroCenter.checked = !!state.display.mobileHeroCenter;
@@ -1460,6 +1748,9 @@
     }
     if (dom.ctaTextOnly) {
       dom.ctaTextOnly.checked = !!state.display.ctaTextOnly;
+    }
+    if (dom.buttonsDisabled) {
+      dom.buttonsDisabled.checked = !!state.display.buttonsDisabled;
     }
 
     if (dom.privacyTitle) {
@@ -1570,6 +1861,7 @@
       dom.underConstructionMobileImagePath.textContent = state.underConstruction.mobileImageFileName || state.underConstruction.mobileImageSrc || "not set";
     }
     applyUnderConstructionControlState();
+    renderMobileButtonsEditor();
     renderUnderConstructionPagesEditor();
 
     applyPageModeUI();
@@ -1673,6 +1965,39 @@
             refresh();
           }
         });
+      });
+    });
+  }
+
+  function renderMobileButtonsEditor() {
+    if (!dom.mobileButtonsEditor) {
+      return;
+    }
+    var mobileHero = getMobileHero();
+    dom.mobileButtonsEditor.innerHTML = mobileHero.buttons
+      .map(function (button, index) {
+        return [
+          "<div class=\"tab-row\" data-mobile-button-index=\"" + index + "\">",
+          "<strong>Mobile Button " + (index + 1) + "</strong>",
+          "<label>Label<input type=\"text\" data-field=\"label\" value=\"" + escapeAttr(button.label) + "\"></label>",
+          "<label>Link<input type=\"text\" data-field=\"href\" value=\"" + escapeAttr(button.href) + "\" placeholder=\"products.html\"></label>",
+          "</div>"
+        ].join("");
+      })
+      .join("");
+
+    dom.mobileButtonsEditor.querySelectorAll(".tab-row").forEach(function (row) {
+      var index = parseInt(row.getAttribute("data-mobile-button-index"), 10);
+      row.querySelectorAll("input[data-field]").forEach(function (input) {
+        var onFieldChange = function () {
+          var hero = ensureMobileHero();
+          hero.buttons = hero.buttons || [];
+          hero.buttons[index] = hero.buttons[index] || {};
+          hero.buttons[index][input.getAttribute("data-field")] = input.value;
+          saveAndPreview();
+        };
+        input.addEventListener("input", onFieldChange);
+        input.addEventListener("change", onFieldChange);
       });
     });
   }
@@ -2038,6 +2363,7 @@
     }
 
     enablePreviewHamburger();
+    enablePreviewNavigation();
     enableDragging();
   }
 
@@ -2051,10 +2377,11 @@
     if (window.ConfiguratorMobileBridge && typeof window.ConfiguratorMobileBridge.applyMobilePreviewLayout === "function") {
       return window.ConfiguratorMobileBridge.applyMobilePreviewLayout(previewConfig);
     }
-    previewConfig.layout.nav = Object.assign({}, previewConfig.layout.mobileNav || { x: 0, y: 0 });
-    previewConfig.layout.heroTitle = Object.assign({}, previewConfig.layout.mobileHeroTitle || { x: 0, y: 0 });
-    previewConfig.layout.heroSubtitle = Object.assign({}, previewConfig.layout.mobileHeroSubtitle || { x: 0, y: 0 });
-    previewConfig.layout.cta = Object.assign({}, previewConfig.layout.mobileCta || { x: 0, y: 0 });
+    var mobileLayout = previewConfig.mobile && previewConfig.mobile.layout ? previewConfig.mobile.layout : {};
+    previewConfig.layout.nav = Object.assign({}, previewConfig.layout.mobileNav || previewConfig.layout.nav || { x: 0, y: 0 }, mobileLayout.nav || {});
+    previewConfig.layout.heroTitle = Object.assign({}, previewConfig.layout.mobileHeroTitle || previewConfig.layout.heroTitle || { x: 0, y: 0 }, mobileLayout.heroTitle || {});
+    previewConfig.layout.heroSubtitle = Object.assign({}, previewConfig.layout.mobileHeroSubtitle || previewConfig.layout.heroSubtitle || { x: 0, y: 0 }, mobileLayout.heroSubtitle || {});
+    previewConfig.layout.cta = Object.assign({}, previewConfig.layout.mobileCta || previewConfig.layout.cta || { x: 0, y: 0 }, mobileLayout.cta || {});
     return previewConfig;
   }
 
@@ -2071,6 +2398,34 @@
     });
   }
 
+  function enablePreviewNavigation() {
+    var links = dom.previewViewport.querySelectorAll(".home-nav a");
+    links.forEach(function (link) {
+      link.addEventListener("click", function (event) {
+        var href = String(link.getAttribute("href") || "").split(/[?#]/)[0];
+        var fileName = href.slice(href.lastIndexOf("/") + 1);
+        if (!fileName) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        state.display.previewPage = fileName === "index.html"
+          ? "home"
+          : normalizePreviewPageValue("page:" + fileName, state);
+        state.display.pageMode = state.display.previewPage === "page:privacy.html"
+          ? "privacy"
+          : state.display.previewPage === "page:contact.html"
+            ? "contact"
+            : "home";
+        if (dom.previewPage) {
+          dom.previewPage.value = state.display.previewPage;
+        }
+        applyPageModeUI();
+        saveAndPreview();
+      });
+    });
+  }
+
   function enableDragging() {
     var dragNodes = dom.previewViewport.querySelectorAll("[data-drag-key]");
     dragNodes.forEach(function (node) {
@@ -2083,8 +2438,11 @@
       }, true);
 
       node.addEventListener("pointerdown", function (event) {
-        event.preventDefault();
         var dragKey = String(node.getAttribute("data-drag-key") || "");
+        if (dragKey === "nav" && event.target.closest("a")) {
+          return;
+        }
+        event.preventDefault();
         var startPosition = getDragPosition(dragKey);
         if (!startPosition) {
           return;
@@ -2107,7 +2465,7 @@
           setDragPosition(dragKey, nextX, nextY);
           if (isLogoDragKey(dragKey)) {
             var logoIndex = logoIndexFromDragKey(dragKey);
-            node.style.transform = logoTransform(state.brand.logos[logoIndex]);
+            node.style.transform = logoTransform(getEditableLogo(logoIndex));
           } else {
             node.style.transform = "translate(" + nextX + "px, " + nextY + "px)";
           }
@@ -2133,16 +2491,16 @@
 
   function syncPositionInputsOnly() {
     if (dom.logo1X) {
-      dom.logo1X.value = String(state.brand.logos[0].x);
+      dom.logo1X.value = String(getEditableLogo(0).x);
     }
     if (dom.logo1Y) {
-      dom.logo1Y.value = String(state.brand.logos[0].y);
+      dom.logo1Y.value = String(getEditableLogo(0).y);
     }
     if (dom.logo2X) {
-      dom.logo2X.value = String(state.brand.logos[1].x);
+      dom.logo2X.value = String(getEditableLogo(1).x);
     }
     if (dom.logo2Y) {
-      dom.logo2Y.value = String(state.brand.logos[1].y);
+      dom.logo2Y.value = String(getEditableLogo(1).y);
     }
     if (dom.navX) {
       dom.navX.value = String(state.layout.nav.x);
@@ -2169,28 +2527,28 @@
       dom.ctaY.value = String(state.layout.cta.y);
     }
     if (dom.mobileNavX) {
-      dom.mobileNavX.value = String((state.layout.mobileNav && state.layout.mobileNav.x) || 0);
+      dom.mobileNavX.value = String(getMobileLayout("nav").x);
     }
     if (dom.mobileNavY) {
-      dom.mobileNavY.value = String((state.layout.mobileNav && state.layout.mobileNav.y) || 0);
+      dom.mobileNavY.value = String(getMobileLayout("nav").y);
     }
     if (dom.mobileHeroTitleX) {
-      dom.mobileHeroTitleX.value = String((state.layout.mobileHeroTitle && state.layout.mobileHeroTitle.x) || 0);
+      dom.mobileHeroTitleX.value = String(getMobileLayout("heroTitle").x);
     }
     if (dom.mobileHeroTitleY) {
-      dom.mobileHeroTitleY.value = String((state.layout.mobileHeroTitle && state.layout.mobileHeroTitle.y) || 0);
+      dom.mobileHeroTitleY.value = String(getMobileLayout("heroTitle").y);
     }
     if (dom.mobileHeroSubtitleX) {
-      dom.mobileHeroSubtitleX.value = String((state.layout.mobileHeroSubtitle && state.layout.mobileHeroSubtitle.x) || 0);
+      dom.mobileHeroSubtitleX.value = String(getMobileLayout("heroSubtitle").x);
     }
     if (dom.mobileHeroSubtitleY) {
-      dom.mobileHeroSubtitleY.value = String((state.layout.mobileHeroSubtitle && state.layout.mobileHeroSubtitle.y) || 0);
+      dom.mobileHeroSubtitleY.value = String(getMobileLayout("heroSubtitle").y);
     }
     if (dom.mobileCtaX) {
-      dom.mobileCtaX.value = String((state.layout.mobileCta && state.layout.mobileCta.x) || 0);
+      dom.mobileCtaX.value = String(getMobileLayout("cta").x);
     }
     if (dom.mobileCtaY) {
-      dom.mobileCtaY.value = String((state.layout.mobileCta && state.layout.mobileCta.y) || 0);
+      dom.mobileCtaY.value = String(getMobileLayout("cta").y);
     }
   }
 
@@ -3109,8 +3467,11 @@
     state.theme.headingSize = defaults.theme.headingSize;
     state.theme.bodySize = defaults.theme.bodySize;
     state.theme.buttonTextSize = defaults.theme.buttonTextSize;
-    state.theme.mobileHeadingSize = defaults.theme.headingSize;
-    state.theme.mobileBodySize = defaults.theme.bodySize;
+    delete state.theme.mobileHeadingSize;
+    delete state.theme.mobileBodySize;
+    delete state.theme.mobileButtonTextSize;
+    state.mobile = state.mobile || {};
+    delete state.mobile.theme;
     state.hero.titleFontFamily = defaults.hero.titleFontFamily;
     state.hero.subtitleFontFamily = defaults.hero.subtitleFontFamily;
     state.hero.titleAlign = defaults.hero.titleAlign;
@@ -3127,6 +3488,8 @@
     state.theme.buttonTextColor = defaults.theme.buttonTextColor;
     state.layout.cta = deepClone(defaults.layout.cta);
     state.layout.mobileCta = deepClone(defaults.layout.mobileCta);
+    state.mobile = state.mobile || {};
+    delete state.mobile.buttons;
     refresh("Buttons reset to defaults.");
     dom.approval.checked = false;
   }
@@ -3155,6 +3518,12 @@
     state.theme.mutedColor = defaults.theme.mutedColor;
     state.theme.surfaceColor = defaults.theme.surfaceColor;
     state.theme.buttonTextColor = defaults.theme.buttonTextColor;
+    state.mobile = state.mobile || {};
+    ["bgColor", "textColor", "accentColor", "mutedColor", "surfaceColor", "buttonTextColor"].forEach(function (key) {
+      if (state.mobile.theme) {
+        delete state.mobile.theme[key];
+      }
+    });
     state.hero.titleColor = defaults.hero.titleColor;
     state.hero.subtitleColor = defaults.hero.subtitleColor;
     state.display.tabTextColor = defaults.display.tabTextColor;
@@ -3186,7 +3555,7 @@
       "  <link rel=\"stylesheet\" href=\"css/components/home/navigation.css\">",
       "  <link rel=\"stylesheet\" href=\"css/components/home/hero-cta.css\">",
       "  <link rel=\"stylesheet\" href=\"css/components/home/cards-footer.css\">",
-      "  <link rel=\"stylesheet\" href=\"css/components/home/mobile.css\">",
+      "  <link rel=\"stylesheet\" href=\"css/mobile/home.css\">",
       "</head>",
       "<body>",
       buildHomeMarkup(config, false),
@@ -3256,6 +3625,7 @@
 
     var tabMode = normalizeTabMode(config.display && config.display.tabMode);
     var topTabsTransparent = !!(config.display && config.display.topTabsTransparent);
+    var buttonsDisabled = !!(config.display && config.display.buttonsDisabled);
     var ctaTextOnly = !!(config.display && config.display.ctaTextOnly);
     var showHomeTabSelector = tabMode === "top-and-home";
     var showTabCards = tabMode === "top-and-home";
@@ -3357,7 +3727,18 @@
       })
       .join("");
 
-    var buttonLinks = config.hero.buttons
+    var mobileHeroOverrides = config.mobile && config.mobile.hero ? config.mobile.hero : {};
+    var mobileHero = {
+      title: Object.prototype.hasOwnProperty.call(mobileHeroOverrides, "title") ? mobileHeroOverrides.title : config.hero.title,
+      subtitle: Object.prototype.hasOwnProperty.call(mobileHeroOverrides, "subtitle") ? mobileHeroOverrides.subtitle : config.hero.subtitle,
+      buttons: config.hero.buttons.map(function (button, index) {
+        var buttonOverrides = Array.isArray(mobileHeroOverrides.buttons) ? mobileHeroOverrides.buttons[index] : null;
+        return Object.assign({}, button, buttonOverrides || {});
+      })
+    };
+
+    function buildButtonLinks(buttons, contentClass) {
+      return buttons
       .map(function (button) {
         var href = String(button.href || "#").trim() || "#";
         href = resolvePreviewSiteHref(href);
@@ -3367,15 +3748,19 @@
         if (ctaTextOnly) {
           buttonStyle += "background:transparent;border-color:transparent;box-shadow:none;color:" + escapeAttr(visibleCtaTextColor) + ";";
         }
-        return "<a href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + buttonStyle + "\">" +
+        return "<a class=\"" + contentClass + "\" href=\"" + escapeAttr(href) + "\"" + previewAttrs + " style=\"" + buttonStyle + "\">" +
           escapeHtml(button.label) +
           "</a>";
       })
       .join("");
-    var ctaMarkup = buttonLinks
+    }
+    var buttonLinks = buildButtonLinks(config.hero.buttons, "hero-content-desktop");
+    var mobileButtonLinks = buildButtonLinks(mobileHero.buttons, "hero-content-mobile");
+    var ctaMarkup = !buttonsDisabled && buttonLinks
       ? [
         "<div class=\"cta-slot\" " + dragAttr("cta", draggable) + transformAttr(config.layout.cta) + ">",
         buttonLinks,
+        mobileButtonLinks,
         "</div>"
       ].join("")
       : "";
@@ -3390,6 +3775,21 @@
         return "<div class=\"logo-slot\" " + logoDragAttr(index, draggable) + logoStyleAttr(logo) + ">" + inner + "</div>";
       })
       .join("");
+    var mobileLogos = config.mobile && config.mobile.brand && Array.isArray(config.mobile.brand.logos)
+      ? config.mobile.brand.logos
+      : [];
+    var mobileLogo0 = Object.assign({}, config.brand.logos[0], mobileLogos[0] || {});
+    var mobileLogo1 = Object.assign({}, config.brand.logos[1], mobileLogos[1] || {});
+    var mobileTheme = Object.assign({}, config.theme, config.mobile && config.mobile.theme ? config.mobile.theme : {});
+    var mobileButtons = Object.assign({ paddingY: 12, paddingX: 18, gap: 10, width: "auto" }, config.mobile && config.mobile.buttons ? config.mobile.buttons : {});
+    var mobileLayout = config.mobile && config.mobile.layout ? config.mobile.layout : {};
+    function getPublishedMobileLayout(key, legacyKey) {
+      return Object.assign({}, config.layout[legacyKey] || config.layout[key] || { x: 0, y: 0 }, mobileLayout[key] || {});
+    }
+    var mobileNav = getPublishedMobileLayout("nav", "mobileNav");
+    var mobileHeroTitle = getPublishedMobileLayout("heroTitle", "mobileHeroTitle");
+    var mobileHeroSubtitle = getPublishedMobileLayout("heroSubtitle", "mobileHeroSubtitle");
+    var mobileCta = getPublishedMobileLayout("cta", "mobileCta");
 
     return [
       "<div class=\"home-root\" style=\"--preview-bg:" + escapeAttr(config.theme.bgColor) +
@@ -3412,15 +3812,36 @@
         config.theme.headingSize +
         "px;--preview-body-size:" +
         config.theme.bodySize +
-        "px;--mobile-nav-x:" + ((config.layout.mobileNav && config.layout.mobileNav.x) || 0) +
-        "px;--mobile-nav-y:" + ((config.layout.mobileNav && config.layout.mobileNav.y) || 0) +
-        "px;--mobile-hero-title-x:" + ((config.layout.mobileHeroTitle && config.layout.mobileHeroTitle.x) || 0) +
-        "px;--mobile-hero-title-y:" + ((config.layout.mobileHeroTitle && config.layout.mobileHeroTitle.y) || 0) +
-        "px;--mobile-hero-subtitle-x:" + ((config.layout.mobileHeroSubtitle && config.layout.mobileHeroSubtitle.x) || 0) +
-        "px;--mobile-hero-subtitle-y:" + ((config.layout.mobileHeroSubtitle && config.layout.mobileHeroSubtitle.y) || 0) +
-        "px;--mobile-cta-x:" + ((config.layout.mobileCta && config.layout.mobileCta.x) || 0) +
-        "px;--mobile-cta-y:" + ((config.layout.mobileCta && config.layout.mobileCta.y) || 0) +
-        "px;font-family:'" +
+        "px;--mobile-nav-x:" + mobileNav.x +
+        "px;--mobile-nav-y:" + mobileNav.y +
+        "px;--mobile-hero-title-x:" + mobileHeroTitle.x +
+        "px;--mobile-hero-title-y:" + mobileHeroTitle.y +
+        "px;--mobile-hero-subtitle-x:" + mobileHeroSubtitle.x +
+        "px;--mobile-hero-subtitle-y:" + mobileHeroSubtitle.y +
+        "px;--mobile-cta-x:" + mobileCta.x +
+        "px;--mobile-cta-y:" + mobileCta.y +
+        "px;--mobile-logo-0-x:" + mobileLogo0.x +
+        "px;--mobile-logo-0-y:" + mobileLogo0.y +
+        "px;--mobile-logo-0-size:" + mobileLogo0.size +
+        "px;--mobile-logo-0-rotation:" + config.brand.logos[0].rotation +
+        "deg;--mobile-logo-1-x:" + mobileLogo1.x +
+        "px;--mobile-logo-1-y:" + mobileLogo1.y +
+        "px;--mobile-logo-1-size:" + mobileLogo1.size +
+        "px;--mobile-logo-1-rotation:" + config.brand.logos[1].rotation +
+        "deg;--mobile-heading-size:" + mobileTheme.headingSize +
+        "px;--mobile-body-size:" + mobileTheme.bodySize +
+        "px;--mobile-button-text-size:" + mobileTheme.buttonTextSize +
+        "px;--mobile-button-padding-y:" + mobileButtons.paddingY +
+        "px;--mobile-button-padding-x:" + mobileButtons.paddingX +
+        "px;--mobile-button-gap:" + mobileButtons.gap +
+        "px;--mobile-button-width:" + (mobileButtons.width === "full" ? "100%" : "auto") +
+        ";--mobile-bg:" + escapeAttr(mobileTheme.bgColor) +
+        ";--mobile-text:" + escapeAttr(mobileTheme.textColor) +
+        ";--mobile-accent:" + escapeAttr(mobileTheme.accentColor) +
+        ";--mobile-muted:" + escapeAttr(mobileTheme.mutedColor) +
+        ";--mobile-surface:" + escapeAttr(mobileTheme.surfaceColor) +
+        ";--mobile-button-text:" + escapeAttr(mobileTheme.buttonTextColor) +
+        ";font-family:'" +
         escapeAttr(config.theme.fontFamily) +
         "','Segoe UI',sans-serif;\">",
       "<div class=\"home-bg\" " + bgImage + "></div>",
@@ -3434,10 +3855,12 @@
       "</header>",
       "<main class=\"hero-wrap\">",
       "<section class=\"hero-title-slot\" " + dragAttr("heroTitle", draggable) + " style=\"transform:translate(" + config.layout.heroTitle.x + "px," + config.layout.heroTitle.y + "px);text-align:" + escapeAttr(config.hero.titleAlign) + ";" + (config.hero.titleFontFamily ? "font-family:'" + escapeAttr(config.hero.titleFontFamily) + "','Segoe UI',sans-serif;" : "") + "\">",
-      "<h1 style=\"color:" + escapeAttr(config.hero.titleColor) + ";\">" + escapeHtml(config.hero.title) + "</h1>",
+      "<h1 class=\"hero-content-desktop\" style=\"color:" + escapeAttr(config.hero.titleColor) + ";\">" + escapeHtml(config.hero.title) + "</h1>",
+      "<h1 class=\"hero-content-mobile\" style=\"color:" + escapeAttr(config.hero.titleColor) + ";\">" + escapeHtml(mobileHero.title) + "</h1>",
       "</section>",
       "<section class=\"hero-subtitle-slot\" " + dragAttr("heroSubtitle", draggable) + " style=\"transform:translate(" + config.layout.heroSubtitle.x + "px," + config.layout.heroSubtitle.y + "px);text-align:" + escapeAttr(config.hero.subtitleAlign) + ";" + (config.hero.subtitleFontFamily ? "font-family:'" + escapeAttr(config.hero.subtitleFontFamily) + "','Segoe UI',sans-serif;" : "") + "\">",
-      "<p style=\"color:" + escapeAttr(config.hero.subtitleColor) + ";\">" + escapeHtml(config.hero.subtitle) + "</p>",
+      "<p class=\"hero-content-desktop\" style=\"color:" + escapeAttr(config.hero.subtitleColor) + ";\">" + escapeHtml(config.hero.subtitle) + "</p>",
+      "<p class=\"hero-content-mobile\" style=\"color:" + escapeAttr(config.hero.subtitleColor) + ";\">" + escapeHtml(mobileHero.subtitle) + "</p>",
       "</section>",
       ctaMarkup,
       homeTabSelectorMarkup,
@@ -3573,6 +3996,11 @@
     var writable = await indexHandle.createWritable();
     await writable.write(html);
     await writable.close();
+    var writtenFile = await indexHandle.getFile();
+    var writtenHtml = await writtenFile.text();
+    if (writtenHtml !== html) {
+      throw new Error("index.html write verification failed.");
+    }
   }
 
   async function writeSinglePage(projectDirectory, fileName, html) {
@@ -4598,17 +5026,12 @@
   function getDragPosition(dragKey) {
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     if (previewDevice === "mobile") {
-      if (dragKey === "nav") {
-        return state.layout.mobileNav || { x: 0, y: 0 };
+      if (isLogoDragKey(dragKey)) {
+        var mobileLogoIndex = logoIndexFromDragKey(dragKey);
+        return getEditableLogo(mobileLogoIndex);
       }
-      if (dragKey === "heroTitle") {
-        return state.layout.mobileHeroTitle || { x: 0, y: 0 };
-      }
-      if (dragKey === "heroSubtitle") {
-        return state.layout.mobileHeroSubtitle || { x: 0, y: 0 };
-      }
-      if (dragKey === "cta") {
-        return state.layout.mobileCta || { x: 0, y: 0 };
+      if (["nav", "heroTitle", "heroSubtitle", "cta"].indexOf(dragKey) >= 0) {
+        return getMobileLayout(dragKey);
       }
     }
     if (isLogoDragKey(dragKey)) {
@@ -4630,24 +5053,12 @@
   function setDragPosition(dragKey, x, y) {
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     if (previewDevice === "mobile") {
-      if (dragKey === "nav") {
-        state.layout.mobileNav.x = x;
-        state.layout.mobileNav.y = y;
+      if (isLogoDragKey(dragKey)) {
+        setLogoPosition(logoIndexFromDragKey(dragKey), x, y);
         return;
       }
-      if (dragKey === "heroTitle") {
-        state.layout.mobileHeroTitle.x = x;
-        state.layout.mobileHeroTitle.y = y;
-        return;
-      }
-      if (dragKey === "heroSubtitle") {
-        state.layout.mobileHeroSubtitle.x = x;
-        state.layout.mobileHeroSubtitle.y = y;
-        return;
-      }
-      if (dragKey === "cta") {
-        state.layout.mobileCta.x = x;
-        state.layout.mobileCta.y = y;
+      if (["nav", "heroTitle", "heroSubtitle", "cta"].indexOf(dragKey) >= 0) {
+        ensureMobileLayout()[dragKey] = { x: x, y: y };
         return;
       }
     }
@@ -4739,9 +5150,17 @@
     state.theme.surfaceColor = normalizeHex(state.theme.surfaceColor, "#e5f0ea");
     state.theme.buttonTextColor = normalizeHex(state.theme.buttonTextColor, "#ffffff");
 
-    // Mobile theme defaults
-    state.theme.mobileHeadingSize = clamp(parseInt(state.theme.mobileHeadingSize, 10) || state.theme.headingSize || 48, 20, 160);
-    state.theme.mobileBodySize = clamp(parseInt(state.theme.mobileBodySize, 10) || state.theme.bodySize || 16, 10, 72);
+    // Legacy mobile typography fields remain optional migration inputs.
+    var legacyMobileTypographyFallbacks = {
+      mobileHeadingSize: state.theme.headingSize,
+      mobileBodySize: state.theme.bodySize,
+      mobileButtonTextSize: state.theme.buttonTextSize
+    };
+    Object.keys(legacyMobileTypographyFallbacks).forEach(function (key) {
+      if (Object.prototype.hasOwnProperty.call(state.theme, key)) {
+        state.theme[key] = clamp(parseInt(state.theme[key], 10) || legacyMobileTypographyFallbacks[key], 10, 160);
+      }
+    });
 
     state.layout = state.layout || {};
     var hasHeroTitleLayout = !!state.layout.heroTitle;
@@ -4765,12 +5184,17 @@
       };
     }
 
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeMobileOverrides === "function") {
+      state.mobile = window.ConfiguratorStateBridge.normalizeMobileOverrides(state.mobile, state);
+    }
+
     state.display = state.display || {};
     state.display.pageMode = normalizePageMode(state.display.pageMode);
     state.display.tabMode = normalizeTabMode(state.display.tabMode);
     state.display.topTabsTransparent = !!state.display.topTabsTransparent;
     state.display.tabTextColor = normalizeHex(state.display.tabTextColor, state.theme.textColor);
     state.display.tabBgColor = normalizeHex(state.display.tabBgColor, state.theme.surfaceColor);
+    state.display.buttonsDisabled = !!state.display.buttonsDisabled;
     state.display.ctaTextOnly = !!state.display.ctaTextOnly;
     // Mobile display flags
     state.display.mobileOverrides = !!state.display.mobileOverrides;
@@ -4982,6 +5406,7 @@
     merged.privacy = Object.assign({}, merged.privacy, incoming.privacy || {});
     merged.contact = Object.assign({}, merged.contact, incoming.contact || {});
     merged.underConstruction = Object.assign({}, merged.underConstruction, incoming.underConstruction || {});
+    merged.mobile = deepClone(incoming.mobile || merged.mobile || {});
 
     var incomingLayout = incoming.layout || {};
     merged.layout = {
@@ -5429,15 +5854,58 @@
 
   function setLogoSize(index, value, keepCenter) {
     var logoIndex = clamp(parseInt(index, 10) || 0, 0, 1);
-    var logo = state.brand.logos[logoIndex];
+    var logo = getEditableLogo(logoIndex);
     var nextSize = clamp(parseInt(value, 10) || 0, 1, 1200);
     var previousSize = clamp(parseInt(logo.size, 10) || 72, 1, 1200);
+    var nextX = logo.x;
+    var nextY = logo.y;
     if (keepCenter && nextSize !== previousSize) {
       var delta = nextSize - previousSize;
-      logo.x -= Math.round(delta / 2);
-      logo.y -= Math.round(delta / 2);
+      nextX -= Math.round(delta / 2);
+      nextY -= Math.round(delta / 2);
     }
-    logo.size = nextSize;
+    if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+      state.mobile = state.mobile || {};
+      state.mobile.brand = state.mobile.brand || {};
+      state.mobile.brand.logos = state.mobile.brand.logos || [];
+      state.mobile.brand.logos[logoIndex] = Object.assign({}, state.mobile.brand.logos[logoIndex] || {}, {
+        x: nextX,
+        y: nextY,
+        size: nextSize
+      });
+      return;
+    }
+    state.brand.logos[logoIndex].x = nextX;
+    state.brand.logos[logoIndex].y = nextY;
+    state.brand.logos[logoIndex].size = nextSize;
+  }
+
+  function getEditableLogo(index) {
+    var logoIndex = clamp(parseInt(index, 10) || 0, 0, 1);
+    if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+      var mobileLogos = state.mobile && state.mobile.brand && state.mobile.brand.logos;
+      if (mobileLogos && mobileLogos[logoIndex]) {
+        return Object.assign({}, state.brand.logos[logoIndex], mobileLogos[logoIndex]);
+      }
+    }
+    return state.brand.logos[logoIndex];
+  }
+
+  function setLogoPosition(index, x, y) {
+    var logoIndex = clamp(parseInt(index, 10) || 0, 0, 1);
+    if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+      var logo = getEditableLogo(logoIndex);
+      state.mobile = state.mobile || {};
+      state.mobile.brand = state.mobile.brand || {};
+      state.mobile.brand.logos = state.mobile.brand.logos || [];
+      state.mobile.brand.logos[logoIndex] = Object.assign({}, state.mobile.brand.logos[logoIndex] || {}, {
+        x: x,
+        y: y
+      });
+      return;
+    }
+    state.brand.logos[logoIndex].x = x;
+    state.brand.logos[logoIndex].y = y;
   }
 
   function createEmptyGallery() {

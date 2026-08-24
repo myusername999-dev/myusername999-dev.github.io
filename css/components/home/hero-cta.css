@@ -63,3 +63,12 @@
 	border-radius: 999px;
 	font-size: var(--preview-button-size);
 }
+
+.hero-title-slot .hero-content-mobile,
+.hero-subtitle-slot .hero-content-mobile {
+	display: none !important;
+}
+
+.cta-slot a.hero-content-mobile {
+	display: none;
+}

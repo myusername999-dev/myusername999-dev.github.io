@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createStateFixture } from "../helpers/state-fixtures.js";
 import { applyScopedSetting } from "../../tools/configurator/core/page-context.js";
-import { getPreviewConfigForDevice } from "../../tools/configurator/mobile/mobile-layout.js";
+import { getPreviewConfigForDevice } from "../../js/mobile/mobile-layout.js";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import vm from "node:vm";

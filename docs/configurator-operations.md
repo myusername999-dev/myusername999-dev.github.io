@@ -14,7 +14,7 @@
 
 ### 3. Configurator locations
 1. Main configurator entry: `tools/configurator/index.html`
-2. Mobile-manageable modules: `tools/configurator/mobile/`
+2. Mobile runtime modules: `js/mobile/`
 3. Publish services: `tools/configurator/publish/`
 4. Test suites: `tests/`
 
@@ -42,6 +42,24 @@ These pages route into the same configurator runtime with panel focus, so behavi
 2. Mobile:
    - Use mobile preview and verify mobile override positions.
 3. Confirm changes in one environment do not unintentionally alter the other.
+4. HOME logo safety:
+   - In mobile preview, logo position and size changes are saved as mobile overrides.
+   - Switch back to desktop after each logo edit and confirm desktop position and size are unchanged.
+   - Logo files, rotation, and transparency remain shared between desktop and mobile.
+5. HOME typography safety:
+   - Mobile heading, body, and button text size controls are independent from desktop values.
+   - Switch back to desktop after each typography edit and confirm desktop text sizes are unchanged.
+6. HOME CTA layout safety:
+   - Mobile CTA padding, gap, and width controls are independent from desktop values.
+   - Switch back to desktop after each CTA layout edit and confirm desktop buttons are unchanged.
+7. HOME color safety:
+   - Mobile background, text, accent, muted, surface, and button-text colors are independent from desktop values.
+   - Switch back to desktop after each color edit and confirm desktop colors are unchanged.
+8. Mobile stylesheet:
+   - HOME mobile rules are stored in `css/mobile/home.css` and apply at `max-width: 760px`.
+9. Reset to desktop:
+   - Typography and CTA layout resets remove their mobile override group instead of copying desktop values into it.
+   - After resetting, the mobile preview resolves that group from the desktop values again.
 
 ### 6. Publish and draft workflows
 1. Publish scopes:
@@ -81,11 +99,12 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - `privacy.html`
 3. The importer merges detected values into current draft state instead of replacing the full draft object.
 4. Desktop and mobile layout values are both imported when present in HOME page style variables.
-5. Import report now includes diagnostics:
+5. Draft export/import, repo draft save/load, HOME-only publish, and ALL-pages publish preserve sparse `mobile` overrides, including mobile hero copy and CTA links.
+6. Import report now includes diagnostics:
    - confidence by page (`high` / `medium` / `low`)
    - unresolved field list (`page:field`)
    - preserved-by-policy list for fields intentionally left to existing draft state
-6. Known preservation-first limitations:
+7. Known preservation-first limitations:
    - mobile layout overrides are preserved unless explicit mobile CSS vars are found
    - detailed tab/gallery structures are preserved from existing draft unless reliably inferable
    - contact field schema is preserved unless explicit form structure extraction is added
@@ -136,7 +155,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
 2. Desktop and mobile baseline tests are passing.
 3. Publish and mobile helper extraction is active through runtime bridge modules:
    - `tools/configurator/publish/publish-bridge.js`
-   - `tools/configurator/mobile/mobile-bridge.js`
+   - `js/mobile/mobile-bridge.js`
 4. State normalization extraction is active through:
    - `tools/configurator/core/state-bridge.js`
    - includes page/tab/preview normalization, text-align/contact-field normalization, and logo/gallery helper normalization

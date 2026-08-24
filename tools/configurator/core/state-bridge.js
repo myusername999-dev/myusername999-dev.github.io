@@ -187,6 +187,152 @@
     return normalizeBrandLogos(source.logos, legacy);
   }
 
+  function normalizeMobileLogoOverrides(value, desktopLogos) {
+    var source = Array.isArray(value) ? value : [];
+    var desktop = Array.isArray(desktopLogos) ? desktopLogos : createDefaultLogos();
+
+    return [0, 1].map(function (index) {
+      var override = source[index] || {};
+      var fallback = desktop[index] || createDefaultLogo(index);
+      return {
+        x: parseNumberOrFallback(override.x, fallback.x),
+        y: parseNumberOrFallback(override.y, fallback.y),
+        size: clamp(parseNumberOrFallback(override.size, fallback.size), 1, 1200)
+      };
+    });
+  }
+
+  function parseNumberOrFallback(value, fallback) {
+    var parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+  }
+
+  function hasOwn(source, key) {
+    return !!source && Object.prototype.hasOwnProperty.call(source, key);
+  }
+
+  function normalizeMobileOverrides(value, desktopState) {
+    var source = value || {};
+    var desktop = desktopState || {};
+    var desktopLayout = desktop.layout || {};
+    var desktopTheme = desktop.theme || {};
+    var legacyMobileKeys = {
+      nav: "mobileNav",
+      heroTitle: "mobileHeroTitle",
+      heroSubtitle: "mobileHeroSubtitle",
+      cta: "mobileCta"
+    };
+
+    function normalizePosition(override, fallback) {
+      var item = override || {};
+      var base = fallback || { x: 0, y: 0 };
+      var result = {};
+      if (hasOwn(item, "x")) {
+        result.x = parseNumberOrFallback(item.x, base.x || 0);
+      }
+      if (hasOwn(item, "y")) {
+        result.y = parseNumberOrFallback(item.y, base.y || 0);
+      }
+      return result;
+    }
+
+    function normalizeThemeNumber(key, legacyKey, fallback, min, max) {
+      if (hasOwn(source.theme, key)) {
+        return clamp(parseNumberOrFallback(source.theme[key], fallback), min, max);
+      }
+      if (hasOwn(desktopTheme, legacyKey)) {
+        return clamp(parseNumberOrFallback(desktopTheme[legacyKey], fallback), min, max);
+      }
+      return undefined;
+    }
+
+    function normalizeThemeColor(key, fallback) {
+      return hasOwn(source.theme, key) ? normalizeHex(source.theme[key], fallback) : undefined;
+    }
+
+    function compact(object) {
+      return Object.keys(object).reduce(function (result, key) {
+        if (typeof object[key] !== "undefined") {
+          result[key] = object[key];
+        }
+        return result;
+      }, {});
+    }
+
+    var sourceLayout = source.layout || {};
+    var mobileLayout = {
+      nav: normalizePosition(sourceLayout.nav, desktopLayout[legacyMobileKeys.nav] || desktopLayout.nav),
+      heroTitle: normalizePosition(sourceLayout.heroTitle, desktopLayout[legacyMobileKeys.heroTitle] || desktopLayout.heroTitle),
+      heroSubtitle: normalizePosition(sourceLayout.heroSubtitle, desktopLayout[legacyMobileKeys.heroSubtitle] || desktopLayout.heroSubtitle),
+      cta: normalizePosition(sourceLayout.cta, desktopLayout[legacyMobileKeys.cta] || desktopLayout.cta)
+    };
+
+    Object.keys(legacyMobileKeys).forEach(function (key) {
+      if (!hasOwn(sourceLayout, key) && hasOwn(desktopLayout, legacyMobileKeys[key])) {
+        var legacyPosition = normalizePosition(desktopLayout[legacyMobileKeys[key]], desktopLayout[key]);
+        var desktopPosition = desktopLayout[key] || { x: 0, y: 0 };
+        if (legacyPosition.x !== desktopPosition.x || legacyPosition.y !== desktopPosition.y) {
+          mobileLayout[key] = legacyPosition;
+        }
+      }
+      if (mobileLayout[key] && !Object.keys(mobileLayout[key]).length) {
+        delete mobileLayout[key];
+      }
+    });
+
+    var sourceLogos = source.brand && Array.isArray(source.brand.logos) ? source.brand.logos : [];
+    var mobileLogos = sourceLogos.map(function (override, index) {
+      var fallback = (desktop.brand && desktop.brand.logos && desktop.brand.logos[index]) || createDefaultLogo(index);
+      return compact({
+        x: hasOwn(override, "x") ? parseNumberOrFallback(override.x, fallback.x) : undefined,
+        y: hasOwn(override, "y") ? parseNumberOrFallback(override.y, fallback.y) : undefined,
+        size: hasOwn(override, "size") ? clamp(parseNumberOrFallback(override.size, fallback.size), 1, 1200) : undefined
+      });
+    });
+
+    var mobileTheme = compact({
+      headingSize: normalizeThemeNumber("headingSize", "mobileHeadingSize", desktopTheme.headingSize || 64, 20, 160),
+      bodySize: normalizeThemeNumber("bodySize", "mobileBodySize", desktopTheme.bodySize || 18, 10, 72),
+      buttonTextSize: normalizeThemeNumber("buttonTextSize", "mobileButtonTextSize", desktopTheme.buttonTextSize || 16, 10, 72),
+      bgColor: normalizeThemeColor("bgColor", desktopTheme.bgColor || "#f2f7f3"),
+      textColor: normalizeThemeColor("textColor", desktopTheme.textColor || "#102822"),
+      accentColor: normalizeThemeColor("accentColor", desktopTheme.accentColor || "#0f7b6c"),
+      mutedColor: normalizeThemeColor("mutedColor", desktopTheme.mutedColor || "#4f6962"),
+      surfaceColor: normalizeThemeColor("surfaceColor", desktopTheme.surfaceColor || "#e5f0ea"),
+      buttonTextColor: normalizeThemeColor("buttonTextColor", desktopTheme.buttonTextColor || "#ffffff")
+    });
+
+    var sourceButtons = source.buttons || {};
+    var mobileButtons = compact({
+      paddingY: hasOwn(sourceButtons, "paddingY") ? clamp(parseNumberOrFallback(sourceButtons.paddingY, 12), 0, 80) : undefined,
+      paddingX: hasOwn(sourceButtons, "paddingX") ? clamp(parseNumberOrFallback(sourceButtons.paddingX, 18), 0, 120) : undefined,
+      gap: hasOwn(sourceButtons, "gap") ? clamp(parseNumberOrFallback(sourceButtons.gap, 10), 0, 80) : undefined,
+      width: hasOwn(sourceButtons, "width") ? (sourceButtons.width === "full" ? "full" : "auto") : undefined
+    });
+
+    var sourceHero = source.hero || {};
+    var mobileHero = compact({
+      title: hasOwn(sourceHero, "title") ? String(sourceHero.title || "") : undefined,
+      subtitle: hasOwn(sourceHero, "subtitle") ? String(sourceHero.subtitle || "") : undefined,
+      buttons: Array.isArray(sourceHero.buttons)
+        ? sourceHero.buttons.map(function (button) {
+          return compact({
+            label: hasOwn(button, "label") ? String(button.label || "") : undefined,
+            href: hasOwn(button, "href") ? String(button.href || "") : undefined
+          });
+        })
+        : undefined
+    });
+
+    return {
+      layout: mobileLayout,
+      brand: { logos: mobileLogos },
+      theme: mobileTheme,
+      buttons: mobileButtons,
+      hero: mobileHero
+    };
+  }
+
   function normalizeGalleryImages(value) {
     var items = Array.isArray(value) ? value.slice(0, 4) : [];
     while (items.length < 4) {
@@ -306,10 +452,13 @@
     normalizeImageSrc: normalizeImageSrc,
     sanitizeFileName: sanitizeFileName,
     normalizeRotation: normalizeRotation,
+    parseNumberOrFallback: parseNumberOrFallback,
     createDefaultLogo: createDefaultLogo,
     createDefaultLogos: createDefaultLogos,
     normalizeBrandLogos: normalizeBrandLogos,
     ensureTwoLogos: ensureTwoLogos,
+    normalizeMobileLogoOverrides: normalizeMobileLogoOverrides,
+    normalizeMobileOverrides: normalizeMobileOverrides,
     normalizeGalleryImages: normalizeGalleryImages,
     normalizeUnderConstructionConfig: normalizeUnderConstructionConfig
   };

@@ -38,12 +38,16 @@
         <h2>Branding</h2>
         <p class="hint">Publish writes uploaded images into images/ in your selected project folder.</p>
         <label>Brand Name<input id="brandName" type="text"></label>
-        <label>Hero Title<textarea id="heroTitle" rows="2"></textarea></label>
-        <label>Hero Subtitle<textarea id="heroSubtitle" rows="3"></textarea></label>
         <div class="upload-group">
           <label>Background File<input id="backgroundInput" type="file" accept="image/*"></label>
           <button id="clearBackground" type="button" class="ghost">Clear Background</button>
         </div>
+      </section>
+
+      <section id="panel-hero-content" class="panel">
+        <h2>Hero Content</h2>
+        <label>Hero Title<textarea id="heroTitle" rows="2"></textarea></label>
+        <label>Hero Subtitle<textarea id="heroSubtitle" rows="3"></textarea></label>
       </section>
 
       <section id="panel-colors" class="panel">
@@ -117,7 +121,7 @@
           <input id="headingSize" type="range" min="40" max="92" step="1">
           <span id="headingSizeValue" class="value-pill"></span>
         </label>
-        <label>Body Size (px)
+        <label>Hero Subtitle Size (px)
           <input id="bodySize" type="range" min="14" max="28" step="1">
           <span id="bodySizeValue" class="value-pill"></span>
         </label>
@@ -186,7 +190,16 @@
           <h2>Action Buttons</h2>
           <button id="addButton" type="button">Add Button</button>
         </div>
+        <label class="approval"><input id="buttonsDisabled" type="checkbox"> Disable Buttons</label>
         <label class="approval"><input id="ctaTextOnly" type="checkbox"> Buttons text only (transparent)</label>
+        <div class="color-grid">
+          <label>Button Background<input id="ctaBackgroundColor" type="color"></label>
+          <label>Button Text<input id="ctaLabelColor" type="color"></label>
+        </div>
+        <div class="layout-grid">
+          <label>CTA X<input id="buttonCtaX" type="number" step="1"></label>
+          <label>CTA Y<input id="buttonCtaY" type="number" step="1"></label>
+        </div>
         <div id="buttonsEditor" class="tabs-editor"></div>
       </section>
 
@@ -245,11 +258,49 @@
               <input id="mobileHeadingSize" type="range" min="28" max="92" step="1">
               <span id="mobileHeadingSizeValue" class="value-pill"></span>
             </label>
-            <label style="flex:1">Mobile Body Size (px)
+            <label style="flex:1">Mobile Hero Subtitle Size (px)
               <input id="mobileBodySize" type="range" min="12" max="28" step="1">
               <span id="mobileBodySizeValue" class="value-pill"></span>
             </label>
           </div>
+          <label style="display:block;margin-top:8px">Mobile Button Text Size (px)
+            <input id="mobileButtonTextSize" type="range" min="12" max="32" step="1">
+            <span id="mobileButtonTextSizeValue" class="value-pill"></span>
+          </label>
+          <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
+            <label style="flex:1">Mobile Button Vertical Padding (px)
+              <input id="mobileButtonPaddingY" type="range" min="0" max="40" step="1">
+              <span id="mobileButtonPaddingYValue" class="value-pill"></span>
+            </label>
+            <label style="flex:1">Mobile Button Horizontal Padding (px)
+              <input id="mobileButtonPaddingX" type="range" min="0" max="64" step="1">
+              <span id="mobileButtonPaddingXValue" class="value-pill"></span>
+            </label>
+          </div>
+          <label style="display:block;margin-top:8px">Mobile Button Gap (px)
+            <input id="mobileButtonGap" type="range" min="0" max="40" step="1">
+            <span id="mobileButtonGapValue" class="value-pill"></span>
+          </label>
+          <label style="display:block;margin-top:8px">Mobile Button Width
+            <select id="mobileButtonWidth">
+              <option value="auto">Automatic</option>
+              <option value="full">Full width</option>
+            </select>
+          </label>
+          <div class="color-grid" style="margin-top:8px">
+            <label>Mobile Background<input id="mobileBgColor" type="color"></label>
+            <label>Mobile Text<input id="mobileTextColor" type="color"></label>
+            <label>Mobile Accent<input id="mobileAccentColor" type="color"></label>
+            <label>Mobile Muted<input id="mobileMutedColor" type="color"></label>
+            <label>Mobile Surface<input id="mobileSurfaceColor" type="color"></label>
+            <label>Mobile Button Text<input id="mobileButtonTextColor" type="color"></label>
+          </div>
+          <label style="display:block;margin-top:8px">Mobile Hero Title<input id="mobileHeroTitleContent" type="text"></label>
+          <label style="display:block;margin-top:8px">Mobile Hero Subtitle<textarea id="mobileHeroSubtitleContent" rows="3"></textarea></label>
+          <div class="tabs-head" style="margin-top:12px">
+            <strong>Mobile CTA Content And Links</strong>
+          </div>
+          <div id="mobileButtonsEditor" class="tabs-editor"></div>
           <label style="display:block;margin-top:8px"><input id="mobileHeroCenter" type="checkbox"> Center hero on mobile</label>
         </fieldset>
         <label class="approval"><input id="topTabsTransparent" type="checkbox"> Top tabs fully transparent (text only)</label>
@@ -371,6 +422,9 @@
           <button id="publishContactOnly" type="button">Publish CONTACT only</button>
           <button id="publishHome" type="button" class="primary">Publish ALL pages</button>
         </div>
+        <div class="action-row">
+          <button id="changePublishFolder" type="button" class="ghost">Change Publish Folder</button>
+        </div>
         <div id="publishDraftActions" class="action-row">
           <button id="exportDraft" type="button" class="ghost">Export Draft JSON</button>
           <label class="import-btn ghost">Import Draft JSON<input id="importDraft" type="file" accept="application/json"></label>
@@ -433,7 +487,7 @@
   <script src="draft/draft-bridge.js"></script>
   <script src="import/import-bridge.js"></script>
   <script src="import/live-importer.js"></script>
-  <script src="mobile/mobile-bridge.js"></script>
+  <script src="../../js/mobile/mobile-bridge.js"></script>
   <script src="../../js/configurator.draft.js?v=20260711d"></script>
   <script src="../../js/configurator.app.js?v=20260711d"></script>
 </body>
