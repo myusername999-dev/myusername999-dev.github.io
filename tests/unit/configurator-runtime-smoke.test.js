@@ -167,7 +167,9 @@ describe("configurator runtime smoke", () => {
     const configuratorCss = readFileSync(resolve("css/configurator.css"), "utf8");
     const mobileCss = readFileSync(resolve("css/mobile/home.css"), "utf8");
     expect(code).toContain("function enablePreviewNavigation()");
-    expect(code).toContain('state.display.previewPage = normalizePreviewPageValue("page:" + fileName, state);');
+    expect(code).toContain('state.display.previewPage = fileName === "index.html"');
+    expect(code).toContain('? "home"');
+    expect(code).toContain(': normalizePreviewPageValue("page:" + fileName, state);');
     expect(code).toContain('if (event.target.closest("a")) {');
     expect(configuratorCss).toContain("top: 16px;");
     expect(configuratorCss).toContain("right: 68px;");

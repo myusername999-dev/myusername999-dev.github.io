@@ -2344,12 +2344,14 @@
       link.addEventListener("click", function (event) {
         var href = String(link.getAttribute("href") || "").split(/[?#]/)[0];
         var fileName = href.slice(href.lastIndexOf("/") + 1);
-        if (!fileName || fileName === "index.html") {
+        if (!fileName) {
           return;
         }
         event.preventDefault();
         event.stopPropagation();
-        state.display.previewPage = normalizePreviewPageValue("page:" + fileName, state);
+        state.display.previewPage = fileName === "index.html"
+          ? "home"
+          : normalizePreviewPageValue("page:" + fileName, state);
         state.display.pageMode = state.display.previewPage === "page:privacy.html"
           ? "privacy"
           : state.display.previewPage === "page:contact.html"
