@@ -1,7 +1,26 @@
 @media (max-width: 760px) {
   .hero-title-slot h1,
   .hero-slot h1 {
-    font-size: clamp(2rem, 10vw, var(--preview-heading-size));
+    font-size: clamp(2rem, 10vw, var(--mobile-heading-size)) !important;
+  }
+
+  .hero-subtitle-slot p {
+    font-size: var(--mobile-body-size) !important;
+  }
+
+  .home-nav a,
+  .cta-slot a {
+    font-size: var(--mobile-button-text-size) !important;
+  }
+
+  .cta-slot {
+    gap: var(--mobile-button-gap) !important;
+  }
+
+  .cta-slot a {
+    width: var(--mobile-button-width);
+    justify-content: center;
+    padding: var(--mobile-button-padding-y) var(--mobile-button-padding-x) !important;
   }
 
   .home-tab-selector {

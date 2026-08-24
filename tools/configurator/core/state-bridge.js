@@ -206,6 +206,7 @@
     var source = value || {};
     var desktop = desktopState || {};
     var desktopLayout = desktop.layout || {};
+    var desktopTheme = desktop.theme || {};
     var legacyMobileKeys = {
       nav: "mobileNav",
       heroTitle: "mobileHeroTitle",
@@ -231,6 +232,17 @@
       },
       brand: {
         logos: normalizeMobileLogoOverrides(source.brand && source.brand.logos, desktop.brand && desktop.brand.logos)
+      },
+      theme: {
+        headingSize: clamp(parseInt(source.theme && source.theme.headingSize, 10) || parseInt(desktopTheme.mobileHeadingSize, 10) || desktopTheme.headingSize || 64, 20, 160),
+        bodySize: clamp(parseInt(source.theme && source.theme.bodySize, 10) || parseInt(desktopTheme.mobileBodySize, 10) || desktopTheme.bodySize || 18, 10, 72),
+        buttonTextSize: clamp(parseInt(source.theme && source.theme.buttonTextSize, 10) || parseInt(desktopTheme.mobileButtonTextSize, 10) || desktopTheme.buttonTextSize || 16, 10, 72)
+      },
+      buttons: {
+        paddingY: clamp(parseInt(source.buttons && source.buttons.paddingY, 10) || 12, 0, 80),
+        paddingX: clamp(parseInt(source.buttons && source.buttons.paddingX, 10) || 18, 0, 120),
+        gap: clamp(parseInt(source.buttons && source.buttons.gap, 10) || 10, 0, 80),
+        width: source.buttons && source.buttons.width === "full" ? "full" : "auto"
       }
     };
   }

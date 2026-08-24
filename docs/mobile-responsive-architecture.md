@@ -2,7 +2,7 @@
 
 ## Scope
 
-The HOME configurator uses a desktop/base design and mobile overrides. This migration currently isolates HOME layout coordinates and logo position/size. Privacy, Contact, and under-construction pages keep their existing responsive behavior.
+The HOME configurator uses a desktop/base design and mobile overrides. This migration currently isolates HOME layout coordinates, logo position/size, and heading/body/button text sizes. Privacy, Contact, and under-construction pages keep their existing responsive behavior.
 
 ## Ownership
 
@@ -29,16 +29,27 @@ Mobile values are stored in `mobile`:
     },
     brand: {
       logos: [{ x, y, size }, { x, y, size }]
+    },
+    theme: {
+      headingSize,
+      bodySize,
+      buttonTextSize
+    },
+    buttons: {
+      paddingY,
+      paddingX,
+      gap,
+      width: "auto" | "full"
     }
   }
 }
 ```
 
-During migration, legacy `layout.mobileNav`, `layout.mobileHeroTitle`, `layout.mobileHeroSubtitle`, and `layout.mobileCta` values seed the new mobile layout values. Missing mobile logo values fall back to desktop logo position and size.
+During migration, legacy `layout.mobileNav`, `layout.mobileHeroTitle`, `layout.mobileHeroSubtitle`, `layout.mobileCta`, `theme.mobileHeadingSize`, and `theme.mobileBodySize` values seed the new mobile values. Missing mobile logo and typography values fall back to desktop values.
 
 ## Current Editing Behavior
 
-In mobile preview mode, logo position and size controls, plus direct logo dragging, modify `mobile.brand.logos`. Desktop logo values remain unchanged. Logo image files, rotation, and transparency remain shared in this phase.
+In mobile preview mode, logo position and size controls, plus direct logo dragging, modify `mobile.brand.logos`. Mobile heading, body, and button text sliders modify `mobile.theme`. Mobile CTA padding, gap, and width controls modify `mobile.buttons`. Desktop logo, typography, and CTA layout values remain unchanged. Logo image files, rotation, and transparency remain shared in this phase.
 
 ## Stylesheet Order
 

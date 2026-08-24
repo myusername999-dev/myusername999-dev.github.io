@@ -15,9 +15,9 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Define versioned `state.mobile` schema.
 - [x] Define desktop fallback behavior for implemented layout and logo overrides.
 - [x] Add legacy-draft normalization for existing mobile layout values.
-- [-] Migrate existing mobile layout and font fields. Layout is migrated; typography remains pending.
+- [x] Migrate existing mobile layout and font fields.
 - [x] Add mobile logo position and size overrides.
-- [ ] Add independent mobile theme, button, content, and link overrides.
+- [-] Add independent mobile theme, button, content, and link overrides. Typography and CTA layout are complete; colors, content, and links remain pending.
 - [ ] Update state fixtures.
 
 ## JavaScript Structure
@@ -35,8 +35,8 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 ## Configurator Controls
 
 - [x] Add or update mobile controls for logo position and size.
-- [ ] Add mobile typography controls, including button text size.
-- [ ] Add mobile button padding, gap, and width controls.
+- [x] Add mobile typography controls, including button text size.
+- [x] Add mobile button padding, gap, and width controls.
 - [ ] Add mobile colors and visual-style controls.
 - [ ] Add mobile HOME content and link controls.
 - [ ] Add reset-to-desktop controls for each override group.
@@ -48,13 +48,13 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Create `css/mobile/`.
 - [x] Move HOME mobile breakpoint rules to `css/mobile/home.css`.
 - [x] Preserve base-first, mobile-second CSS load order.
-- [ ] Add mobile variables for logos, typography, buttons, colors, content, and links.
+- [-] Add mobile variables for logos, typography, buttons, colors, content, and links. Logo, typography, and CTA layout variables are complete; remaining groups are pending.
 - [ ] Verify desktop CSS output remains unchanged without mobile overrides.
 
 ## Rendering And Publishing
 
-- [x] Resolve implemented mobile layout and logo overrides in configurator preview rendering.
-- [x] Emit mobile logo CSS variables in generated HOME markup.
+- [x] Resolve implemented mobile layout, logo, typography, and CTA layout overrides in configurator preview rendering.
+- [x] Emit mobile logo, typography, and CTA layout CSS variables in generated HOME markup.
 - [x] Preserve desktop rules outside `max-width: 760px`.
 - [x] Emit implemented mobile logo overrides within `max-width: 760px`.
 - [ ] Update HOME-only publishing.

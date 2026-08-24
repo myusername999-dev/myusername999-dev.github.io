@@ -21,6 +21,11 @@ describe("mobile bridge", () => {
   it("maps mobile layout into active preview coordinates", () => {
     const bridge = loadBridge();
     const config = {
+      theme: {
+        headingSize: 64,
+        bodySize: 18,
+        buttonTextSize: 16
+      },
       layout: {
         nav: { x: 1, y: 1 },
         heroTitle: { x: 2, y: 2 },
@@ -35,6 +40,11 @@ describe("mobile bridge", () => {
         logos: [{ x: 1, y: 2, size: 72 }]
       },
       mobile: {
+        theme: {
+          headingSize: 42,
+          bodySize: 15,
+          buttonTextSize: 14
+        },
         brand: {
           logos: [{ x: 100, y: 101, size: 44 }]
         }
@@ -48,5 +58,6 @@ describe("mobile bridge", () => {
     expect(config.layout.heroSubtitle).toEqual({ x: 14, y: 15 });
     expect(config.layout.cta).toEqual({ x: 16, y: 17 });
     expect(config.brand.logos[0]).toEqual({ x: 100, y: 101, size: 44 });
+    expect(config.theme).toEqual({ headingSize: 42, bodySize: 15, buttonTextSize: 14 });
   });
 });

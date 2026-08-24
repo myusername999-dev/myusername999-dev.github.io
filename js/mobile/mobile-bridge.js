@@ -28,6 +28,10 @@
       previewConfig.layout[key] = Object.assign({}, getMobileLayout(previewConfig, key));
     });
 
+    if (previewConfig.mobile && previewConfig.mobile.theme) {
+      previewConfig.theme = Object.assign({}, previewConfig.theme, previewConfig.mobile.theme);
+    }
+
     var mobileLogos = previewConfig.mobile && previewConfig.mobile.brand && previewConfig.mobile.brand.logos;
     if (Array.isArray(previewConfig.brand && previewConfig.brand.logos) && Array.isArray(mobileLogos)) {
       previewConfig.brand.logos = previewConfig.brand.logos.map(function (logo, index) {

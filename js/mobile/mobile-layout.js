@@ -46,6 +46,10 @@ function getPreviewConfigForDevice(state, previewDevice) {
     clone.layout[key] = { ...getMobileLayout(clone, key) };
   });
 
+  if (clone.mobile && clone.mobile.theme) {
+    clone.theme = { ...clone.theme, ...clone.mobile.theme };
+  }
+
   if (clone.brand && Array.isArray(clone.brand.logos)) {
     clone.brand.logos = clone.brand.logos.map((logo, index) => ({
       ...logo,

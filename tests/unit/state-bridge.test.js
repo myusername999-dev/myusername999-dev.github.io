@@ -140,6 +140,46 @@ describe("state bridge", () => {
     });
   });
 
+  it("migrates legacy mobile typography into mobile theme overrides", () => {
+    const bridge = loadBridge();
+    const mobile = bridge.normalizeMobileOverrides({}, {
+      layout: {},
+      brand: { logos: [] },
+      theme: {
+        headingSize: 64,
+        bodySize: 18,
+        buttonTextSize: 16,
+        mobileHeadingSize: 42,
+        mobileBodySize: 15
+      }
+    });
+
+    expect(mobile.theme).toEqual({
+      headingSize: 42,
+      bodySize: 15,
+      buttonTextSize: 16
+    });
+  });
+
+  it("normalizes mobile CTA button layout overrides", () => {
+    const bridge = loadBridge();
+    const mobile = bridge.normalizeMobileOverrides({
+      buttons: {
+        paddingY: 9,
+        paddingX: 22,
+        gap: 14,
+        width: "full"
+      }
+    }, { layout: {}, brand: { logos: [] }, theme: {} });
+
+    expect(mobile.buttons).toEqual({
+      paddingY: 9,
+      paddingX: 22,
+      gap: 14,
+      width: "full"
+    });
+  });
+
   it("normalizes gallery images to four slots", () => {
     const bridge = loadBridge();
     const gallery = bridge.normalizeGalleryImages([{ src: "a", fileName: "a.png" }]);

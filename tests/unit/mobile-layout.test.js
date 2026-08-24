@@ -11,12 +11,29 @@ describe("mobile and desktop preview behavior", () => {
 
   it("maps mobile layout to preview positions in mobile mode", () => {
     const state = createStateFixture();
+    state.theme = {
+      headingSize: 64,
+      bodySize: 18,
+      buttonTextSize: 16
+    };
+    state.mobile = {
+      theme: {
+        headingSize: 42,
+        bodySize: 15,
+        buttonTextSize: 14
+      }
+    };
     const previewConfig = getPreviewConfigForDevice(state, "mobile");
 
     expect(previewConfig.layout.nav).toEqual({ x: 11, y: 12 });
     expect(previewConfig.layout.heroTitle).toEqual({ x: 13, y: 14 });
     expect(previewConfig.layout.heroSubtitle).toEqual({ x: 15, y: 16 });
     expect(previewConfig.layout.cta).toEqual({ x: 17, y: 18 });
+    expect(previewConfig.theme).toEqual({
+      headingSize: 42,
+      bodySize: 15,
+      buttonTextSize: 14
+    });
   });
 
   it("updates drag positions in mobile-specific keys for mobile", () => {

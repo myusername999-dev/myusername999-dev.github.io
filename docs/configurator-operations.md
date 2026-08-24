@@ -46,7 +46,13 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - In mobile preview, logo position and size changes are saved as mobile overrides.
    - Switch back to desktop after each logo edit and confirm desktop position and size are unchanged.
    - Logo files, rotation, and transparency remain shared between desktop and mobile.
-5. Mobile stylesheet:
+5. HOME typography safety:
+   - Mobile heading, body, and button text size controls are independent from desktop values.
+   - Switch back to desktop after each typography edit and confirm desktop text sizes are unchanged.
+6. HOME CTA layout safety:
+   - Mobile CTA padding, gap, and width controls are independent from desktop values.
+   - Switch back to desktop after each CTA layout edit and confirm desktop buttons are unchanged.
+7. Mobile stylesheet:
    - HOME mobile rules are stored in `css/mobile/home.css` and apply at `max-width: 760px`.
 
 ### 6. Publish and draft workflows

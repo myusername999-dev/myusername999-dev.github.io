@@ -56,6 +56,8 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("function resetLogosDefaults()");
     expect(code).toContain("function resetColorsDefaults()");
     expect(code).toContain("state.layout.cta.y = 0;");
+    expect(code).toContain("state.mobile.theme = {");
+    expect(code).toContain("state.mobile.buttons = {");
   });
 
   it("renders CTA row only when buttons exist", () => {
@@ -69,6 +71,10 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("css/mobile/home.css");
     expect(code).toContain("--mobile-logo-0-x:");
     expect(code).toContain("--mobile-logo-1-size:");
+    expect(code).toContain("--mobile-heading-size:");
+    expect(code).toContain("--mobile-button-text-size:");
+    expect(code).toContain("--mobile-button-padding-y:");
+    expect(code).toContain("--mobile-button-width:");
   });
 
   it("wires under-construction controls and generation branch", () => {

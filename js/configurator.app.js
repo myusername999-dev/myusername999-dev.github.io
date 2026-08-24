@@ -76,6 +76,7 @@
       headingSize: 64,
       bodySize: 18,
       buttonTextSize: 16,
+      mobileButtonTextSize: 16,
       bgColor: "#f2f7f3",
       textColor: "#102822",
       accentColor: "#0f7b6c",
@@ -298,6 +299,15 @@
     dom.mobileHeadingSizeValue = document.getElementById("mobileHeadingSizeValue");
     dom.mobileBodySize = document.getElementById("mobileBodySize");
     dom.mobileBodySizeValue = document.getElementById("mobileBodySizeValue");
+    dom.mobileButtonTextSize = document.getElementById("mobileButtonTextSize");
+    dom.mobileButtonTextSizeValue = document.getElementById("mobileButtonTextSizeValue");
+    dom.mobileButtonPaddingY = document.getElementById("mobileButtonPaddingY");
+    dom.mobileButtonPaddingYValue = document.getElementById("mobileButtonPaddingYValue");
+    dom.mobileButtonPaddingX = document.getElementById("mobileButtonPaddingX");
+    dom.mobileButtonPaddingXValue = document.getElementById("mobileButtonPaddingXValue");
+    dom.mobileButtonGap = document.getElementById("mobileButtonGap");
+    dom.mobileButtonGapValue = document.getElementById("mobileButtonGapValue");
+    dom.mobileButtonWidth = document.getElementById("mobileButtonWidth");
     dom.mobileHeroCenter = document.getElementById("mobileHeroCenter");
 
     dom.bgColor = document.getElementById("bgColor");
@@ -501,11 +511,32 @@
       });
     }
     bindNumber(dom.mobileHeadingSize, function (value) {
-      state.theme.mobileHeadingSize = clamp(value, 28, 120);
+      var normalized = clamp(value, 28, 120);
+      state.theme.mobileHeadingSize = normalized;
+      state.mobile.theme.headingSize = normalized;
     });
     bindNumber(dom.mobileBodySize, function (value) {
-      state.theme.mobileBodySize = clamp(value, 12, 40);
+      var normalized = clamp(value, 12, 40);
+      state.theme.mobileBodySize = normalized;
+      state.mobile.theme.bodySize = normalized;
     });
+    bindNumber(dom.mobileButtonTextSize, function (value) {
+      var normalized = clamp(value, 12, 40);
+      state.theme.mobileButtonTextSize = normalized;
+      state.mobile.theme.buttonTextSize = normalized;
+    });
+    bindNumber(dom.mobileButtonPaddingY, function (value) {
+      state.mobile.buttons.paddingY = clamp(value, 0, 40);
+    });
+    bindNumber(dom.mobileButtonPaddingX, function (value) {
+      state.mobile.buttons.paddingX = clamp(value, 0, 64);
+    });
+    bindNumber(dom.mobileButtonGap, function (value) {
+      state.mobile.buttons.gap = clamp(value, 0, 40);
+    });
+    bindText(dom.mobileButtonWidth, function (value) {
+      state.mobile.buttons.width = value === "full" ? "full" : "auto";
+    }, "change");
     if (dom.mobileHeroCenter) {
       dom.mobileHeroCenter.addEventListener("change", function () {
         state.display.mobileHeroCenter = !!dom.mobileHeroCenter.checked;
@@ -1115,6 +1146,22 @@
       dom.mobileBodySizeValue.textContent = value + "px";
       return;
     }
+    if (element === dom.mobileButtonTextSize && dom.mobileButtonTextSizeValue) {
+      dom.mobileButtonTextSizeValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.mobileButtonPaddingY && dom.mobileButtonPaddingYValue) {
+      dom.mobileButtonPaddingYValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.mobileButtonPaddingX && dom.mobileButtonPaddingXValue) {
+      dom.mobileButtonPaddingXValue.textContent = value + "px";
+      return;
+    }
+    if (element === dom.mobileButtonGap && dom.mobileButtonGapValue) {
+      dom.mobileButtonGapValue.textContent = value + "px";
+      return;
+    }
     if (element === dom.bgTransparency && dom.bgTransparencyValue) {
       dom.bgTransparencyValue.textContent = value + "%";
       return;
@@ -1429,16 +1476,43 @@
       dom.mobileOverridesEnabled.checked = !!state.display.mobileOverrides;
     }
     if (dom.mobileHeadingSize) {
-      dom.mobileHeadingSize.value = String(state.theme.mobileHeadingSize || state.theme.headingSize || 48);
+      dom.mobileHeadingSize.value = String(state.mobile.theme.headingSize);
     }
     if (dom.mobileHeadingSizeValue) {
-      dom.mobileHeadingSizeValue.textContent = String(state.theme.mobileHeadingSize || state.theme.headingSize || 48) + "px";
+      dom.mobileHeadingSizeValue.textContent = String(state.mobile.theme.headingSize) + "px";
     }
     if (dom.mobileBodySize) {
-      dom.mobileBodySize.value = String(state.theme.mobileBodySize || state.theme.bodySize || 16);
+      dom.mobileBodySize.value = String(state.mobile.theme.bodySize);
     }
     if (dom.mobileBodySizeValue) {
-      dom.mobileBodySizeValue.textContent = String(state.theme.mobileBodySize || state.theme.bodySize || 16) + "px";
+      dom.mobileBodySizeValue.textContent = String(state.mobile.theme.bodySize) + "px";
+    }
+    if (dom.mobileButtonTextSize) {
+      dom.mobileButtonTextSize.value = String(state.mobile.theme.buttonTextSize);
+    }
+    if (dom.mobileButtonTextSizeValue) {
+      dom.mobileButtonTextSizeValue.textContent = String(state.mobile.theme.buttonTextSize) + "px";
+    }
+    if (dom.mobileButtonPaddingY) {
+      dom.mobileButtonPaddingY.value = String(state.mobile.buttons.paddingY);
+    }
+    if (dom.mobileButtonPaddingYValue) {
+      dom.mobileButtonPaddingYValue.textContent = String(state.mobile.buttons.paddingY) + "px";
+    }
+    if (dom.mobileButtonPaddingX) {
+      dom.mobileButtonPaddingX.value = String(state.mobile.buttons.paddingX);
+    }
+    if (dom.mobileButtonPaddingXValue) {
+      dom.mobileButtonPaddingXValue.textContent = String(state.mobile.buttons.paddingX) + "px";
+    }
+    if (dom.mobileButtonGap) {
+      dom.mobileButtonGap.value = String(state.mobile.buttons.gap);
+    }
+    if (dom.mobileButtonGapValue) {
+      dom.mobileButtonGapValue.textContent = String(state.mobile.buttons.gap) + "px";
+    }
+    if (dom.mobileButtonWidth) {
+      dom.mobileButtonWidth.value = state.mobile.buttons.width;
     }
     if (dom.mobileHeroCenter) {
       dom.mobileHeroCenter.checked = !!state.display.mobileHeroCenter;
@@ -3115,6 +3189,13 @@
     state.theme.buttonTextSize = defaults.theme.buttonTextSize;
     state.theme.mobileHeadingSize = defaults.theme.headingSize;
     state.theme.mobileBodySize = defaults.theme.bodySize;
+    state.theme.mobileButtonTextSize = defaults.theme.buttonTextSize;
+    state.mobile = state.mobile || {};
+    state.mobile.theme = {
+      headingSize: defaults.theme.headingSize,
+      bodySize: defaults.theme.bodySize,
+      buttonTextSize: defaults.theme.buttonTextSize
+    };
     state.hero.titleFontFamily = defaults.hero.titleFontFamily;
     state.hero.subtitleFontFamily = defaults.hero.subtitleFontFamily;
     state.hero.titleAlign = defaults.hero.titleAlign;
@@ -3131,6 +3212,13 @@
     state.theme.buttonTextColor = defaults.theme.buttonTextColor;
     state.layout.cta = deepClone(defaults.layout.cta);
     state.layout.mobileCta = deepClone(defaults.layout.mobileCta);
+    state.mobile = state.mobile || {};
+    state.mobile.buttons = {
+      paddingY: 12,
+      paddingX: 18,
+      gap: 10,
+      width: "auto"
+    };
     refresh("Buttons reset to defaults.");
     dom.approval.checked = false;
   }
@@ -3399,6 +3487,10 @@
       : [];
     var mobileLogo0 = mobileLogos[0] || config.brand.logos[0];
     var mobileLogo1 = mobileLogos[1] || config.brand.logos[1];
+    var mobileTheme = config.mobile && config.mobile.theme ? config.mobile.theme : config.theme;
+    var mobileButtons = config.mobile && config.mobile.buttons
+      ? config.mobile.buttons
+      : { paddingY: 12, paddingX: 18, gap: 10, width: "auto" };
 
     return [
       "<div class=\"home-root\" style=\"--preview-bg:" + escapeAttr(config.theme.bgColor) +
@@ -3437,7 +3529,14 @@
         "px;--mobile-logo-1-y:" + mobileLogo1.y +
         "px;--mobile-logo-1-size:" + mobileLogo1.size +
         "px;--mobile-logo-1-rotation:" + config.brand.logos[1].rotation +
-        "px;font-family:'" +
+        "deg;--mobile-heading-size:" + mobileTheme.headingSize +
+        "px;--mobile-body-size:" + mobileTheme.bodySize +
+        "px;--mobile-button-text-size:" + mobileTheme.buttonTextSize +
+        "px;--mobile-button-padding-y:" + mobileButtons.paddingY +
+        "px;--mobile-button-padding-x:" + mobileButtons.paddingX +
+        "px;--mobile-button-gap:" + mobileButtons.gap +
+        "px;--mobile-button-width:" + (mobileButtons.width === "full" ? "100%" : "auto") +
+        ";font-family:'" +
         escapeAttr(config.theme.fontFamily) +
         "','Segoe UI',sans-serif;\">",
       "<div class=\"home-bg\" " + bgImage + "></div>",
@@ -4767,6 +4866,7 @@
     // Mobile theme defaults
     state.theme.mobileHeadingSize = clamp(parseInt(state.theme.mobileHeadingSize, 10) || state.theme.headingSize || 48, 20, 160);
     state.theme.mobileBodySize = clamp(parseInt(state.theme.mobileBodySize, 10) || state.theme.bodySize || 16, 10, 72);
+    state.theme.mobileButtonTextSize = clamp(parseInt(state.theme.mobileButtonTextSize, 10) || state.theme.buttonTextSize || 16, 10, 72);
 
     state.layout = state.layout || {};
     var hasHeroTitleLayout = !!state.layout.heroTitle;
