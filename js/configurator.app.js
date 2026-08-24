@@ -112,6 +112,7 @@
       topTabsTransparent: false,
       tabTextColor: "#102822",
       tabBgColor: "#e5f0ea",
+      buttonsDisabled: false,
       ctaTextOnly: false,
       previewPage: "home",
       previewDevice: "desktop",
@@ -359,6 +360,7 @@
     dom.tabsEditor = document.getElementById("tabsEditor");
     dom.buttonsEditor = document.getElementById("buttonsEditor");
     dom.addButton = document.getElementById("addButton");
+    dom.buttonsDisabled = document.getElementById("buttonsDisabled");
     dom.ctaTextOnly = document.getElementById("ctaTextOnly");
     dom.ctaBackgroundColor = document.getElementById("ctaBackgroundColor");
     dom.ctaLabelColor = document.getElementById("ctaLabelColor");
@@ -959,6 +961,13 @@
       state.display.topTabsTransparent = !!dom.topTabsTransparent.checked;
       refresh();
     });
+
+    if (dom.buttonsDisabled) {
+      dom.buttonsDisabled.addEventListener("change", function () {
+        state.display.buttonsDisabled = !!dom.buttonsDisabled.checked;
+        refresh();
+      });
+    }
 
     dom.ctaTextOnly.addEventListener("change", function () {
       state.display.ctaTextOnly = !!dom.ctaTextOnly.checked;
@@ -1739,6 +1748,9 @@
     }
     if (dom.ctaTextOnly) {
       dom.ctaTextOnly.checked = !!state.display.ctaTextOnly;
+    }
+    if (dom.buttonsDisabled) {
+      dom.buttonsDisabled.checked = !!state.display.buttonsDisabled;
     }
 
     if (dom.privacyTitle) {
@@ -3613,6 +3625,7 @@
 
     var tabMode = normalizeTabMode(config.display && config.display.tabMode);
     var topTabsTransparent = !!(config.display && config.display.topTabsTransparent);
+    var buttonsDisabled = !!(config.display && config.display.buttonsDisabled);
     var ctaTextOnly = !!(config.display && config.display.ctaTextOnly);
     var showHomeTabSelector = tabMode === "top-and-home";
     var showTabCards = tabMode === "top-and-home";
@@ -3743,7 +3756,7 @@
     }
     var buttonLinks = buildButtonLinks(config.hero.buttons, "hero-content-desktop");
     var mobileButtonLinks = buildButtonLinks(mobileHero.buttons, "hero-content-mobile");
-    var ctaMarkup = buttonLinks
+    var ctaMarkup = !buttonsDisabled && buttonLinks
       ? [
         "<div class=\"cta-slot\" " + dragAttr("cta", draggable) + transformAttr(config.layout.cta) + ">",
         buttonLinks,
@@ -5181,6 +5194,7 @@
     state.display.topTabsTransparent = !!state.display.topTabsTransparent;
     state.display.tabTextColor = normalizeHex(state.display.tabTextColor, state.theme.textColor);
     state.display.tabBgColor = normalizeHex(state.display.tabBgColor, state.theme.surfaceColor);
+    state.display.buttonsDisabled = !!state.display.buttonsDisabled;
     state.display.ctaTextOnly = !!state.display.ctaTextOnly;
     // Mobile display flags
     state.display.mobileOverrides = !!state.display.mobileOverrides;

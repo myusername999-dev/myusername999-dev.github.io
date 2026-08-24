@@ -60,9 +60,9 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("delete state.mobile.buttons;");
   });
 
-  it("renders CTA row only when buttons exist", () => {
+  it("renders CTA row only when buttons exist and it is enabled", () => {
     const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
-    expect(code).toContain("var ctaMarkup = buttonLinks");
+    expect(code).toContain("var ctaMarkup = !buttonsDisabled && buttonLinks");
     expect(code).toContain("ctaMarkup,");
   });
 
@@ -203,6 +203,16 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain('setDragPosition("cta", value, position.y);');
     expect(code).toContain("ensureMobileTheme().accentColor = value;");
     expect(code).toContain("var ctaPositionForControls = getDragPosition(\"cta\");");
+  });
+
+  it("can hide the full CTA group without deleting configured buttons", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    const markup = readFileSync(resolve("tools/configurator/index.html"), "utf8");
+    expect(markup).toContain('id="buttonsDisabled"');
+    expect(code).toContain("buttonsDisabled: false,");
+    expect(code).toContain("state.display.buttonsDisabled = !!dom.buttonsDisabled.checked;");
+    expect(code).toContain("var buttonsDisabled = !!(config.display && config.display.buttonsDisabled);");
+    expect(code).toContain("var ctaMarkup = !buttonsDisabled && buttonLinks");
   });
 
   it("wires under-construction controls and generation branch", () => {
