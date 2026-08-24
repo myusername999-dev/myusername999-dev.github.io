@@ -60,4 +60,23 @@ describe("mobile bridge", () => {
     expect(config.brand.logos[0]).toEqual({ x: 100, y: 101, size: 44 });
     expect(config.theme).toEqual({ headingSize: 42, bodySize: 15, buttonTextSize: 14 });
   });
+
+  it("merges partial mobile layout overrides with fallback coordinates", () => {
+    const bridge = loadBridge();
+    const config = {
+      layout: {
+        heroSubtitle: { x: 3, y: 4 },
+        mobileHeroSubtitle: { x: 14, y: 15 }
+      },
+      mobile: {
+        layout: {
+          heroSubtitle: { x: 90 }
+        }
+      }
+    };
+
+    bridge.applyMobilePreviewLayout(config);
+
+    expect(config.layout.heroSubtitle).toEqual({ x: 90, y: 15 });
+  });
 });

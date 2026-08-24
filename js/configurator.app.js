@@ -505,7 +505,12 @@
       state.theme.headingSize = clamp(value, 32, 120);
     });
     bindNumber(dom.bodySize, function (value) {
-      state.theme.bodySize = clamp(value, 12, 32);
+      var normalized = clamp(value, 12, 32);
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().bodySize = normalized;
+        return;
+      }
+      state.theme.bodySize = normalized;
     });
     bindNumber(dom.buttonTextSize, function (value) {
       state.theme.buttonTextSize = clamp(value, 12, 32);
@@ -1436,8 +1441,11 @@
     if (dom.headingSize) {
       dom.headingSize.value = String(state.theme.headingSize);
     }
+    var bodySizeForControls = normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile"
+      ? getMobileTheme().bodySize
+      : state.theme.bodySize;
     if (dom.bodySize) {
-      dom.bodySize.value = String(state.theme.bodySize);
+      dom.bodySize.value = String(bodySizeForControls);
     }
     if (dom.buttonTextSize) {
       dom.buttonTextSize.value = String(state.theme.buttonTextSize);
@@ -1446,7 +1454,7 @@
       dom.headingSizeValue.textContent = state.theme.headingSize + "px";
     }
     if (dom.bodySizeValue) {
-      dom.bodySizeValue.textContent = state.theme.bodySize + "px";
+      dom.bodySizeValue.textContent = bodySizeForControls + "px";
     }
     if (dom.buttonTextSizeValue) {
       dom.buttonTextSizeValue.textContent = state.theme.buttonTextSize + "px";
@@ -2336,7 +2344,7 @@
           setDragPosition(dragKey, nextX, nextY);
           if (isLogoDragKey(dragKey)) {
             var logoIndex = logoIndexFromDragKey(dragKey);
-            node.style.transform = logoTransform(state.brand.logos[logoIndex]);
+            node.style.transform = logoTransform(getEditableLogo(logoIndex));
           } else {
             node.style.transform = "translate(" + nextX + "px, " + nextY + "px)";
           }
@@ -3648,8 +3656,8 @@
     var mobileLogos = config.mobile && config.mobile.brand && Array.isArray(config.mobile.brand.logos)
       ? config.mobile.brand.logos
       : [];
-    var mobileLogo0 = mobileLogos[0] || config.brand.logos[0];
-    var mobileLogo1 = mobileLogos[1] || config.brand.logos[1];
+    var mobileLogo0 = Object.assign({}, config.brand.logos[0], mobileLogos[0] || {});
+    var mobileLogo1 = Object.assign({}, config.brand.logos[1], mobileLogos[1] || {});
     var mobileTheme = Object.assign({}, config.theme, config.mobile && config.mobile.theme ? config.mobile.theme : {});
     var mobileButtons = Object.assign({ paddingY: 12, paddingX: 18, gap: 10, width: "auto" }, config.mobile && config.mobile.buttons ? config.mobile.buttons : {});
     var mobileLayout = config.mobile && config.mobile.layout ? config.mobile.layout : {};
@@ -4895,17 +4903,8 @@
         var mobileLogoIndex = logoIndexFromDragKey(dragKey);
         return getEditableLogo(mobileLogoIndex);
       }
-      if (dragKey === "nav") {
-        return state.layout.mobileNav || { x: 0, y: 0 };
-      }
-      if (dragKey === "heroTitle") {
-        return state.layout.mobileHeroTitle || { x: 0, y: 0 };
-      }
-      if (dragKey === "heroSubtitle") {
-        return state.layout.mobileHeroSubtitle || { x: 0, y: 0 };
-      }
-      if (dragKey === "cta") {
-        return state.layout.mobileCta || { x: 0, y: 0 };
+      if (["nav", "heroTitle", "heroSubtitle", "cta"].indexOf(dragKey) >= 0) {
+        return getMobileLayout(dragKey);
       }
     }
     if (isLogoDragKey(dragKey)) {
@@ -4931,24 +4930,8 @@
         setLogoPosition(logoIndexFromDragKey(dragKey), x, y);
         return;
       }
-      if (dragKey === "nav") {
-        state.layout.mobileNav.x = x;
-        state.layout.mobileNav.y = y;
-        return;
-      }
-      if (dragKey === "heroTitle") {
-        state.layout.mobileHeroTitle.x = x;
-        state.layout.mobileHeroTitle.y = y;
-        return;
-      }
-      if (dragKey === "heroSubtitle") {
-        state.layout.mobileHeroSubtitle.x = x;
-        state.layout.mobileHeroSubtitle.y = y;
-        return;
-      }
-      if (dragKey === "cta") {
-        state.layout.mobileCta.x = x;
-        state.layout.mobileCta.y = y;
+      if (["nav", "heroTitle", "heroSubtitle", "cta"].indexOf(dragKey) >= 0) {
+        ensureMobileLayout()[dragKey] = { x: x, y: y };
         return;
       }
     }

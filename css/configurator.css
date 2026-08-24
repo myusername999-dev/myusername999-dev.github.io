@@ -621,6 +621,10 @@ button.danger {
   font-size: clamp(2rem, 8.5vw, var(--preview-heading-size));
 }
 
+.preview-viewport.preview-mobile .hero-subtitle-slot p {
+  font-size: var(--mobile-body-size) !important;
+}
+
 .preview-viewport.preview-mobile .home-tab-selector {
   display: none;
 }

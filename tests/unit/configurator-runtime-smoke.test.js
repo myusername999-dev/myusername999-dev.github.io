@@ -94,6 +94,8 @@ describe("configurator runtime smoke", () => {
     expect(baseCss).toContain(".hero-title-slot .hero-content-mobile");
     expect(configuratorCss).toContain(".preview-viewport .hero-title-slot .hero-content-mobile");
     expect(configuratorCss).toContain(".preview-viewport.preview-mobile .hero-content-desktop");
+    expect(configuratorCss).toContain(".preview-viewport.preview-mobile .hero-subtitle-slot p");
+    expect(configuratorCss).toContain("font-size: var(--mobile-body-size) !important;");
   });
 
   it("keeps mobile overrides when drafts are merged", () => {
@@ -109,10 +111,42 @@ describe("configurator runtime smoke", () => {
     expect(code).not.toContain("state.layout.mobileNav.x = value;");
   });
 
+  it("uses sparse mobile layout state for mobile dragging", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("return getMobileLayout(dragKey);");
+    expect(code).toContain("ensureMobileLayout()[dragKey] = { x: x, y: y };");
+    expect(code).not.toContain("state.layout.mobileHeroSubtitle.x = x;");
+  });
+
+  it("merges sparse mobile logo geometry before emitting HOME styles", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("var mobileLogo0 = Object.assign({}, config.brand.logos[0], mobileLogos[0] || {});");
+    expect(code).toContain("var mobileLogo1 = Object.assign({}, config.brand.logos[1], mobileLogos[1] || {});");
+  });
+
+  it("uses resolved mobile logo geometry during direct dragging", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("node.style.transform = logoTransform(getEditableLogo(logoIndex));");
+    expect(code).not.toContain("node.style.transform = logoTransform(state.brand.logos[logoIndex]);");
+  });
+
   it("uses matching desktop fallbacks for legacy mobile typography", () => {
     const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
     expect(code).toContain("mobileBodySize: state.theme.bodySize");
     expect(code).toContain("mobileButtonTextSize: state.theme.buttonTextSize");
+  });
+
+  it("labels subtitle-only typography controls explicitly", () => {
+    const markup = readFileSync(resolve("tools/configurator/index.html"), "utf8");
+    expect(markup).toContain("Hero Subtitle Size (px)");
+    expect(markup).toContain("Mobile Hero Subtitle Size (px)");
+  });
+
+  it("routes the primary subtitle size control to the selected preview device", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain('if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {');
+    expect(code).toContain("ensureMobileTheme().bodySize = normalized;");
+    expect(code).toContain("var bodySizeForControls = normalizePreviewDevice(state.display && state.display.previewDevice) === \"mobile\"");
   });
 
   it("keeps mobile CSS safe for published pages without generated mobile variables", () => {

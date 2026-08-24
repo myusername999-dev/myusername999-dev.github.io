@@ -8,23 +8,20 @@ function cloneState(state) {
 
 function getMobileLayout(state, key) {
   const overrides = state.mobile && state.mobile.layout;
-  if (overrides && overrides[key]) {
-    return overrides[key];
-  }
-
   const legacyKeys = {
     nav: "mobileNav",
     heroTitle: "mobileHeroTitle",
     heroSubtitle: "mobileHeroSubtitle",
     cta: "mobileCta"
   };
-  return state.layout[legacyKeys[key]] || state.layout[key] || { x: 0, y: 0 };
+  const fallback = state.layout[legacyKeys[key]] || state.layout[key] || { x: 0, y: 0 };
+  return { ...fallback, ...(overrides && overrides[key] ? overrides[key] : {}) };
 }
 
 function getMobileLogoOverride(state, index) {
   const overrides = state.mobile && state.mobile.brand && state.mobile.brand.logos;
   const desktopLogo = state.brand && state.brand.logos && state.brand.logos[index];
-  return (overrides && overrides[index]) || desktopLogo || { x: 0, y: 0, size: 72 };
+  return { ...(desktopLogo || { x: 0, y: 0, size: 72 }), ...(overrides && overrides[index] ? overrides[index] : {}) };
 }
 
 function isLogoDragKey(dragKey) {

@@ -7,16 +7,14 @@
 
   function getMobileLayout(config, key) {
     var overrides = config.mobile && config.mobile.layout;
-    if (overrides && overrides[key]) {
-      return overrides[key];
-    }
     var legacyKeys = {
       nav: "mobileNav",
       heroTitle: "mobileHeroTitle",
       heroSubtitle: "mobileHeroSubtitle",
       cta: "mobileCta"
     };
-    return config.layout[legacyKeys[key]] || config.layout[key] || { x: 0, y: 0 };
+    var fallback = config.layout[legacyKeys[key]] || config.layout[key] || { x: 0, y: 0 };
+    return Object.assign({}, fallback, overrides && overrides[key] ? overrides[key] : {});
   }
 
   function applyMobilePreviewLayout(previewConfig) {

@@ -53,6 +53,22 @@ describe("mobile and desktop preview behavior", () => {
     expect(state.layout.mobileNav).toEqual({ x: 11, y: 12 });
   });
 
+  it("keeps a partial mobile subtitle override visible while dragging", () => {
+    const state = createStateFixture();
+    state.mobile = {
+      layout: {
+        heroSubtitle: { x: 90 }
+      }
+    };
+
+    expect(getPreviewConfigForDevice(state, "mobile").layout.heroSubtitle).toEqual({ x: 90, y: 16 });
+
+    updateDragPositionByDevice(state, "mobile", "heroSubtitle", 92, 93);
+
+    expect(state.mobile.layout.heroSubtitle).toEqual({ x: 92, y: 93 });
+    expect(state.layout.mobileHeroSubtitle).toEqual({ x: 15, y: 16 });
+  });
+
   it("updates drag positions in desktop keys for desktop", () => {
     const state = createStateFixture();
     updateDragPositionByDevice(state, "desktop", "heroTitle", 120, 121);
@@ -85,8 +101,16 @@ describe("mobile and desktop preview behavior", () => {
   it("keeps a size-only mobile logo change sparse", () => {
     const state = createStateFixture();
 
+    state.brand = {
+      logos: [
+        { x: 10, y: 11, size: 72 },
+        { x: 20, y: 21, size: 64 }
+      ]
+    };
+
     updateLogoSizeByDevice(state, "mobile", 1, 44);
 
     expect(state.mobile.brand.logos[1]).toEqual({ size: 44 });
+    expect(getPreviewConfigForDevice(state, "mobile").brand.logos[1]).toEqual({ x: 20, y: 21, size: 44 });
   });
 });
