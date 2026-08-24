@@ -57,6 +57,9 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - Switch back to desktop after each color edit and confirm desktop colors are unchanged.
 8. Mobile stylesheet:
    - HOME mobile rules are stored in `css/mobile/home.css` and apply at `max-width: 760px`.
+9. Reset to desktop:
+   - Typography and CTA layout resets remove their mobile override group instead of copying desktop values into it.
+   - After resetting, the mobile preview resolves that group from the desktop values again.
 
 ### 6. Publish and draft workflows
 1. Publish scopes:
@@ -96,11 +99,12 @@ These pages route into the same configurator runtime with panel focus, so behavi
    - `privacy.html`
 3. The importer merges detected values into current draft state instead of replacing the full draft object.
 4. Desktop and mobile layout values are both imported when present in HOME page style variables.
-5. Import report now includes diagnostics:
+5. Draft export/import, repo draft save/load, HOME-only publish, and ALL-pages publish preserve sparse `mobile` overrides, including mobile hero copy and CTA links.
+6. Import report now includes diagnostics:
    - confidence by page (`high` / `medium` / `low`)
    - unresolved field list (`page:field`)
    - preserved-by-policy list for fields intentionally left to existing draft state
-6. Known preservation-first limitations:
+7. Known preservation-first limitations:
    - mobile layout overrides are preserved unless explicit mobile CSS vars are found
    - detailed tab/gallery structures are preserved from existing draft unless reliably inferable
    - contact field schema is preserved unless explicit form structure extraction is added

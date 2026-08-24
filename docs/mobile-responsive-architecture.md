@@ -40,6 +40,11 @@ Mobile values are stored in `mobile`:
       paddingX,
       gap,
       width: "auto" | "full"
+    },
+    hero: {
+      title,
+      subtitle,
+      buttons: [{ label, href }]
     }
   }
 }
@@ -47,11 +52,11 @@ Mobile values are stored in `mobile`:
 
 During migration, legacy `layout.mobileNav`, `layout.mobileHeroTitle`, `layout.mobileHeroSubtitle`, `layout.mobileCta`, `theme.mobileHeadingSize`, and `theme.mobileBodySize` values seed the new mobile values. Missing mobile logo and typography values fall back to desktop values. Explicit zero values for layout coordinates and CTA spacing are preserved during normalization.
 
-Current normalization materializes supported mobile groups for control synchronization. Converting this representation to sparse persisted overrides with explicit reset-to-desktop markers is tracked as a separate compatibility refactor.
+Mobile state is sparse: only fields deliberately changed in mobile mode are persisted. Renderers and controls resolve missing mobile values from the desktop base state. Group reset removes the corresponding mobile override (`mobile.theme` or `mobile.buttons`), restoring the desktop values without writing duplicate fallback data.
 
 ## Current Editing Behavior
 
-In mobile preview mode, logo position and size controls, plus direct logo dragging, modify `mobile.brand.logos`. Mobile heading, body, button text, and theme color controls modify `mobile.theme`. Mobile CTA padding, gap, and width controls modify `mobile.buttons`. Desktop logo, typography, CTA layout, and colors remain unchanged. Logo image files, rotation, and transparency remain shared in this phase.
+In mobile preview mode, logo position and size controls, plus direct logo dragging, modify `mobile.brand.logos`. Mobile heading, body, button text, and theme color controls modify `mobile.theme`. Mobile CTA padding, gap, and width controls modify `mobile.buttons`. Mobile hero title, subtitle, CTA labels, and CTA links modify `mobile.hero`. Published HOME markup includes desktop and mobile content variants and the mobile stylesheet selects the correct variant at the breakpoint. Desktop logo, typography, CTA layout, colors, content, and links remain unchanged. Logo image files, rotation, and transparency remain shared in this phase. The existing typography and CTA resets remove their complete mobile group and therefore revert it to desktop; dedicated per-group reset controls remain future UI work.
 
 ## Stylesheet Order
 

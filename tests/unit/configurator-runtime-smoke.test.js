@@ -56,8 +56,8 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("function resetLogosDefaults()");
     expect(code).toContain("function resetColorsDefaults()");
     expect(code).toContain("state.layout.cta.y = 0;");
-    expect(code).toContain("state.mobile.theme = {");
-    expect(code).toContain("state.mobile.buttons = {");
+    expect(code).toContain("delete state.mobile.theme;");
+    expect(code).toContain("delete state.mobile.buttons;");
   });
 
   it("renders CTA row only when buttons exist", () => {
@@ -77,6 +77,37 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("--mobile-button-width:");
     expect(code).toContain("--mobile-accent:");
     expect(code).toContain("--mobile-button-text:");
+  });
+
+  it("renders independent mobile hero content and CTA links", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    const mobileCss = readFileSync(resolve("css/mobile/home.css"), "utf8");
+    expect(code).toContain("function getMobileHero()");
+    expect(code).toContain("function renderMobileButtonsEditor()");
+    expect(code).toContain("var mobileHeroOverrides = config.mobile && config.mobile.hero");
+    expect(code).toContain("hero-content-mobile");
+    expect(mobileCss).toContain(".hero-content-desktop");
+    expect(mobileCss).toContain(".cta-slot a.hero-content-mobile");
+    expect(readFileSync(resolve("css/components/home/hero-cta.css"), "utf8")).toContain(".cta-slot a.hero-content-mobile");
+  });
+
+  it("keeps mobile overrides when drafts are merged", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("merged.mobile = deepClone(incoming.mobile || merged.mobile || {});");
+  });
+
+  it("uses sparse mobile layout state for mobile position controls", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain('ensureMobileLayout().nav = Object.assign({}, getMobileLayout("nav"), { x: value });');
+    expect(code).toContain('dom.mobileNavX.value = String(getMobileLayout("nav").x);');
+    expect(code).toContain('dom.mobileCtaY.value = String(getMobileLayout("cta").y);');
+    expect(code).not.toContain("state.layout.mobileNav.x = value;");
+  });
+
+  it("uses matching desktop fallbacks for legacy mobile typography", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("mobileBodySize: state.theme.bodySize");
+    expect(code).toContain("mobileButtonTextSize: state.theme.buttonTextSize");
   });
 
   it("keeps mobile CSS safe for published pages without generated mobile variables", () => {

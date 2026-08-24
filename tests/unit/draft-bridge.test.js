@@ -19,6 +19,22 @@ describe("draft bridge", () => {
     expect(script).toContain('"a": 1');
   });
 
+  it("serializes sparse mobile hero overrides in repo drafts", () => {
+    const bridge = loadBridge();
+    const script = bridge.buildRepoDraftScript("__KEY__", {
+      mobile: {
+        hero: {
+          title: "Mobile title",
+          buttons: [{ href: "contact.html" }]
+        }
+      }
+    });
+
+    expect(script).toContain('"mobile"');
+    expect(script).toContain('"Mobile title"');
+    expect(script).toContain('"contact.html"');
+  });
+
   it("returns null for invalid repo draft candidate", () => {
     const bridge = loadBridge();
     expect(bridge.getRepoDraftCandidate({}, "__KEY__")).toBeNull();

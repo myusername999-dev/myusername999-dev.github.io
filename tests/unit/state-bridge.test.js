@@ -106,10 +106,7 @@ describe("state bridge", () => {
       brand: { logos: [{ x: 100, y: 101, size: 44 }] }
     }, desktopState);
 
-    expect(mobile.brand.logos).toEqual([
-      { x: 100, y: 101, size: 44 },
-      { x: 20, y: 21, size: 64 }
-    ]);
+    expect(mobile.brand.logos).toEqual([{ x: 100, y: 101, size: 44 }]);
     expect(desktopState.brand.logos).toEqual([
       { x: 10, y: 11, size: 72 },
       { x: 20, y: 21, size: 64 }
@@ -154,10 +151,9 @@ describe("state bridge", () => {
       }
     });
 
-    expect(mobile.theme).toMatchObject({
+    expect(mobile.theme).toEqual({
       headingSize: 42,
-      bodySize: 15,
-      buttonTextSize: 16
+      bodySize: 15
     });
   });
 
@@ -198,8 +194,8 @@ describe("state bridge", () => {
     });
 
     expect(mobile.theme.accentColor).toBe("#123456");
-    expect(mobile.theme.bgColor).toBe("#111111");
-    expect(mobile.theme.buttonTextColor).toBe("#666666");
+    expect(mobile.theme.bgColor).toBeUndefined();
+    expect(mobile.theme.buttonTextColor).toBeUndefined();
   });
 
   it("preserves explicit zero values in mobile layout, logos, and CTA buttons", () => {
@@ -217,6 +213,56 @@ describe("state bridge", () => {
     expect(mobile.layout.nav).toEqual({ x: 0, y: 0 });
     expect(mobile.brand.logos[0]).toEqual({ x: 0, y: 0, size: 1 });
     expect(mobile.buttons).toMatchObject({ paddingY: 0, paddingX: 0, gap: 0 });
+  });
+
+  it("keeps an empty mobile state sparse when no legacy fields exist", () => {
+    const bridge = loadBridge();
+    const mobile = bridge.normalizeMobileOverrides({}, {
+      layout: {},
+      brand: { logos: [] },
+      theme: {
+        headingSize: 64,
+        bodySize: 18,
+        buttonTextSize: 16
+      }
+    });
+
+    expect(mobile).toEqual({
+      layout: {},
+      brand: { logos: [] },
+      theme: {},
+      buttons: {},
+      hero: {}
+    });
+  });
+
+  it("normalizes sparse mobile hero content and CTA links", () => {
+    const bridge = loadBridge();
+    const mobile = bridge.normalizeMobileOverrides({
+      hero: {
+        title: "Mobile title",
+        buttons: [{ href: "contact.html" }]
+      }
+    }, { layout: {}, brand: { logos: [] }, theme: {} });
+
+    expect(mobile.hero).toEqual({
+      title: "Mobile title",
+      buttons: [{ href: "contact.html" }]
+    });
+  });
+
+  it("does not migrate legacy layout values that match desktop", () => {
+    const bridge = loadBridge();
+    const mobile = bridge.normalizeMobileOverrides({}, {
+      layout: {
+        nav: { x: 0, y: 0 },
+        mobileNav: { x: 0, y: 0 }
+      },
+      brand: { logos: [] },
+      theme: {}
+    });
+
+    expect(mobile.layout).toEqual({});
   });
 
   it("normalizes gallery images to four slots", () => {

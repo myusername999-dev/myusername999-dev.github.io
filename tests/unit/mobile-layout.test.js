@@ -39,9 +39,18 @@ describe("mobile and desktop preview behavior", () => {
   it("updates drag positions in mobile-specific keys for mobile", () => {
     const state = createStateFixture();
     updateDragPositionByDevice(state, "mobile", "heroTitle", 90, 91);
-    expect(state.layout.mobileHeroTitle).toEqual({ x: 90, y: 91 });
+    expect(state.layout.mobileHeroTitle).toEqual({ x: 13, y: 14 });
     expect(state.mobile.layout.heroTitle).toEqual({ x: 90, y: 91 });
     expect(state.layout.heroTitle).toEqual({ x: 3, y: 4 });
+  });
+
+  it("keeps legacy mobile nav coordinates unchanged when a sparse override is written", () => {
+    const state = createStateFixture();
+
+    updateDragPositionByDevice(state, "mobile", "nav", 90, 91);
+
+    expect(state.mobile.layout.nav).toEqual({ x: 90, y: 91 });
+    expect(state.layout.mobileNav).toEqual({ x: 11, y: 12 });
   });
 
   it("updates drag positions in desktop keys for desktop", () => {
@@ -61,6 +70,8 @@ describe("mobile and desktop preview behavior", () => {
     };
 
     updateDragPositionByDevice(state, "mobile", "logo-0", 100, 101);
+    expect(state.mobile.brand.logos[0]).toEqual({ x: 100, y: 101 });
+
     updateLogoSizeByDevice(state, "mobile", 0, 44);
 
     expect(state.brand.logos[0]).toEqual({ x: 10, y: 11, size: 72 });
@@ -69,5 +80,13 @@ describe("mobile and desktop preview behavior", () => {
     const mobilePreview = getPreviewConfigForDevice(state, "mobile");
     expect(mobilePreview.brand.logos[0]).toEqual({ x: 100, y: 101, size: 44 });
     expect(getPreviewConfigForDevice(state, "desktop").brand.logos[0]).toEqual({ x: 10, y: 11, size: 72 });
+  });
+
+  it("keeps a size-only mobile logo change sparse", () => {
+    const state = createStateFixture();
+
+    updateLogoSizeByDevice(state, "mobile", 1, 44);
+
+    expect(state.mobile.brand.logos[1]).toEqual({ size: 44 });
   });
 });

@@ -73,20 +73,11 @@ function updateDragPositionByDevice(state, previewDevice, dragKey, x, y) {
     ensureMobileOverrides(state);
     if (isLogoDragKey(dragKey)) {
       const index = logoIndexFromDragKey(dragKey);
-      const fallback = getMobileLogoOverride(state, index);
-      state.mobile.brand.logos[index] = { ...fallback, x, y };
+      const existingOverride = state.mobile.brand.logos[index] || {};
+      state.mobile.brand.logos[index] = { ...existingOverride, x, y };
       return;
     }
     state.mobile.layout[dragKey] = { x, y };
-    const legacyKeys = {
-      nav: "mobileNav",
-      heroTitle: "mobileHeroTitle",
-      heroSubtitle: "mobileHeroSubtitle",
-      cta: "mobileCta"
-    };
-    if (legacyKeys[dragKey]) {
-      state.layout[legacyKeys[dragKey]] = { x, y };
-    }
     return;
   }
 
@@ -103,8 +94,8 @@ function updateLogoSizeByDevice(state, previewDevice, index, size) {
   const normalizedSize = Math.max(1, Math.min(1200, Number.parseInt(size, 10) || 1));
   if (normalizePreviewDevice(previewDevice) === "mobile") {
     ensureMobileOverrides(state);
-    const fallback = getMobileLogoOverride(state, index);
-    state.mobile.brand.logos[index] = { ...fallback, size: normalizedSize };
+    const existingOverride = state.mobile.brand.logos[index] || {};
+    state.mobile.brand.logos[index] = { ...existingOverride, size: normalizedSize };
     return;
   }
   state.brand.logos[index].size = normalizedSize;

@@ -17,10 +17,10 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Add legacy-draft normalization for existing mobile layout values.
 - [x] Preserve explicit zero values during mobile override normalization.
 - [x] Make mobile CSS safe when a published HOME page lacks generated mobile variables.
-- [ ] Refactor materialized mobile state to sparse overrides with explicit reset-to-desktop semantics.
+- [x] Refactor materialized mobile state to sparse overrides with explicit reset-to-desktop semantics.
 - [x] Migrate existing mobile layout and font fields.
 - [x] Add mobile logo position and size overrides.
-- [-] Add independent mobile theme, button, content, and link overrides. Typography, CTA layout, and colors are complete; content and links remain pending.
+- [x] Add independent mobile theme, button, content, and link overrides.
 - [ ] Update state fixtures.
 
 ## JavaScript Structure
@@ -32,7 +32,7 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Centralize device normalization and override resolution.
 - [x] Centralize mobile preview transformation.
 - [x] Centralize device-aware drag and resize writes for layout and logos.
-- [ ] Add reset-to-desktop helper behavior.
+- [x] Add reset-to-desktop helper behavior.
 - [ ] Remove duplicated inline mobile decision logic from the main runtime.
 
 ## Configurator Controls
@@ -41,17 +41,17 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Add mobile typography controls, including button text size.
 - [x] Add mobile button padding, gap, and width controls.
 - [x] Add mobile colors and visual-style controls.
-- [ ] Add mobile HOME content and link controls.
+- [x] Add mobile HOME content and link controls.
 - [ ] Add reset-to-desktop controls for each override group.
 - [ ] Verify desktop controls write only base state.
-- [ ] Verify mobile controls write only `state.mobile` overrides.
+- [x] Verify mobile controls write only `state.mobile` overrides.
 
 ## CSS Structure
 
 - [x] Create `css/mobile/`.
 - [x] Move HOME mobile breakpoint rules to `css/mobile/home.css`.
 - [x] Preserve base-first, mobile-second CSS load order.
-- [-] Add mobile variables for logos, typography, buttons, colors, content, and links. Logo, typography, and CTA layout variables are complete; remaining groups are pending.
+- [x] Add mobile variables and markup for logos, typography, buttons, colors, content, and links.
 - [ ] Verify desktop CSS output remains unchanged without mobile overrides.
 
 ## Rendering And Publishing
@@ -60,11 +60,11 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Emit mobile logo, typography, and CTA layout CSS variables in generated HOME markup.
 - [x] Preserve desktop rules outside `max-width: 760px`.
 - [x] Emit implemented mobile logo overrides within `max-width: 760px`.
-- [ ] Update HOME-only publishing.
-- [ ] Update ALL-pages publishing.
-- [ ] Update draft export/import.
-- [ ] Update repo draft save/load.
-- [ ] Update live-page initialization compatibility.
+- [x] Update HOME-only publishing.
+- [x] Update ALL-pages publishing.
+- [x] Update draft export/import.
+- [x] Update repo draft save/load.
+- [x] Update live-page initialization compatibility.
 
 ## Tests
 
@@ -75,7 +75,7 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Add desktop fallback tests for absent mobile logo overrides.
 - [ ] Add mobile-to-desktop isolation tests for every independent setting group.
 - [x] Add logo desktop-mobile-desktop regression test.
-- [ ] Add draft export/import round-trip tests.
+- [x] Add draft export/import round-trip tests.
 - [ ] Add published HOME mobile CSS tests.
 - [x] Run focused unit and integration tests.
 - [x] Run `npm test`.
@@ -85,9 +85,9 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Update `docs/configurator-operations.md`.
 - [x] Create `docs/mobile-responsive-architecture.md`.
 - [x] Document shared versus mobile-independent settings.
-- [ ] Document reset-to-desktop behavior.
-- [ ] Document draft and publish migration behavior.
-- [ ] Start the configurator server successfully.
+- [x] Document reset-to-desktop behavior.
+- [x] Document draft and publish migration behavior.
+- [x] Start the configurator server successfully.
 - [ ] Verify each mobile control does not alter desktop in localhost configurator.
 - [ ] Publish HOME and inspect desktop output.
 - [ ] Publish HOME and inspect output at viewport <=760px.
