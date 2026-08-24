@@ -14,7 +14,7 @@
 
 ### 3. Configurator locations
 1. Main configurator entry: `tools/configurator/index.html`
-2. Mobile-manageable modules: `tools/configurator/mobile/`
+2. Mobile runtime modules: `js/mobile/`
 3. Publish services: `tools/configurator/publish/`
 4. Test suites: `tests/`
 
@@ -42,6 +42,12 @@ These pages route into the same configurator runtime with panel focus, so behavi
 2. Mobile:
    - Use mobile preview and verify mobile override positions.
 3. Confirm changes in one environment do not unintentionally alter the other.
+4. HOME logo safety:
+   - In mobile preview, logo position and size changes are saved as mobile overrides.
+   - Switch back to desktop after each logo edit and confirm desktop position and size are unchanged.
+   - Logo files, rotation, and transparency remain shared between desktop and mobile.
+5. Mobile stylesheet:
+   - HOME mobile rules are stored in `css/mobile/home.css` and apply at `max-width: 760px`.
 
 ### 6. Publish and draft workflows
 1. Publish scopes:
@@ -136,7 +142,7 @@ These pages route into the same configurator runtime with panel focus, so behavi
 2. Desktop and mobile baseline tests are passing.
 3. Publish and mobile helper extraction is active through runtime bridge modules:
    - `tools/configurator/publish/publish-bridge.js`
-   - `tools/configurator/mobile/mobile-bridge.js`
+   - `js/mobile/mobile-bridge.js`
 4. State normalization extraction is active through:
    - `tools/configurator/core/state-bridge.js`
    - includes page/tab/preview normalization, text-align/contact-field normalization, and logo/gallery helper normalization

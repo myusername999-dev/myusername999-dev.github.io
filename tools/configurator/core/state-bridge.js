@@ -187,6 +187,54 @@
     return normalizeBrandLogos(source.logos, legacy);
   }
 
+  function normalizeMobileLogoOverrides(value, desktopLogos) {
+    var source = Array.isArray(value) ? value : [];
+    var desktop = Array.isArray(desktopLogos) ? desktopLogos : createDefaultLogos();
+
+    return [0, 1].map(function (index) {
+      var override = source[index] || {};
+      var fallback = desktop[index] || createDefaultLogo(index);
+      return {
+        x: parseInt(override.x, 10) || fallback.x,
+        y: parseInt(override.y, 10) || fallback.y,
+        size: clamp(parseInt(override.size, 10) || fallback.size, 1, 1200)
+      };
+    });
+  }
+
+  function normalizeMobileOverrides(value, desktopState) {
+    var source = value || {};
+    var desktop = desktopState || {};
+    var desktopLayout = desktop.layout || {};
+    var legacyMobileKeys = {
+      nav: "mobileNav",
+      heroTitle: "mobileHeroTitle",
+      heroSubtitle: "mobileHeroSubtitle",
+      cta: "mobileCta"
+    };
+
+    function normalizePosition(override, fallback) {
+      var item = override || {};
+      var base = fallback || { x: 0, y: 0 };
+      return {
+        x: parseInt(item.x, 10) || base.x || 0,
+        y: parseInt(item.y, 10) || base.y || 0
+      };
+    }
+
+    return {
+      layout: {
+        nav: normalizePosition(source.layout && source.layout.nav, desktopLayout[legacyMobileKeys.nav] || desktopLayout.nav),
+        heroTitle: normalizePosition(source.layout && source.layout.heroTitle, desktopLayout[legacyMobileKeys.heroTitle] || desktopLayout.heroTitle),
+        heroSubtitle: normalizePosition(source.layout && source.layout.heroSubtitle, desktopLayout[legacyMobileKeys.heroSubtitle] || desktopLayout.heroSubtitle),
+        cta: normalizePosition(source.layout && source.layout.cta, desktopLayout[legacyMobileKeys.cta] || desktopLayout.cta)
+      },
+      brand: {
+        logos: normalizeMobileLogoOverrides(source.brand && source.brand.logos, desktop.brand && desktop.brand.logos)
+      }
+    };
+  }
+
   function normalizeGalleryImages(value) {
     var items = Array.isArray(value) ? value.slice(0, 4) : [];
     while (items.length < 4) {
@@ -310,6 +358,8 @@
     createDefaultLogos: createDefaultLogos,
     normalizeBrandLogos: normalizeBrandLogos,
     ensureTwoLogos: ensureTwoLogos,
+    normalizeMobileLogoOverrides: normalizeMobileLogoOverrides,
+    normalizeMobileOverrides: normalizeMobileOverrides,
     normalizeGalleryImages: normalizeGalleryImages,
     normalizeUnderConstructionConfig: normalizeUnderConstructionConfig
   };

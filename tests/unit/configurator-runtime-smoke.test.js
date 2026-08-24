@@ -64,6 +64,13 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("ctaMarkup,");
   });
 
+  it("publishes HOME with the mobile stylesheet and logo override variables", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    expect(code).toContain("css/mobile/home.css");
+    expect(code).toContain("--mobile-logo-0-x:");
+    expect(code).toContain("--mobile-logo-1-size:");
+  });
+
   it("wires under-construction controls and generation branch", () => {
     const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
     expect(code).toContain("UNDER_CONSTRUCTION_DEFAULT_IMAGE");

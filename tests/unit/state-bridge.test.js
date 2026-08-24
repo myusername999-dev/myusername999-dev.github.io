@@ -85,6 +85,61 @@ describe("state bridge", () => {
     expect(logos.length).toBe(2);
   });
 
+  it("creates independent mobile logo overrides from desktop logos", () => {
+    const bridge = loadBridge();
+    const desktopState = {
+      layout: {
+        nav: { x: 1, y: 2 },
+        heroTitle: { x: 3, y: 4 },
+        heroSubtitle: { x: 5, y: 6 },
+        cta: { x: 7, y: 8 }
+      },
+      brand: {
+        logos: [
+          { x: 10, y: 11, size: 72 },
+          { x: 20, y: 21, size: 64 }
+        ]
+      }
+    };
+
+    const mobile = bridge.normalizeMobileOverrides({
+      brand: { logos: [{ x: 100, y: 101, size: 44 }] }
+    }, desktopState);
+
+    expect(mobile.brand.logos).toEqual([
+      { x: 100, y: 101, size: 44 },
+      { x: 20, y: 21, size: 64 }
+    ]);
+    expect(desktopState.brand.logos).toEqual([
+      { x: 10, y: 11, size: 72 },
+      { x: 20, y: 21, size: 64 }
+    ]);
+  });
+
+  it("migrates legacy mobile layout coordinates into mobile overrides", () => {
+    const bridge = loadBridge();
+    const mobile = bridge.normalizeMobileOverrides({}, {
+      layout: {
+        nav: { x: 1, y: 2 },
+        heroTitle: { x: 3, y: 4 },
+        heroSubtitle: { x: 5, y: 6 },
+        cta: { x: 7, y: 8 },
+        mobileNav: { x: 11, y: 12 },
+        mobileHeroTitle: { x: 13, y: 14 },
+        mobileHeroSubtitle: { x: 15, y: 16 },
+        mobileCta: { x: 17, y: 18 }
+      },
+      brand: { logos: [] }
+    });
+
+    expect(mobile.layout).toEqual({
+      nav: { x: 11, y: 12 },
+      heroTitle: { x: 13, y: 14 },
+      heroSubtitle: { x: 15, y: 16 },
+      cta: { x: 17, y: 18 }
+    });
+  });
+
   it("normalizes gallery images to four slots", () => {
     const bridge = loadBridge();
     const gallery = bridge.normalizeGalleryImages([{ src: "a", fileName: "a.png" }]);

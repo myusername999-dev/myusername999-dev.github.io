@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getPreviewConfigForDevice, normalizePreviewDevice, updateDragPositionByDevice } from "../../tools/configurator/mobile/mobile-layout.js";
+import { getPreviewConfigForDevice, normalizePreviewDevice, updateDragPositionByDevice, updateLogoSizeByDevice } from "../../js/mobile/mobile-layout.js";
 import { createStateFixture } from "../helpers/state-fixtures.js";
 
 describe("mobile and desktop preview behavior", () => {
@@ -23,6 +23,7 @@ describe("mobile and desktop preview behavior", () => {
     const state = createStateFixture();
     updateDragPositionByDevice(state, "mobile", "heroTitle", 90, 91);
     expect(state.layout.mobileHeroTitle).toEqual({ x: 90, y: 91 });
+    expect(state.mobile.layout.heroTitle).toEqual({ x: 90, y: 91 });
     expect(state.layout.heroTitle).toEqual({ x: 3, y: 4 });
   });
 
@@ -31,5 +32,25 @@ describe("mobile and desktop preview behavior", () => {
     updateDragPositionByDevice(state, "desktop", "heroTitle", 120, 121);
     expect(state.layout.heroTitle).toEqual({ x: 120, y: 121 });
     expect(state.layout.mobileHeroTitle).toEqual({ x: 13, y: 14 });
+  });
+
+  it("keeps desktop logo placement and size when mobile overrides change", () => {
+    const state = createStateFixture();
+    state.brand = {
+      logos: [
+        { x: 10, y: 11, size: 72 },
+        { x: 20, y: 21, size: 64 }
+      ]
+    };
+
+    updateDragPositionByDevice(state, "mobile", "logo-0", 100, 101);
+    updateLogoSizeByDevice(state, "mobile", 0, 44);
+
+    expect(state.brand.logos[0]).toEqual({ x: 10, y: 11, size: 72 });
+    expect(state.mobile.brand.logos[0]).toEqual({ x: 100, y: 101, size: 44 });
+
+    const mobilePreview = getPreviewConfigForDevice(state, "mobile");
+    expect(mobilePreview.brand.logos[0]).toEqual({ x: 100, y: 101, size: 44 });
+    expect(getPreviewConfigForDevice(state, "desktop").brand.logos[0]).toEqual({ x: 10, y: 11, size: 72 });
   });
 });

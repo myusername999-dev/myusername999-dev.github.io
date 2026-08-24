@@ -102,6 +102,10 @@
       mobileHeroSubtitle: { x: 0, y: 0 },
       mobileCta: { x: 0, y: 0 }
     },
+    mobile: {
+      layout: {},
+      brand: { logos: [] }
+    },
     display: {
       pageMode: "home",
       tabMode: "top-and-home",
@@ -733,10 +737,10 @@
     }, "input");
 
     bindNumber(dom.logo1X, function (value) {
-      state.brand.logos[0].x = value;
+      setLogoPosition(0, value, getEditableLogo(0).y);
     });
     bindNumber(dom.logo1Y, function (value) {
-      state.brand.logos[0].y = value;
+      setLogoPosition(0, getEditableLogo(0).x, value);
     });
     bindNumber(dom.logo1Size, function (value) {
       setLogoSize(0, value, true);
@@ -748,10 +752,10 @@
       state.brand.logos[0].transparency = clamp(value, 0, 95);
     });
     bindNumber(dom.logo2X, function (value) {
-      state.brand.logos[1].x = value;
+      setLogoPosition(1, value, getEditableLogo(1).y);
     });
     bindNumber(dom.logo2Y, function (value) {
-      state.brand.logos[1].y = value;
+      setLogoPosition(1, getEditableLogo(1).x, value);
     });
     bindNumber(dom.logo2Size, function (value) {
       setLogoSize(1, value, true);
@@ -1331,13 +1335,13 @@
     }
 
     if (dom.logo1X) {
-      dom.logo1X.value = String(state.brand.logos[0].x);
+      dom.logo1X.value = String(getEditableLogo(0).x);
     }
     if (dom.logo1Y) {
-      dom.logo1Y.value = String(state.brand.logos[0].y);
+      dom.logo1Y.value = String(getEditableLogo(0).y);
     }
     if (dom.logo1Size) {
-      dom.logo1Size.value = String(state.brand.logos[0].size);
+      dom.logo1Size.value = String(getEditableLogo(0).size);
     }
     if (dom.logo1Rotation) {
       dom.logo1Rotation.value = String(state.brand.logos[0].rotation);
@@ -1346,13 +1350,13 @@
       dom.logo1Transparency.value = String(state.brand.logos[0].transparency);
     }
     if (dom.logo2X) {
-      dom.logo2X.value = String(state.brand.logos[1].x);
+      dom.logo2X.value = String(getEditableLogo(1).x);
     }
     if (dom.logo2Y) {
-      dom.logo2Y.value = String(state.brand.logos[1].y);
+      dom.logo2Y.value = String(getEditableLogo(1).y);
     }
     if (dom.logo2Size) {
-      dom.logo2Size.value = String(state.brand.logos[1].size);
+      dom.logo2Size.value = String(getEditableLogo(1).size);
     }
     if (dom.logo2Rotation) {
       dom.logo2Rotation.value = String(state.brand.logos[1].rotation);
@@ -2133,16 +2137,16 @@
 
   function syncPositionInputsOnly() {
     if (dom.logo1X) {
-      dom.logo1X.value = String(state.brand.logos[0].x);
+      dom.logo1X.value = String(getEditableLogo(0).x);
     }
     if (dom.logo1Y) {
-      dom.logo1Y.value = String(state.brand.logos[0].y);
+      dom.logo1Y.value = String(getEditableLogo(0).y);
     }
     if (dom.logo2X) {
-      dom.logo2X.value = String(state.brand.logos[1].x);
+      dom.logo2X.value = String(getEditableLogo(1).x);
     }
     if (dom.logo2Y) {
-      dom.logo2Y.value = String(state.brand.logos[1].y);
+      dom.logo2Y.value = String(getEditableLogo(1).y);
     }
     if (dom.navX) {
       dom.navX.value = String(state.layout.nav.x);
@@ -3186,7 +3190,7 @@
       "  <link rel=\"stylesheet\" href=\"css/components/home/navigation.css\">",
       "  <link rel=\"stylesheet\" href=\"css/components/home/hero-cta.css\">",
       "  <link rel=\"stylesheet\" href=\"css/components/home/cards-footer.css\">",
-      "  <link rel=\"stylesheet\" href=\"css/components/home/mobile.css\">",
+      "  <link rel=\"stylesheet\" href=\"css/mobile/home.css\">",
       "</head>",
       "<body>",
       buildHomeMarkup(config, false),
@@ -3390,6 +3394,11 @@
         return "<div class=\"logo-slot\" " + logoDragAttr(index, draggable) + logoStyleAttr(logo) + ">" + inner + "</div>";
       })
       .join("");
+    var mobileLogos = config.mobile && config.mobile.brand && Array.isArray(config.mobile.brand.logos)
+      ? config.mobile.brand.logos
+      : [];
+    var mobileLogo0 = mobileLogos[0] || config.brand.logos[0];
+    var mobileLogo1 = mobileLogos[1] || config.brand.logos[1];
 
     return [
       "<div class=\"home-root\" style=\"--preview-bg:" + escapeAttr(config.theme.bgColor) +
@@ -3420,6 +3429,14 @@
         "px;--mobile-hero-subtitle-y:" + ((config.layout.mobileHeroSubtitle && config.layout.mobileHeroSubtitle.y) || 0) +
         "px;--mobile-cta-x:" + ((config.layout.mobileCta && config.layout.mobileCta.x) || 0) +
         "px;--mobile-cta-y:" + ((config.layout.mobileCta && config.layout.mobileCta.y) || 0) +
+        "px;--mobile-logo-0-x:" + mobileLogo0.x +
+        "px;--mobile-logo-0-y:" + mobileLogo0.y +
+        "px;--mobile-logo-0-size:" + mobileLogo0.size +
+        "px;--mobile-logo-0-rotation:" + config.brand.logos[0].rotation +
+        "deg;--mobile-logo-1-x:" + mobileLogo1.x +
+        "px;--mobile-logo-1-y:" + mobileLogo1.y +
+        "px;--mobile-logo-1-size:" + mobileLogo1.size +
+        "px;--mobile-logo-1-rotation:" + config.brand.logos[1].rotation +
         "px;font-family:'" +
         escapeAttr(config.theme.fontFamily) +
         "','Segoe UI',sans-serif;\">",
@@ -4598,6 +4615,10 @@
   function getDragPosition(dragKey) {
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     if (previewDevice === "mobile") {
+      if (isLogoDragKey(dragKey)) {
+        var mobileLogoIndex = logoIndexFromDragKey(dragKey);
+        return getEditableLogo(mobileLogoIndex);
+      }
       if (dragKey === "nav") {
         return state.layout.mobileNav || { x: 0, y: 0 };
       }
@@ -4630,6 +4651,10 @@
   function setDragPosition(dragKey, x, y) {
     var previewDevice = normalizePreviewDevice(state.display && state.display.previewDevice);
     if (previewDevice === "mobile") {
+      if (isLogoDragKey(dragKey)) {
+        setLogoPosition(logoIndexFromDragKey(dragKey), x, y);
+        return;
+      }
       if (dragKey === "nav") {
         state.layout.mobileNav.x = x;
         state.layout.mobileNav.y = y;
@@ -4763,6 +4788,10 @@
         x: parseInt(legacyHeroLayout.x, 10) || 0,
         y: (parseInt(legacyHeroLayout.y, 10) || 0) + 86
       };
+    }
+
+    if (window.ConfiguratorStateBridge && typeof window.ConfiguratorStateBridge.normalizeMobileOverrides === "function") {
+      state.mobile = window.ConfiguratorStateBridge.normalizeMobileOverrides(state.mobile, state);
     }
 
     state.display = state.display || {};
@@ -5429,15 +5458,59 @@
 
   function setLogoSize(index, value, keepCenter) {
     var logoIndex = clamp(parseInt(index, 10) || 0, 0, 1);
-    var logo = state.brand.logos[logoIndex];
+    var logo = getEditableLogo(logoIndex);
     var nextSize = clamp(parseInt(value, 10) || 0, 1, 1200);
     var previousSize = clamp(parseInt(logo.size, 10) || 72, 1, 1200);
+    var nextX = logo.x;
+    var nextY = logo.y;
     if (keepCenter && nextSize !== previousSize) {
       var delta = nextSize - previousSize;
-      logo.x -= Math.round(delta / 2);
-      logo.y -= Math.round(delta / 2);
+      nextX -= Math.round(delta / 2);
+      nextY -= Math.round(delta / 2);
     }
-    logo.size = nextSize;
+    if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+      state.mobile = state.mobile || {};
+      state.mobile.brand = state.mobile.brand || {};
+      state.mobile.brand.logos = state.mobile.brand.logos || [];
+      state.mobile.brand.logos[logoIndex] = {
+        x: nextX,
+        y: nextY,
+        size: nextSize
+      };
+      return;
+    }
+    state.brand.logos[logoIndex].x = nextX;
+    state.brand.logos[logoIndex].y = nextY;
+    state.brand.logos[logoIndex].size = nextSize;
+  }
+
+  function getEditableLogo(index) {
+    var logoIndex = clamp(parseInt(index, 10) || 0, 0, 1);
+    if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+      var mobileLogos = state.mobile && state.mobile.brand && state.mobile.brand.logos;
+      if (mobileLogos && mobileLogos[logoIndex]) {
+        return mobileLogos[logoIndex];
+      }
+    }
+    return state.brand.logos[logoIndex];
+  }
+
+  function setLogoPosition(index, x, y) {
+    var logoIndex = clamp(parseInt(index, 10) || 0, 0, 1);
+    if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+      var logo = getEditableLogo(logoIndex);
+      state.mobile = state.mobile || {};
+      state.mobile.brand = state.mobile.brand || {};
+      state.mobile.brand.logos = state.mobile.brand.logos || [];
+      state.mobile.brand.logos[logoIndex] = {
+        x: x,
+        y: y,
+        size: logo.size
+      };
+      return;
+    }
+    state.brand.logos[logoIndex].x = x;
+    state.brand.logos[logoIndex].y = y;
   }
 
   function createEmptyGallery() {

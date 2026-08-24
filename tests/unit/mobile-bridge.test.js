@@ -5,7 +5,7 @@ import vm from "node:vm";
 
 describe("mobile bridge", () => {
   function loadBridge() {
-    const code = readFileSync(resolve("tools/configurator/mobile/mobile-bridge.js"), "utf8");
+    const code = readFileSync(resolve("js/mobile/mobile-bridge.js"), "utf8");
     const sandbox = { window: {} };
     vm.createContext(sandbox);
     vm.runInContext(code, sandbox);
@@ -30,6 +30,14 @@ describe("mobile bridge", () => {
         mobileHeroTitle: { x: 12, y: 13 },
         mobileHeroSubtitle: { x: 14, y: 15 },
         mobileCta: { x: 16, y: 17 }
+      },
+      brand: {
+        logos: [{ x: 1, y: 2, size: 72 }]
+      },
+      mobile: {
+        brand: {
+          logos: [{ x: 100, y: 101, size: 44 }]
+        }
       }
     };
 
@@ -39,5 +47,6 @@ describe("mobile bridge", () => {
     expect(config.layout.heroTitle).toEqual({ x: 12, y: 13 });
     expect(config.layout.heroSubtitle).toEqual({ x: 14, y: 15 });
     expect(config.layout.cta).toEqual({ x: 16, y: 17 });
+    expect(config.brand.logos[0]).toEqual({ x: 100, y: 101, size: 44 });
   });
 });
