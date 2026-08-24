@@ -49,7 +49,7 @@ During migration, legacy `layout.mobileNav`, `layout.mobileHeroTitle`, `layout.m
 
 ## Current Editing Behavior
 
-In mobile preview mode, logo position and size controls, plus direct logo dragging, modify `mobile.brand.logos`. Mobile heading, body, and button text sliders modify `mobile.theme`. Mobile CTA padding, gap, and width controls modify `mobile.buttons`. Desktop logo, typography, and CTA layout values remain unchanged. Logo image files, rotation, and transparency remain shared in this phase.
+In mobile preview mode, logo position and size controls, plus direct logo dragging, modify `mobile.brand.logos`. Mobile heading, body, button text, and theme color controls modify `mobile.theme`. Mobile CTA padding, gap, and width controls modify `mobile.buttons`. Desktop logo, typography, CTA layout, and colors remain unchanged. Logo image files, rotation, and transparency remain shared in this phase.
 
 ## Stylesheet Order
 

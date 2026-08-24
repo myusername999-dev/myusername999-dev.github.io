@@ -308,6 +308,12 @@
     dom.mobileButtonGap = document.getElementById("mobileButtonGap");
     dom.mobileButtonGapValue = document.getElementById("mobileButtonGapValue");
     dom.mobileButtonWidth = document.getElementById("mobileButtonWidth");
+    dom.mobileBgColor = document.getElementById("mobileBgColor");
+    dom.mobileTextColor = document.getElementById("mobileTextColor");
+    dom.mobileAccentColor = document.getElementById("mobileAccentColor");
+    dom.mobileMutedColor = document.getElementById("mobileMutedColor");
+    dom.mobileSurfaceColor = document.getElementById("mobileSurfaceColor");
+    dom.mobileButtonTextColor = document.getElementById("mobileButtonTextColor");
     dom.mobileHeroCenter = document.getElementById("mobileHeroCenter");
 
     dom.bgColor = document.getElementById("bgColor");
@@ -537,6 +543,24 @@
     bindText(dom.mobileButtonWidth, function (value) {
       state.mobile.buttons.width = value === "full" ? "full" : "auto";
     }, "change");
+    bindText(dom.mobileBgColor, function (value) {
+      state.mobile.theme.bgColor = normalizeHex(value, state.theme.bgColor);
+    }, "input");
+    bindText(dom.mobileTextColor, function (value) {
+      state.mobile.theme.textColor = normalizeHex(value, state.theme.textColor);
+    }, "input");
+    bindText(dom.mobileAccentColor, function (value) {
+      state.mobile.theme.accentColor = normalizeHex(value, state.theme.accentColor);
+    }, "input");
+    bindText(dom.mobileMutedColor, function (value) {
+      state.mobile.theme.mutedColor = normalizeHex(value, state.theme.mutedColor);
+    }, "input");
+    bindText(dom.mobileSurfaceColor, function (value) {
+      state.mobile.theme.surfaceColor = normalizeHex(value, state.theme.surfaceColor);
+    }, "input");
+    bindText(dom.mobileButtonTextColor, function (value) {
+      state.mobile.theme.buttonTextColor = normalizeHex(value, state.theme.buttonTextColor);
+    }, "input");
     if (dom.mobileHeroCenter) {
       dom.mobileHeroCenter.addEventListener("change", function () {
         state.display.mobileHeroCenter = !!dom.mobileHeroCenter.checked;
@@ -1513,6 +1537,24 @@
     }
     if (dom.mobileButtonWidth) {
       dom.mobileButtonWidth.value = state.mobile.buttons.width;
+    }
+    if (dom.mobileBgColor) {
+      dom.mobileBgColor.value = state.mobile.theme.bgColor;
+    }
+    if (dom.mobileTextColor) {
+      dom.mobileTextColor.value = state.mobile.theme.textColor;
+    }
+    if (dom.mobileAccentColor) {
+      dom.mobileAccentColor.value = state.mobile.theme.accentColor;
+    }
+    if (dom.mobileMutedColor) {
+      dom.mobileMutedColor.value = state.mobile.theme.mutedColor;
+    }
+    if (dom.mobileSurfaceColor) {
+      dom.mobileSurfaceColor.value = state.mobile.theme.surfaceColor;
+    }
+    if (dom.mobileButtonTextColor) {
+      dom.mobileButtonTextColor.value = state.mobile.theme.buttonTextColor;
     }
     if (dom.mobileHeroCenter) {
       dom.mobileHeroCenter.checked = !!state.display.mobileHeroCenter;
@@ -3247,6 +3289,15 @@
     state.theme.mutedColor = defaults.theme.mutedColor;
     state.theme.surfaceColor = defaults.theme.surfaceColor;
     state.theme.buttonTextColor = defaults.theme.buttonTextColor;
+    state.mobile = state.mobile || {};
+    state.mobile.theme = Object.assign({}, state.mobile.theme, {
+      bgColor: defaults.theme.bgColor,
+      textColor: defaults.theme.textColor,
+      accentColor: defaults.theme.accentColor,
+      mutedColor: defaults.theme.mutedColor,
+      surfaceColor: defaults.theme.surfaceColor,
+      buttonTextColor: defaults.theme.buttonTextColor
+    });
     state.hero.titleColor = defaults.hero.titleColor;
     state.hero.subtitleColor = defaults.hero.subtitleColor;
     state.display.tabTextColor = defaults.display.tabTextColor;
@@ -3536,6 +3587,12 @@
         "px;--mobile-button-padding-x:" + mobileButtons.paddingX +
         "px;--mobile-button-gap:" + mobileButtons.gap +
         "px;--mobile-button-width:" + (mobileButtons.width === "full" ? "100%" : "auto") +
+        ";--mobile-bg:" + escapeAttr(mobileTheme.bgColor) +
+        ";--mobile-text:" + escapeAttr(mobileTheme.textColor) +
+        ";--mobile-accent:" + escapeAttr(mobileTheme.accentColor) +
+        ";--mobile-muted:" + escapeAttr(mobileTheme.mutedColor) +
+        ";--mobile-surface:" + escapeAttr(mobileTheme.surfaceColor) +
+        ";--mobile-button-text:" + escapeAttr(mobileTheme.buttonTextColor) +
         ";font-family:'" +
         escapeAttr(config.theme.fontFamily) +
         "','Segoe UI',sans-serif;\">",

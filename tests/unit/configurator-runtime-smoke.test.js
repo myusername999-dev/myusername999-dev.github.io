@@ -75,6 +75,8 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("--mobile-button-text-size:");
     expect(code).toContain("--mobile-button-padding-y:");
     expect(code).toContain("--mobile-button-width:");
+    expect(code).toContain("--mobile-accent:");
+    expect(code).toContain("--mobile-button-text:");
   });
 
   it("wires under-construction controls and generation branch", () => {

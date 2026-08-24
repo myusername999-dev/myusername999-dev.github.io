@@ -52,7 +52,10 @@ These pages route into the same configurator runtime with panel focus, so behavi
 6. HOME CTA layout safety:
    - Mobile CTA padding, gap, and width controls are independent from desktop values.
    - Switch back to desktop after each CTA layout edit and confirm desktop buttons are unchanged.
-7. Mobile stylesheet:
+7. HOME color safety:
+   - Mobile background, text, accent, muted, surface, and button-text colors are independent from desktop values.
+   - Switch back to desktop after each color edit and confirm desktop colors are unchanged.
+8. Mobile stylesheet:
    - HOME mobile rules are stored in `css/mobile/home.css` and apply at `max-width: 760px`.
 
 ### 6. Publish and draft workflows

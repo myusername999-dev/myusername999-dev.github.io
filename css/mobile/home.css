@@ -1,4 +1,30 @@
 @media (max-width: 760px) {
+  .home-root {
+    --preview-bg: var(--mobile-bg);
+    --preview-text: var(--mobile-text);
+    --preview-accent: var(--mobile-accent);
+    --preview-muted: var(--mobile-muted);
+    --preview-surface: var(--mobile-surface);
+    --preview-button-text: var(--mobile-button-text);
+  }
+
+  .home-overlay {
+    background: linear-gradient(160deg, color-mix(in srgb, var(--mobile-surface) 86%, #ffffff 14%) 0%, transparent 70%) !important;
+  }
+
+  .cta-slot a {
+    background: var(--mobile-accent) !important;
+    color: var(--mobile-button-text) !important;
+  }
+
+  .hero-title-slot h1 {
+    color: var(--mobile-text) !important;
+  }
+
+  .hero-subtitle-slot p {
+    color: var(--mobile-muted) !important;
+  }
+
   .hero-title-slot h1,
   .hero-slot h1 {
     font-size: clamp(2rem, 10vw, var(--mobile-heading-size)) !important;

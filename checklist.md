@@ -17,7 +17,7 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Add legacy-draft normalization for existing mobile layout values.
 - [x] Migrate existing mobile layout and font fields.
 - [x] Add mobile logo position and size overrides.
-- [-] Add independent mobile theme, button, content, and link overrides. Typography and CTA layout are complete; colors, content, and links remain pending.
+- [-] Add independent mobile theme, button, content, and link overrides. Typography, CTA layout, and colors are complete; content and links remain pending.
 - [ ] Update state fixtures.
 
 ## JavaScript Structure
@@ -37,7 +37,7 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Add or update mobile controls for logo position and size.
 - [x] Add mobile typography controls, including button text size.
 - [x] Add mobile button padding, gap, and width controls.
-- [ ] Add mobile colors and visual-style controls.
+- [x] Add mobile colors and visual-style controls.
 - [ ] Add mobile HOME content and link controls.
 - [ ] Add reset-to-desktop controls for each override group.
 - [ ] Verify desktop controls write only base state.

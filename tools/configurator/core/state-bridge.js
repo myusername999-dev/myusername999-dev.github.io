@@ -236,7 +236,13 @@
       theme: {
         headingSize: clamp(parseInt(source.theme && source.theme.headingSize, 10) || parseInt(desktopTheme.mobileHeadingSize, 10) || desktopTheme.headingSize || 64, 20, 160),
         bodySize: clamp(parseInt(source.theme && source.theme.bodySize, 10) || parseInt(desktopTheme.mobileBodySize, 10) || desktopTheme.bodySize || 18, 10, 72),
-        buttonTextSize: clamp(parseInt(source.theme && source.theme.buttonTextSize, 10) || parseInt(desktopTheme.mobileButtonTextSize, 10) || desktopTheme.buttonTextSize || 16, 10, 72)
+        buttonTextSize: clamp(parseInt(source.theme && source.theme.buttonTextSize, 10) || parseInt(desktopTheme.mobileButtonTextSize, 10) || desktopTheme.buttonTextSize || 16, 10, 72),
+        bgColor: normalizeHex(source.theme && source.theme.bgColor, desktopTheme.bgColor || "#f2f7f3"),
+        textColor: normalizeHex(source.theme && source.theme.textColor, desktopTheme.textColor || "#102822"),
+        accentColor: normalizeHex(source.theme && source.theme.accentColor, desktopTheme.accentColor || "#0f7b6c"),
+        mutedColor: normalizeHex(source.theme && source.theme.mutedColor, desktopTheme.mutedColor || "#4f6962"),
+        surfaceColor: normalizeHex(source.theme && source.theme.surfaceColor, desktopTheme.surfaceColor || "#e5f0ea"),
+        buttonTextColor: normalizeHex(source.theme && source.theme.buttonTextColor, desktopTheme.buttonTextColor || "#ffffff")
       },
       buttons: {
         paddingY: clamp(parseInt(source.buttons && source.buttons.paddingY, 10) || 12, 0, 80),

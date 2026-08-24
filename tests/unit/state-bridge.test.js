@@ -154,7 +154,7 @@ describe("state bridge", () => {
       }
     });
 
-    expect(mobile.theme).toEqual({
+    expect(mobile.theme).toMatchObject({
       headingSize: 42,
       bodySize: 15,
       buttonTextSize: 16
@@ -178,6 +178,28 @@ describe("state bridge", () => {
       gap: 14,
       width: "full"
     });
+  });
+
+  it("normalizes mobile theme colors with desktop fallback", () => {
+    const bridge = loadBridge();
+    const mobile = bridge.normalizeMobileOverrides({
+      theme: { accentColor: "#123456" }
+    }, {
+      layout: {},
+      brand: { logos: [] },
+      theme: {
+        bgColor: "#111111",
+        textColor: "#222222",
+        accentColor: "#333333",
+        mutedColor: "#444444",
+        surfaceColor: "#555555",
+        buttonTextColor: "#666666"
+      }
+    });
+
+    expect(mobile.theme.accentColor).toBe("#123456");
+    expect(mobile.theme.bgColor).toBe("#111111");
+    expect(mobile.theme.buttonTextColor).toBe("#666666");
   });
 
   it("normalizes gallery images to four slots", () => {
