@@ -86,8 +86,6 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("function renderMobileButtonsEditor()");
     expect(code).toContain("var mobileHeroOverrides = config.mobile && config.mobile.hero");
     expect(code).toContain("hero-content-mobile");
-    expect(mobileCss).toContain(".hero-content-desktop");
-    expect(mobileCss).toContain(".cta-slot a.hero-content-mobile");
     const baseCss = readFileSync(resolve("css/components/home/hero-cta.css"), "utf8");
     const configuratorCss = readFileSync(resolve("css/configurator.css"), "utf8");
     expect(baseCss).toContain(".cta-slot a.hero-content-mobile");
@@ -101,6 +99,10 @@ describe("configurator runtime smoke", () => {
     expect(configuratorCss).toContain("background: var(--mobile-surface);");
     expect(mobileCss).toContain(".home-nav a {");
     expect(mobileCss).toContain("color: var(--mobile-text, var(--preview-text));");
+    expect(mobileCss).not.toContain(".hero-content-desktop");
+    expect(mobileCss).not.toContain(".cta-slot a.hero-content-mobile {");
+    expect(mobileCss).not.toContain(".cta-slot {\n    display: flex !important;");
+    expect(mobileCss).not.toContain("background: var(--mobile-accent, var(--preview-accent)) !important;");
   });
 
   it("keeps mobile overrides when drafts are merged", () => {
@@ -170,7 +172,7 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain('state.display.previewPage = fileName === "index.html"');
     expect(code).toContain('? "home"');
     expect(code).toContain(': normalizePreviewPageValue("page:" + fileName, state);');
-    expect(code).toContain('if (event.target.closest("a")) {');
+    expect(code).toContain('if (dragKey === "nav" && event.target.closest("a")) {');
     expect(configuratorCss).toContain("top: 16px;");
     expect(configuratorCss).toContain("right: 68px;");
     expect(mobileCss).toContain("right: 68px;");
@@ -178,10 +180,29 @@ describe("configurator runtime smoke", () => {
 
   it("keeps mobile CSS safe for published pages without generated mobile variables", () => {
     const css = readFileSync(resolve("css/mobile/home.css"), "utf8");
-    expect(css).toContain("var(--mobile-accent, var(--preview-accent))");
-    expect(css).toContain("var(--mobile-button-text, var(--preview-button-text))");
     expect(css).toContain("var(--mobile-surface, var(--preview-surface))");
+    expect(css).toContain("var(--mobile-text, var(--preview-text))");
+    expect(css).not.toContain(".cta-slot a {\n    background:");
     expect(css).not.toContain("--preview-bg: var(--mobile-bg);");
+  });
+
+  it("allows the remembered publish folder to be changed and verifies HOME writes", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    const markup = readFileSync(resolve("tools/configurator/index.html"), "utf8");
+    expect(markup).toContain('id="changePublishFolder"');
+    expect(code).toContain("await clearRememberedProjectDirectory();");
+    expect(code).toContain("var writtenHtml = await writtenFile.text();");
+    expect(code).toContain('throw new Error("index.html write verification failed.");');
+  });
+
+  it("provides device-aware CTA styling and position controls in Buttons", () => {
+    const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
+    const markup = readFileSync(resolve("tools/configurator/index.html"), "utf8");
+    expect(markup).toContain('id="ctaBackgroundColor"');
+    expect(markup).toContain('id="buttonCtaX"');
+    expect(code).toContain('setDragPosition("cta", value, position.y);');
+    expect(code).toContain("ensureMobileTheme().accentColor = value;");
+    expect(code).toContain("var ctaPositionForControls = getDragPosition(\"cta\");");
   });
 
   it("wires under-construction controls and generation branch", () => {

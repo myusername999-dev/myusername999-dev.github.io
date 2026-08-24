@@ -360,6 +360,10 @@
     dom.buttonsEditor = document.getElementById("buttonsEditor");
     dom.addButton = document.getElementById("addButton");
     dom.ctaTextOnly = document.getElementById("ctaTextOnly");
+    dom.ctaBackgroundColor = document.getElementById("ctaBackgroundColor");
+    dom.ctaLabelColor = document.getElementById("ctaLabelColor");
+    dom.buttonCtaX = document.getElementById("buttonCtaX");
+    dom.buttonCtaY = document.getElementById("buttonCtaY");
     dom.addTab = document.getElementById("addTab");
     dom.tabDisplayMode = document.getElementById("tabDisplayMode");
     dom.topTabsTransparent = document.getElementById("topTabsTransparent");
@@ -370,6 +374,7 @@
     dom.publishHomeOnly = document.getElementById("publishHomeOnly");
     dom.publishPrivacyOnly = document.getElementById("publishPrivacyOnly");
     dom.publishContactOnly = document.getElementById("publishContactOnly");
+    dom.changePublishFolder = document.getElementById("changePublishFolder");
     dom.publishUnderConstruction = document.getElementById("publishUnderConstruction");
     dom.previewPage = document.getElementById("previewPage");
     dom.previewMobileToggle = document.getElementById("previewMobileToggle");
@@ -826,6 +831,20 @@
       }
       state.theme.buttonTextColor = value;
     }, "input");
+    bindText(dom.ctaBackgroundColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().accentColor = value;
+        return;
+      }
+      state.theme.accentColor = value;
+    }, "input");
+    bindText(dom.ctaLabelColor, function (value) {
+      if (normalizePreviewDevice(state.display && state.display.previewDevice) === "mobile") {
+        ensureMobileTheme().buttonTextColor = value;
+        return;
+      }
+      state.theme.buttonTextColor = value;
+    }, "input");
 
     bindNumber(dom.logo1X, function (value) {
       setLogoPosition(0, value, getEditableLogo(0).y);
@@ -880,6 +899,14 @@
     });
     bindNumber(dom.ctaY, function (value) {
       state.layout.cta.y = value;
+    });
+    bindNumber(dom.buttonCtaX, function (value) {
+      var position = getDragPosition("cta");
+      setDragPosition("cta", value, position.y);
+    });
+    bindNumber(dom.buttonCtaY, function (value) {
+      var position = getDragPosition("cta");
+      setDragPosition("cta", position.x, value);
     });
     bindNumber(dom.bgX, function (value) {
       state.background.x = clamp(value, 0, 100);
@@ -1039,6 +1066,14 @@
     if (dom.publishContactOnly) {
       dom.publishContactOnly.addEventListener("click", function () {
         handlePublish("contact");
+      });
+    }
+
+    if (dom.changePublishFolder) {
+      dom.changePublishFolder.addEventListener("click", async function () {
+        rememberedProjectDirectory = null;
+        await clearRememberedProjectDirectory();
+        setStatus("Publish folder cleared. Your next publish will ask you to select the project root containing index.html.", false);
       });
     }
 
@@ -1506,6 +1541,19 @@
     }
     if (dom.buttonTextColor) {
       dom.buttonTextColor.value = normalizeHex(themeForColorControls.buttonTextColor, "#ffffff");
+    }
+    if (dom.ctaBackgroundColor) {
+      dom.ctaBackgroundColor.value = normalizeHex(themeForColorControls.accentColor, "#0f7b6c");
+    }
+    if (dom.ctaLabelColor) {
+      dom.ctaLabelColor.value = normalizeHex(themeForColorControls.buttonTextColor, "#ffffff");
+    }
+    var ctaPositionForControls = getDragPosition("cta");
+    if (dom.buttonCtaX && ctaPositionForControls) {
+      dom.buttonCtaX.value = String(ctaPositionForControls.x);
+    }
+    if (dom.buttonCtaY && ctaPositionForControls) {
+      dom.buttonCtaY.value = String(ctaPositionForControls.y);
     }
     if (dom.heroTitleColor) {
       dom.heroTitleColor.value = normalizeHex(state.hero.titleColor, state.theme.textColor);
@@ -2378,11 +2426,11 @@
       }, true);
 
       node.addEventListener("pointerdown", function (event) {
-        if (event.target.closest("a")) {
+        var dragKey = String(node.getAttribute("data-drag-key") || "");
+        if (dragKey === "nav" && event.target.closest("a")) {
           return;
         }
         event.preventDefault();
-        var dragKey = String(node.getAttribute("data-drag-key") || "");
         var startPosition = getDragPosition(dragKey);
         if (!startPosition) {
           return;
@@ -3935,6 +3983,11 @@
     var writable = await indexHandle.createWritable();
     await writable.write(html);
     await writable.close();
+    var writtenFile = await indexHandle.getFile();
+    var writtenHtml = await writtenFile.text();
+    if (writtenHtml !== html) {
+      throw new Error("index.html write verification failed.");
+    }
   }
 
   async function writeSinglePage(projectDirectory, fileName, html) {

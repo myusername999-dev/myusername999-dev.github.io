@@ -1,24 +1,6 @@
 @media (max-width: 760px) {
-    .hero-content-desktop {
-      display: none !important;
-    }
-
-    .hero-title-slot .hero-content-mobile,
-    .hero-subtitle-slot .hero-content-mobile {
-      display: block;
-    }
-
-    .cta-slot a.hero-content-mobile {
-      display: inline-flex;
-    }
-
   .home-overlay {
     background: linear-gradient(160deg, color-mix(in srgb, var(--mobile-surface, var(--preview-surface)) 86%, #ffffff 14%) 0%, transparent 70%) !important;
-  }
-
-  .cta-slot a {
-    background: var(--mobile-accent, var(--preview-accent)) !important;
-    color: var(--mobile-button-text, var(--preview-button-text)) !important;
   }
 
   .hero-title-slot h1 {
@@ -55,10 +37,6 @@
 
   .home-tab-selector {
     display: none;
-  }
-
-  .cta-slot {
-    display: flex !important;
   }
 
   .home-header,

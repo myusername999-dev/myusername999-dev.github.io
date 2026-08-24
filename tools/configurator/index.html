@@ -191,6 +191,14 @@
           <button id="addButton" type="button">Add Button</button>
         </div>
         <label class="approval"><input id="ctaTextOnly" type="checkbox"> Buttons text only (transparent)</label>
+        <div class="color-grid">
+          <label>Button Background<input id="ctaBackgroundColor" type="color"></label>
+          <label>Button Text<input id="ctaLabelColor" type="color"></label>
+        </div>
+        <div class="layout-grid">
+          <label>CTA X<input id="buttonCtaX" type="number" step="1"></label>
+          <label>CTA Y<input id="buttonCtaY" type="number" step="1"></label>
+        </div>
         <div id="buttonsEditor" class="tabs-editor"></div>
       </section>
 
@@ -412,6 +420,9 @@
           <button id="publishPrivacyOnly" type="button">Publish PRIVACY only</button>
           <button id="publishContactOnly" type="button">Publish CONTACT only</button>
           <button id="publishHome" type="button" class="primary">Publish ALL pages</button>
+        </div>
+        <div class="action-row">
+          <button id="changePublishFolder" type="button" class="ghost">Change Publish Folder</button>
         </div>
         <div id="publishDraftActions" class="action-row">
           <button id="exportDraft" type="button" class="ghost">Export Draft JSON</button>
