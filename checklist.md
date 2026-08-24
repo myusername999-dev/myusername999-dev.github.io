@@ -15,6 +15,9 @@ Status key: `[ ]` not started, `[-]` in progress, `[x]` complete, `[!]` blocked
 - [x] Define versioned `state.mobile` schema.
 - [x] Define desktop fallback behavior for implemented layout and logo overrides.
 - [x] Add legacy-draft normalization for existing mobile layout values.
+- [x] Preserve explicit zero values during mobile override normalization.
+- [x] Make mobile CSS safe when a published HOME page lacks generated mobile variables.
+- [ ] Refactor materialized mobile state to sparse overrides with explicit reset-to-desktop semantics.
 - [x] Migrate existing mobile layout and font fields.
 - [x] Add mobile logo position and size overrides.
 - [-] Add independent mobile theme, button, content, and link overrides. Typography, CTA layout, and colors are complete; content and links remain pending.

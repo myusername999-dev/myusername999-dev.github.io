@@ -45,7 +45,9 @@ Mobile values are stored in `mobile`:
 }
 ```
 
-During migration, legacy `layout.mobileNav`, `layout.mobileHeroTitle`, `layout.mobileHeroSubtitle`, `layout.mobileCta`, `theme.mobileHeadingSize`, and `theme.mobileBodySize` values seed the new mobile values. Missing mobile logo and typography values fall back to desktop values.
+During migration, legacy `layout.mobileNav`, `layout.mobileHeroTitle`, `layout.mobileHeroSubtitle`, `layout.mobileCta`, `theme.mobileHeadingSize`, and `theme.mobileBodySize` values seed the new mobile values. Missing mobile logo and typography values fall back to desktop values. Explicit zero values for layout coordinates and CTA spacing are preserved during normalization.
+
+Current normalization materializes supported mobile groups for control synchronization. Converting this representation to sparse persisted overrides with explicit reset-to-desktop markers is tracked as a separate compatibility refactor.
 
 ## Current Editing Behavior
 

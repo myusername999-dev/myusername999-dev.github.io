@@ -79,6 +79,14 @@ describe("configurator runtime smoke", () => {
     expect(code).toContain("--mobile-button-text:");
   });
 
+  it("keeps mobile CSS safe for published pages without generated mobile variables", () => {
+    const css = readFileSync(resolve("css/mobile/home.css"), "utf8");
+    expect(css).toContain("var(--mobile-accent, var(--preview-accent))");
+    expect(css).toContain("var(--mobile-button-text, var(--preview-button-text))");
+    expect(css).toContain("var(--mobile-surface, var(--preview-surface))");
+    expect(css).not.toContain("--preview-bg: var(--mobile-bg);");
+  });
+
   it("wires under-construction controls and generation branch", () => {
     const code = readFileSync(resolve("js/configurator.app.js"), "utf8");
     expect(code).toContain("UNDER_CONSTRUCTION_DEFAULT_IMAGE");

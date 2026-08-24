@@ -202,6 +202,23 @@ describe("state bridge", () => {
     expect(mobile.theme.buttonTextColor).toBe("#666666");
   });
 
+  it("preserves explicit zero values in mobile layout, logos, and CTA buttons", () => {
+    const bridge = loadBridge();
+    const mobile = bridge.normalizeMobileOverrides({
+      layout: { nav: { x: 0, y: 0 } },
+      brand: { logos: [{ x: 0, y: 0, size: 0 }] },
+      buttons: { paddingY: 0, paddingX: 0, gap: 0 }
+    }, {
+      layout: { nav: { x: 19, y: 20 } },
+      brand: { logos: [{ x: 30, y: 31, size: 72 }] },
+      theme: {}
+    });
+
+    expect(mobile.layout.nav).toEqual({ x: 0, y: 0 });
+    expect(mobile.brand.logos[0]).toEqual({ x: 0, y: 0, size: 1 });
+    expect(mobile.buttons).toMatchObject({ paddingY: 0, paddingX: 0, gap: 0 });
+  });
+
   it("normalizes gallery images to four slots", () => {
     const bridge = loadBridge();
     const gallery = bridge.normalizeGalleryImages([{ src: "a", fileName: "a.png" }]);

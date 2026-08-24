@@ -195,11 +195,16 @@
       var override = source[index] || {};
       var fallback = desktop[index] || createDefaultLogo(index);
       return {
-        x: parseInt(override.x, 10) || fallback.x,
-        y: parseInt(override.y, 10) || fallback.y,
-        size: clamp(parseInt(override.size, 10) || fallback.size, 1, 1200)
+        x: parseNumberOrFallback(override.x, fallback.x),
+        y: parseNumberOrFallback(override.y, fallback.y),
+        size: clamp(parseNumberOrFallback(override.size, fallback.size), 1, 1200)
       };
     });
+  }
+
+  function parseNumberOrFallback(value, fallback) {
+    var parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
   }
 
   function normalizeMobileOverrides(value, desktopState) {
@@ -218,8 +223,8 @@
       var item = override || {};
       var base = fallback || { x: 0, y: 0 };
       return {
-        x: parseInt(item.x, 10) || base.x || 0,
-        y: parseInt(item.y, 10) || base.y || 0
+        x: parseNumberOrFallback(item.x, base.x || 0),
+        y: parseNumberOrFallback(item.y, base.y || 0)
       };
     }
 
@@ -245,9 +250,9 @@
         buttonTextColor: normalizeHex(source.theme && source.theme.buttonTextColor, desktopTheme.buttonTextColor || "#ffffff")
       },
       buttons: {
-        paddingY: clamp(parseInt(source.buttons && source.buttons.paddingY, 10) || 12, 0, 80),
-        paddingX: clamp(parseInt(source.buttons && source.buttons.paddingX, 10) || 18, 0, 120),
-        gap: clamp(parseInt(source.buttons && source.buttons.gap, 10) || 10, 0, 80),
+        paddingY: clamp(parseNumberOrFallback(source.buttons && source.buttons.paddingY, 12), 0, 80),
+        paddingX: clamp(parseNumberOrFallback(source.buttons && source.buttons.paddingX, 18), 0, 120),
+        gap: clamp(parseNumberOrFallback(source.buttons && source.buttons.gap, 10), 0, 80),
         width: source.buttons && source.buttons.width === "full" ? "full" : "auto"
       }
     };
@@ -372,6 +377,7 @@
     normalizeImageSrc: normalizeImageSrc,
     sanitizeFileName: sanitizeFileName,
     normalizeRotation: normalizeRotation,
+    parseNumberOrFallback: parseNumberOrFallback,
     createDefaultLogo: createDefaultLogo,
     createDefaultLogos: createDefaultLogos,
     normalizeBrandLogos: normalizeBrandLogos,
